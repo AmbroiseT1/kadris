@@ -1,6 +1,6 @@
-// Fichier : lib/quartier.ts
+// Fichier : lib/quartier.ts (FIXED: Type Explicite pour les fonctions internes)
 
-// --- 1. DÉFINITION DES DONNÉES ---
+// --- 1. DÉFINITION DES TYPES ---
 
 export interface AmenityItem {
   name: string;
@@ -16,13 +16,13 @@ export interface CategoryData {
   items: AmenityItem[];
 }
 
-// Modification ici : On ajoute lat/lon pour les liens maps
 export interface NuisanceItem {
   present: boolean;
   distance: number;
   name: string;
   lat?: number;
   lon?: number;
+  type?: string; 
 }
 
 export interface QuartierData {
@@ -50,7 +50,12 @@ export interface QuartierData {
   };
 }
 
-// --- 2. UTILITAIRES ---
+// --- 2. UTILITAIRES & MATRICES DE RISQUES ---
+
+// Poids du risque routier
+const ROAD_RISK_MAP: Record<string, number> = {
+    'motorway': 35, 'trunk': 35, 'primary': 20, 'secondary': 10, 'tertiary': 5,
+};
 
 function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371e3; 
@@ -93,7 +98,7 @@ export async function fetchQuartier(lat: number, lon: number): Promise<QuartierD
         node["amenity"~"police|fire_station"](around:1500, ${lat}, ${lon});
         node["amenity"~"post_office|town_hall"](around:1000, ${lat}, ${lon});
         
-        way["highway"~"motorway|trunk|primary"](around:300, ${lat}, ${lon});
+        way["highway"~"motorway|trunk|primary|secondary|tertiary"](around:300, ${lat}, ${lon});
         way["railway"="rail"](around:300, ${lat}, ${lon});
         way["aeroway"~"aerodrome|runway"](around:3000, ${lat}, ${lon});
         node["aeroway"~"aerodrome"](around:3000, ${lat}, ${lon});
@@ -123,43 +128,85 @@ export async function fetchQuartier(lat: number, lon: number): Promise<QuartierD
               distance: getDist(e),
               lat: e.lat || e.center?.lat,
               lon: e.lon || e.center?.lon
-          })).sort((a: any, b: any) => a.distance - b.distance);
+          })).sort((a: AmenityItem, b: AmenityItem) => a.distance - b.distance); // <-- FIX: a and b sont typés
 
        return {
          count: items.length,
          score_norm: normalize(items.length, seuilMax),
          items: items
-       };
+       } as CategoryData;
     };
 
-    // Logic Nuisances Mise à jour
-    const findNuisance = (filterFn: (e: any) => boolean): NuisanceItem => {
+    // --- LOGIQUE NUISANCES HIERARCHISÉE SÉCURISÉE ---
+
+    // Type intermédiaire pour le tri
+    interface RoadElement {
+        tags: Record<string, string>;
+        dist: number;
+        risk_score: number;
+        lat: number;
+        lon: number;
+        type: string;
+    }
+
+    const roadElements: RoadElement[] = elements
+        .filter((e: any) => ['motorway', 'trunk', 'primary', 'secondary', 'tertiary'].includes(e.tags.highway))
+        .map((e: any) => ({
+            ...e,
+            dist: getDist(e),
+            risk_score: (ROAD_RISK_MAP[e.tags.highway] || 5) * (1000 / (getDist(e) || 1000)),
+            type: e.tags.highway,
+            lat: e.lat || e.center?.lat,
+            lon: e.lon || e.center?.lon,
+        }));
+
+    // FIX: Le tri est maintenant typé et exécuté sur un tableau RoadElement[]
+    const sortedRoads = roadElements.sort((a, b) => b.risk_score - a.risk_score); 
+    const worstRoad = sortedRoads[0]; 
+
+    
+    const findNuisance = (filterFn: (e: any) => boolean, type: string): NuisanceItem => {
         const items = elements.filter(filterFn).map((e: any) => ({
-            name: e.tags.name || "Infrastructure",
+            name: e.tags.name || type,
             dist: getDist(e),
             lat: e.lat || e.center?.lat,
-            lon: e.lon || e.center?.lon
+            lon: e.lon || e.center?.lon,
+            type: e.tags.aeroway || e.tags.railway || e.tags.landuse
         })).sort((a: any, b: any) => a.dist - b.dist);
         
         return items.length > 0 
-            ? { present: true, distance: items[0].dist, name: items[0].name, lat: items[0].lat, lon: items[0].lon } 
-            : { present: false, distance: 0, name: "" };
+            ? { present: true, distance: items[0].dist, name: items[0].name, lat: items[0].lat, lon: items[0].lon, type: items[0].type } 
+            : { present: false, distance: 0, name: "" } as NuisanceItem;
     };
 
     const nuisances = {
-        autoroute: findNuisance((e: any) => ['motorway', 'trunk', 'primary'].includes(e.tags.highway)),
-        ferre: findNuisance((e: any) => e.tags.railway === 'rail'),
-        aerien: findNuisance((e: any) => ['aerodrome', 'runway'].includes(e.tags.aeroway)),
-        industriel: findNuisance((e: any) => e.tags.landuse === 'industrial'),
+        autoroute: worstRoad ? 
+            { 
+                present: true, 
+                distance: worstRoad.dist, 
+                name: worstRoad.tags.name || worstRoad.tags.highway,
+                lat: worstRoad.lat,
+                lon: worstRoad.lon,
+                type: worstRoad.tags.highway
+            } : 
+            { present: false, distance: 0, name: "", type: "" } as NuisanceItem,
+        ferre: findNuisance((e: any) => e.tags.railway === 'rail', 'Voie Ferrée'),
+        aerien: findNuisance((e: any) => ['aerodrome', 'runway'].includes(e.tags.aeroway), 'Aéroport/Piste'),
+        industriel: findNuisance((e: any) => e.tags.landuse === 'industrial', 'Zone Industrielle'),
         score_calme: 100 
     };
 
     let scoreCalme = 100;
-    if (nuisances.autoroute.present) scoreCalme -= 30;
-    if (nuisances.ferre.present) scoreCalme -= 20;
-    if (nuisances.aerien.present) scoreCalme -= 20;
+    if (nuisances.autoroute.present) {
+        const roadType = nuisances.autoroute.type || 'tertiary';
+        const baseMalus = ROAD_RISK_MAP[roadType] || 5;
+        const proximityMultiplier = Math.min(5, 300 / (nuisances.autoroute.distance || 300));
+        scoreCalme -= Math.round(baseMalus * proximityMultiplier);
+    }
+    if (nuisances.ferre.present) scoreCalme -= 20 * (300 / (nuisances.ferre.distance || 300));
+    if (nuisances.aerien.present) scoreCalme -= 15;
     if (nuisances.industriel.present) scoreCalme -= 10;
-    nuisances.score_calme = Math.max(0, scoreCalme);
+    nuisances.score_calme = Math.round(Math.max(0, scoreCalme));
 
     const cats = {
       education: processCat((e: any) => ['school', 'kindergarten', 'college', 'university'].includes(e.tags.amenity), 3),
@@ -185,14 +232,14 @@ export async function fetchQuartier(lat: number, lon: number): Promise<QuartierD
 
     return {
       categories: cats,
-      nuisances,
+      nuisances: nuisances,
       scores: {
         famille: calcScore(WEIGHTS.famille),
         investisseur: calcScore(WEIGHTS.investisseur),
         qualite_vie: calcScore(WEIGHTS.qualite_vie),
         fiabilite: 0.95
       }
-    };
+    } as QuartierData;
 
   } catch (error) {
     console.error("Erreur Quartier:", error);
