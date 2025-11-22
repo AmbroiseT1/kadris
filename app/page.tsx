@@ -1,5 +1,6 @@
 "use client";
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import React, { useState } from 'react';
 import { Menu, X, Shield, CheckCircle, BrickWall, TrendingUp, ArrowRight } from 'lucide-react';
 
@@ -42,9 +43,9 @@ export default function Home() {
             <a href="#login" className="px-5 py-2 border border-kadris-slate/20 hover:bg-kadris-slate hover:text-white rounded-sm transition-colors">
               Connexion
             </a>
-            <a href="#owner" className="px-5 py-2 bg-kadris-slate text-white rounded-sm hover:bg-kadris-slate/90 transition-colors shadow-sm">
+            <Link href="/dashboard" className="px-5 py-2 bg-kadris-slate text-white rounded-sm hover:bg-kadris-slate/90 transition-colors shadow-sm">
               Espace Propriétaire
-            </a>
+            </Link>
           </div>
 
           {/* Bouton Menu Mobile */}
@@ -167,10 +168,10 @@ export default function Home() {
                 </li>
               </ul>
 
-              <button className="group flex items-center gap-3 bg-kadris-slate text-white px-8 py-4 rounded-sm font-serif font-bold uppercase tracking-wider hover:bg-kadris-slate/90 transition-all">
+              <Link href="/login" className="group flex items-center gap-3 bg-kadris-slate text-white px-8 py-4 rounded-sm font-serif font-bold uppercase tracking-wider hover:bg-kadris-slate/90 transition-all">
                 Revendiquer mon bien
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-              </button>
+              </Link>
             </div>
 
             {/* Aperçu Dashboard Abstrait */}
