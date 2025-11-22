@@ -1,7 +1,7 @@
 "use client";
 
 import React, { use, useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Shield, TrendingUp, AlertTriangle, Lock, BrainCircuit, Scroll, ShoppingBag, Database } from 'lucide-react';
+import { ArrowLeft, MapPin, Shield, TrendingUp, AlertTriangle, Lock, BrainCircuit, Scroll, ShoppingBag, Database, FileText, Download } from 'lucide-react';
 import Link from 'next/link';
 import proj4 from 'proj4';
 
@@ -132,18 +132,37 @@ export default function ReportPage({ params }: { params: Promise<{ cityCode: str
 
   return (
     <div className="min-h-screen bg-kadris-cream font-sans text-kadris-slate pb-20">
-      <header className="bg-white/80 backdrop-blur-md border-b border-kadris-slate/10 sticky top-0 z-40">
+
+      {/* HEADER STYLE NOTAIRE */}
+      <header className="bg-white border-b border-kadris-slate/10 sticky top-0 z-40 shadow-sm">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-bold text-kadris-slate"><ArrowLeft size={18} /> Retour</Link>
-          <button className="bg-kadris-slate text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-kadris-slate/90 shadow-sm">Acheter Rapport</button>
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-2 font-bold text-kadris-slate text-sm uppercase tracking-wider hover:text-kadris-terracotta transition-colors">
+              <ArrowLeft size={16} /> Retour
+            </Link>
+            <div className="h-6 w-px bg-kadris-slate/10 hidden md:block"></div>
+            <div className="hidden md:flex items-center gap-2 text-sm text-kadris-slate/60">
+              <FileText size={14} />
+              <span className="font-mono">Dossier : {cityCode}</span>
+            </div>
+          </div>
+          <button className="bg-kadris-slate text-white px-5 py-2 rounded-sm text-sm font-bold uppercase tracking-wide hover:bg-kadris-slate/90 shadow-sm flex items-center gap-2">
+            <Download size={16} /> Export PDF
+          </button>
         </div>
       </header>
 
       <main className="container mx-auto px-6 py-8">
-        <div className="mb-8 md:mb-12">
-          <h1 className="font-serif text-3xl md:text-5xl font-bold text-kadris-slate mb-4">Passeport Immobilier</h1>
+        <div className="mb-10">
+          <h1 className="font-serif text-3xl md:text-4xl font-bold text-kadris-slate mb-2">
+            {buildingData?.adresse_ban || "Chargement de l'adresse..."}
+          </h1>
+          <p className="text-kadris-slate/60 text-lg font-light">Passeport Immobilier & Audit Technique</p>
+        </div>
 
-          <div className="flex flex-wrap gap-2 border-b border-kadris-slate/10 pb-1">
+        {/* NAVIGATION ONGLETS STYLE DOSSIER */}
+        <div className="mb-8 border-b border-kadris-slate/10">
+          <div className="flex flex-wrap gap-8">
             {[
               { id: 'synthese', label: 'Synthèse', icon: MapPin },
               { id: 'analysis', label: 'Analyse IA', icon: BrainCircuit },
@@ -157,7 +176,7 @@ export default function ReportPage({ params }: { params: Promise<{ cityCode: str
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-t-lg border-b-2 transition-all ${activeTab === tab.id ? 'border-kadris-terracotta text-kadris-terracotta bg-white/50' : 'border-transparent text-kadris-slate/60 hover:text-kadris-slate hover:bg-white/30'}`}
+                className={`flex items-center gap-2 pb-3 text-sm font-bold uppercase tracking-wide border-b-2 transition-all ${activeTab === tab.id ? 'border-kadris-terracotta text-kadris-terracotta' : 'border-transparent text-kadris-slate/40 hover:text-kadris-slate hover:border-kadris-slate/20'}`}
               >
                 <tab.icon size={16} /> {tab.label}
               </button>
@@ -165,7 +184,7 @@ export default function ReportPage({ params }: { params: Promise<{ cityCode: str
           </div>
         </div>
 
-        <div className="min-h-[400px]">
+        <div className="min-h-[400px] animate-in fade-in slide-in-from-bottom-4 duration-500">
           {activeTab === 'synthese' && <TabSynthese data={buildingData} dvf={dvfData} loading={loading} />}
           {activeTab === 'analysis' && <TabAnalysis data={buildingData} dvf={dvfData} />}
           {activeTab === 'batiment' && <TabBatiment data={{ ...buildingData?.raw_bdnb, dpe_reel: buildingData?.dpe_reel }} />}

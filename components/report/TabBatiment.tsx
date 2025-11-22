@@ -3,20 +3,16 @@
 import React, { useState } from 'react';
 import {
     Building, Hammer, Ruler, Zap, FileText, ChevronDown, ChevronUp,
-    CheckCircle, XCircle, Info, Calendar, Move, Sun // <--- FIX ICÔNE (Sun au lieu de ThermometerSun)
+    CheckCircle, XCircle, Info, Calendar, Move, Sun
 } from 'lucide-react';
 
 // --- 1. CONFIGURATION INTELLIGENTE ---
 
-// Traduction des clés techniques en français
 const LABELS: Record<string, string> = {
-    // Identité
     annee_construction: "Année Fiscale",
     annee_construction_dpe: "Année DPE (Estimée)",
     usage_niveau_1_txt: "Usage Principal",
     nb_log: "Nombre de Logements",
-
-    // Structure & Enveloppe
     mat_mur_txt: "Matériaux Murs (Famille)",
     materiaux_structure_mur_exterieur: "Structure Murs (Détail)",
     mat_toit_txt: "Matériaux Toiture",
@@ -25,40 +21,30 @@ const LABELS: Record<string, string> = {
     type_isolation_plancher_haut: "Isolation Plafond/Toit",
     type_plancher_bas_deperditif: "Type Plancher Bas",
     type_plancher_haut_deperditif: "Type Plancher Haut",
-
-    // Menuiseries (Fenêtres)
     type_vitrage: "Type Vitrage",
     type_materiaux_menuiserie: "Cadres Fenêtres",
     type_fermeture: "Volets",
-    type_gaz_lame: "Gaz Lame d'Air", // <--- AJOUTÉ ICI
+    type_gaz_lame: "Gaz Lame d'Air",
     epaisseur_lame: "Épaisseur Lame (mm)",
     vitrage_vir: "Vitrage à Isolation Renforcée (VIR)",
     uw: "Perf. Fenêtre Globale (Uw)",
     facteur_solaire_baie_vitree: "Facteur Solaire (Sw)",
-
-    // CVC (Chauffage, Eau, Air)
     type_installation_chauffage: "Installation Chauffage",
     type_energie_chauffage: "Énergie Principale",
     type_generateur_chauffage: "Générateur Principal",
     type_generateur_ecs: "Générateur Eau Chaude",
     nb_installation_chauffage: "Nb Installations Chauffage",
     type_ventilation: "Ventilation (VMC)",
-
-    // Performance & DPE
     classe_bilan_dpe: "Classe DPE (Lettre)",
     conso_5_usages_ep_m2: "Conso. 5 usages (Actuel)",
     emission_ges_5_usages_m2: "Émissions GES (kgCO2)",
     u_mur_exterieur: "Déperdition Murs (U)",
     u_plancher_haut_deperditif: "Déperdition Toit (U)",
     classe_inertie: "Confort d'Été (Inertie)",
-
-    // Dimensions & Terrain
     hauteur_mean: "Hauteur Moyenne (m)",
     nb_niveau: "Nombre de Niveaux",
     surface_emprise_sol: "Emprise au Sol (m²)",
     altitude_sol_mean: "Altitude (NGF)",
-
-    // Admin / Contexte
     libelle_commune_insee: "Commune",
     l_parcelle_id: "Parcelles Cadastrales",
     valeur_fonciere_m2_residentiel_rel_commune: "Ratio Valeur / Commune",
@@ -66,7 +52,6 @@ const LABELS: Record<string, string> = {
     alea_radon: "Risque Radon"
 };
 
-// Tooltips pédagogiques (L'intelligence pour le client)
 const TOOLTIPS: Record<string, string> = {
     uw: "Coefficient de transmission thermique de la fenêtre entière. Plus il est BAS (< 1.5), meilleure est l'isolation.",
     facteur_solaire_baie_vitree: "Capacité à laisser entrer la chaleur du soleil (Sw). Haut = Bien en hiver, Attention en été.",
@@ -74,10 +59,9 @@ const TOOLTIPS: Record<string, string> = {
     conso_5_usages_ep_m2: "Consommation totale en énergie primaire (Chauffage, Eau, Clim, Éclairage, Auxiliaires). C'est le chiffre clé du DPE.",
     u_plancher_haut_deperditif: "Isolation du toit. Un chiffre < 0.2 est très bon (R > 5).",
     valeur_fonciere_m2_residentiel_rel_commune: "Indicateur de valeur relative : > 1 signifie que ce bien est estimé plus cher que la moyenne de la commune.",
-    type_gaz_lame: "Le gaz entre les vitres (Air ou Argon). L'Argon est bien meilleur isolant que l'Air sec." // <--- TOOLTIP AJOUTÉ
+    type_gaz_lame: "Le gaz entre les vitres (Air ou Argon). L'Argon est bien meilleur isolant que l'Air sec."
 };
 
-// Définition des cartes thématiques
 const GROUPS = {
     identite: {
         title: "Identité & Volumétrie",
@@ -95,7 +79,6 @@ const GROUPS = {
         title: "Fenêtres & Vitrages",
         icon: Move,
         description: "Performance des menuiseries.",
-        // AJOUT DE 'type_gaz_lame' ICI 👇
         keys: ["type_materiaux_menuiserie", "type_vitrage", "type_gaz_lame", "uw", "facteur_solaire_baie_vitree", "type_fermeture", "epaisseur_lame"]
     },
     cvc: {
@@ -106,7 +89,7 @@ const GROUPS = {
     },
     perf: {
         title: "Bilan Énergétique",
-        icon: Sun, // <--- UTILISATION DE L'ICÔNE CORRIGÉE
+        icon: Sun,
         keys: ["classe_bilan_dpe", "conso_5_usages_ep_m2", "emission_ges_5_usages_m2", "classe_inertie", "type_dpe"]
     },
     admin: {
@@ -117,7 +100,6 @@ const GROUPS = {
     }
 };
 
-// Clés à cacher totalement (Blacklist)
 const BLACKLIST = [
     "geom_groupe", "batiment_groupe_id", "cle_interop_adr", "batiment_groupe_id", "fiabilite_cr_adr_niv_1",
     "fiabilite_cr_adr_niv_2", "fiabilite_emprise_sol", "fiabilite_hauteur", "lien_valide", "croisement_geospx_reussi", "code_departement_insee", "code_region_insee", "cle_interop_adr_principale_ban",
@@ -143,7 +125,6 @@ const DataRow = ({ label, value, tooltip }: { label: string, value: any, tooltip
     let displayValue = value;
     let unit = '';
 
-    // Détermination de l'unité
     if (label.includes("Conso. Énergie Primaire") || label.includes("Conso. 5 usages")) {
         unit = ' kWhEP/m².an';
     } else if (label.includes("Émissions GES")) {
@@ -160,12 +141,11 @@ const DataRow = ({ label, value, tooltip }: { label: string, value: any, tooltip
         unit = ' (Sw)';
     }
 
-    // Formatage des valeurs
     if (typeof value === 'boolean') {
         displayValue = value ? (
-            <span className="inline-flex items-center gap-1 text-green-700 bg-green-50 px-2 py-0.5 rounded text-xs font-bold"><CheckCircle size={12} /> Oui</span>
+            <span className="inline-flex items-center gap-1 text-green-700 bg-green-50 px-2 py-0.5 rounded-sm text-xs font-bold border border-green-100"><CheckCircle size={12} /> Oui</span>
         ) : (
-            <span className="inline-flex items-center gap-1 text-slate-400 bg-slate-100 px-2 py-0.5 rounded text-xs"><XCircle size={12} /> Non</span>
+            <span className="inline-flex items-center gap-1 text-slate-400 bg-slate-100 px-2 py-0.5 rounded-sm text-xs border border-slate-200"><XCircle size={12} /> Non</span>
         );
         unit = '';
     } else if (Array.isArray(value)) {
@@ -179,22 +159,22 @@ const DataRow = ({ label, value, tooltip }: { label: string, value: any, tooltip
     }
 
     return (
-        <div className="group relative flex justify-between items-center py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50/80 transition-colors px-2 -mx-2 rounded-lg">
+        <div className="group relative flex justify-between items-center py-3 border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors px-2 -mx-2">
             <div className="flex items-center gap-1.5">
-                <span className="text-sm text-slate-500 font-medium flex items-center gap-1">{label}</span>
+                <span className="text-sm text-slate-600 font-medium flex items-center gap-1">{label}</span>
                 {tooltip && (
                     <div className="relative group/tooltip">
-                        <Info size={14} className="text-slate-300 hover:text-kadris-terracotta cursor-help transition-colors" />
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-slate-800 text-white text-xs rounded-lg shadow-xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center leading-relaxed">
+                        <Info size={12} className="text-slate-300 hover:text-kadris-terracotta cursor-help transition-colors" />
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-kadris-slate text-white text-xs rounded-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center leading-relaxed font-light">
                             {tooltip}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-kadris-slate"></div>
                         </div>
                     </div>
                 )}
             </div>
-            <span className="text-sm text-slate-900 font-bold text-right max-w-[60%] break-words">
+            <span className="text-sm text-kadris-slate font-bold text-right max-w-[60%] break-words">
                 {displayValue}
-                {unit && <span className="font-normal text-slate-500 pl-1">{unit}</span>}
+                {unit && <span className="font-normal text-slate-500 pl-1 font-mono text-xs">{unit}</span>}
             </span>
         </div>
     );
@@ -205,14 +185,14 @@ const BentoCard = ({ title, icon: Icon, description, data, keys }: any) => {
     if (!validKeys.length) return null;
 
     return (
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="flex items-start gap-4 mb-6">
-                <div className="p-3 bg-kadris-cream/50 rounded-xl text-kadris-terracotta">
-                    <Icon size={24} />
+        <div className="bg-white border border-stone-200 rounded-sm p-5">
+            <div className="flex items-start gap-3 mb-5 border-b border-stone-100 pb-3">
+                <div className="p-2 bg-kadris-cream/50 rounded-sm text-kadris-terracotta border border-kadris-terracotta/10">
+                    <Icon size={20} />
                 </div>
                 <div>
-                    <h3 className="font-bold text-kadris-slate text-base uppercase tracking-wide">{title}</h3>
-                    <p className="text-xs text-slate-400 mt-1 leading-tight">{description}</p>
+                    <h3 className="font-serif font-bold text-kadris-slate text-base">{title}</h3>
+                    <p className="text-xs text-slate-400 mt-0.5 leading-tight font-light">{description}</p>
                 </div>
             </div>
             <div className="space-y-1">
@@ -236,7 +216,6 @@ export const TabBatiment = ({ data }: { data: any }) => {
 
     if (!data) return <div className="p-8 text-center text-slate-400">Données Bâtiment indisponibles.</div>;
 
-    // Calcul de l'année intelligente
     const dates = [data.annee_construction, data.annee_construction_reelle_t, data.annee_construction_dpe]
         .map(d => parseInt(d)).filter(d => !isNaN(d) && d > 1000);
     const smartYear = dates.length > 0 ? Math.min(...dates) : (data.annee_construction || "--");
@@ -255,34 +234,34 @@ export const TabBatiment = ({ data }: { data: any }) => {
 
             {/* HERO */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-kadris-slate text-white p-8 rounded-2xl shadow-lg flex items-center gap-6 col-span-1 md:col-span-2 relative overflow-hidden">
+                <div className="bg-kadris-slate text-white p-8 rounded-sm border border-kadris-slate col-span-1 md:col-span-2 relative overflow-hidden">
                     <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
-                    <div className="p-4 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10">
-                        <Building size={40} className="text-white" />
+                    <div className="p-3 bg-white/10 rounded-sm backdrop-blur-sm border border-white/10 inline-block">
+                        <Building size={32} className="text-white" />
                     </div>
-                    <div className="relative z-10">
-                        <div className="text-xs uppercase text-kadris-terracotta font-bold tracking-widest mb-1 flex items-center gap-2">
-                            <Info size={12} /> Fiche Technique Officielle
+                    <div className="relative z-10 mt-4">
+                        <div className="text-xs uppercase text-kadris-terracotta font-bold tracking-widest mb-2 flex items-center gap-2 font-mono">
+                            <Info size={10} /> Fiche Technique Officielle
                         </div>
                         <h2 className="text-2xl md:text-3xl font-serif font-bold mb-2">
                             {data.usage_niveau_1_txt || "Bâtiment"}
                         </h2>
-                        <p className="text-white/80 text-sm font-mono bg-black/20 px-2 py-1 rounded inline-block">
+                        <p className="text-white/80 text-sm font-mono bg-black/20 px-2 py-1 rounded-sm inline-block">
                             {data.libelle_adr_principale_ban}
                         </p>
                     </div>
                 </div>
 
-                <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm flex flex-col justify-center items-center text-center relative group">
-                    <div className="absolute top-3 right-3 text-slate-200 group-hover:text-kadris-terracotta transition-colors">
-                        <Calendar size={20} />
+                <div className="bg-white border border-stone-200 p-6 rounded-sm flex flex-col justify-center items-center text-center relative group">
+                    <div className="absolute top-3 right-3 text-stone-200 group-hover:text-kadris-terracotta transition-colors">
+                        <Calendar size={18} />
                     </div>
-                    <div className="text-xs uppercase text-slate-400 font-bold tracking-wider mb-2">Année d'Origine</div>
-                    <div className="text-5xl font-black text-kadris-slate group-hover:scale-110 transition-transform duration-300">
+                    <div className="text-xs uppercase text-slate-400 font-bold tracking-wider mb-2 font-mono">Année d'Origine</div>
+                    <div className="text-5xl font-black text-kadris-slate group-hover:scale-105 transition-transform duration-300">
                         {smartYear}
                     </div>
                     {data.annee_construction_dpe && (
-                        <div className="text-[10px] text-green-600 bg-green-50 px-2 py-1 rounded mt-2 font-bold">
+                        <div className="text-[10px] text-green-600 bg-green-50 px-2 py-1 rounded-sm mt-2 font-bold border border-green-100">
                             Validée par DPE
                         </div>
                     )}
@@ -301,22 +280,22 @@ export const TabBatiment = ({ data }: { data: any }) => {
 
             {/* MODE EXPERT */}
             {remainingKeys.length > 0 && (
-                <div className="border-t border-slate-100 pt-8">
+                <div className="border-t border-stone-100 pt-8">
                     <button
                         onClick={() => setShowAll(!showAll)}
-                        className="flex items-center justify-center gap-3 w-full py-4 text-sm font-bold text-kadris-slate bg-white border border-slate-200 hover:bg-slate-50 hover:border-kadris-slate/30 rounded-xl transition-all shadow-sm group"
+                        className="flex items-center justify-center gap-3 w-full py-4 text-sm font-bold text-kadris-slate bg-white border border-stone-200 hover:bg-stone-50 hover:border-kadris-slate/30 rounded-sm transition-all group"
                     >
                         {showAll ? "Masquer les données brutes" : `Afficher les ${remainingKeys.length} autres données techniques`}
-                        <span className="bg-slate-100 p-1 rounded-full group-hover:bg-slate-200 transition-colors">
+                        <span className="bg-stone-100 p-1 rounded-sm group-hover:bg-stone-200 transition-colors">
                             {showAll ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         </span>
                     </button>
 
                     {showAll && (
-                        <div className="mt-6 p-6 bg-slate-50 rounded-3xl border border-slate-100 animate-in fade-in slide-in-from-top-2">
+                        <div className="mt-6 p-6 bg-stone-50 rounded-sm border border-stone-100 animate-in fade-in slide-in-from-top-2">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3 text-xs">
                                 {remainingKeys.map(key => (
-                                    <div key={key} className="flex flex-col border-b border-slate-200/50 pb-2">
+                                    <div key={key} className="flex flex-col border-b border-stone-200/50 pb-2">
                                         <span className="text-slate-400 font-mono mb-1 truncate" title={key}>{key}</span>
                                         <span className="font-bold text-slate-700 break-all">
                                             {typeof data[key] === 'object' ? 'Donnée Complexe' : String(data[key])}
