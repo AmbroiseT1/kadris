@@ -16,6 +16,7 @@ export interface TransactionDVF {
   numero_plan?: string;
   is_flip?: boolean;
   flip_details?: { previous_date: string; previous_price: number; plus_value: number; percent: number };
+  coords: { lat: number; lon: number };
 }
 
 export interface MarketStats {
@@ -127,23 +128,12 @@ export async function fetchDVF(lat: number, lon: number): Promise<TransactionDVF
           types.includes('Local industriel. commercial ou assimilé') ? 'Local' :
             types[0];
 
-      // Filtres souples
-      // On accepte les surfaces bâties nulles UNIQUEMENT si c'est un Terrain ou une Dépendance vendue seule (ex: garage)
-      // Mais pour l'analyse immo résidentielle, on veut souvent filtrer les petits trucs.
-      // Ici on garde tout ce qui a de la valeur, on filtrera à l'affichage si besoin.
-
-      // Exclusion explicite des 'Dépendance' seules si on veut focuser sur l'habitat, 
-      // mais l'utilisateur veut "bien structuré", donc on garde et on laisse le front filtrer ou trier.
-      // SAUF si c'est vraiment insignifiant (ex: 1€ symbolique ou erreur)
-
       // Calcul Prix/m²
-      // Si c'est un terrain nu (Bati = 0), le prix au m² est basé sur le terrain
+      // Si c'est un terrain nu (Bati = 0), on met 0 pour l'instant (sera affiché N/A)
+      // On ne mélange pas prix m² bati et prix m² terrain dans la même colonne
       let prix_m2 = 0;
       if (totalSurfaceBati > 0) {
         prix_m2 = Math.round(m.valeur_fonciere / totalSurfaceBati);
-      } else if (totalSurfaceTerrain > 0) {
-        // Prix au m² terrain pour les terrains nus
-        prix_m2 = Math.round(m.valeur_fonciere / totalSurfaceTerrain);
       }
 
       // Correction Inflation
@@ -164,13 +154,13 @@ export async function fetchDVF(lat: number, lon: number): Promise<TransactionDVF
         adresse: m.adresse,
         numero_plan: m.numero_plan,
         coords: m.coords
-      } as any);
+      });
     });
 
     // 3. POST-TRAITEMENT AVANCÉ
 
     // A. Calcul Distance & Sniper
-    const transactionsWithDist = transactions.map((t: any) => {
+    const transactionsWithDist = transactions.map((t) => {
       const dist = getDistanceFromLatLonInM(lat, lon, t.coords.lat, t.coords.lon);
       return {
         ...t,
@@ -208,7 +198,7 @@ export async function fetchDVF(lat: number, lon: number): Promise<TransactionDVF
     });
 
     // Tri final
-    return transactionsWithDist.sort((a: any, b: any) => {
+    return transactionsWithDist.sort((a, b) => {
       if (a.is_target && !b.is_target) return -1;
       if (!a.is_target && b.is_target) return 1;
       return new Date(b.date_mutation).getTime() - new Date(a.date_mutation).getTime();
@@ -221,9 +211,12 @@ export async function fetchDVF(lat: number, lon: number): Promise<TransactionDVF
 }
 
 export function calculateMarketStats(transactions: TransactionDVF[], typeFilter?: string): MarketStats {
-  const filtered = typeFilter
-    ? transactions.filter(t => t.type_local === typeFilter)
-    : transactions;
+  // On filtre les transactions selon le type SI demandé
+  // ET on exclut celles qui n'ont pas de prix au m² (donc pas de surface batie)
+  const filtered = transactions.filter(t =>
+    (typeFilter ? t.type_local === typeFilter : true) &&
+    t.prix_m2 > 0
+  );
 
   if (filtered.length === 0) {
     return {

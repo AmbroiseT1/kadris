@@ -36,7 +36,7 @@ export default function Home() {
           </div>
 
           {/* Liens Desktop */}
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-kadris-slate">
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-kadris-slate" suppressHydrationWarning>
             <a href="#how-it-works" className="hover:text-kadris-terracotta hover:underline decoration-2 underline-offset-4 transition-all">Comment ça marche</a>
             <a href="#pricing" className="hover:text-kadris-terracotta hover:underline decoration-2 underline-offset-4 transition-all">Tarifs</a>
             <a href="#login" className="px-5 py-2 border border-kadris-slate/20 hover:bg-kadris-slate hover:text-white rounded-sm transition-colors">

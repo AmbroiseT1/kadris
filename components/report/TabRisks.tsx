@@ -1,184 +1,95 @@
 "use client";
+
 import React from 'react';
-import { Mountain, Pickaxe, AlertTriangle, Shield, Droplets, CheckCircle, Flame, Factory, Skull } from 'lucide-react';
+import { FileText, Download, Shield, ExternalLink, Info } from 'lucide-react';
 import { BuildingData } from '@/app/lib/types';
 
 export const TabRisks = ({ data }: { data: BuildingData | null }) => {
-    if (!data?.risques_detailles) return <div className="p-8 text-center text-kadris-slate/50">Analyse environnementale en cours...</div>;
-    
-    const r = data.risques_detailles;
-  
-    return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in zoom-in-95 duration-300">
-         
-         {/* COLONNE 1 : RISQUES NATURELS & SOL */}
-         <div className="space-y-6">
-            <div className="bg-white p-6 rounded-2xl border border-kadris-slate/5 shadow-sm">
-               <h3 className="font-bold text-kadris-slate mb-6 flex items-center gap-2 uppercase tracking-wider text-sm">
-                  <Mountain size={18} className="text-kadris-terracotta"/> Géologie & Nature
-               </h3>
-               <div className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-kadris-cream/30 rounded-lg">
-                     <span className="text-kadris-slate font-medium">Retrait-Gonflement Argiles</span>
-                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                         r.argiles === 'Fort' ? 'bg-red-100 text-red-800' : 
-                         r.argiles === 'Moyen' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
-                     }`}>
-                        {r.argiles.toUpperCase()}
-                     </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-kadris-cream/30 rounded-lg">
-                     <div className="flex items-center gap-2">
-                         <Pickaxe size={16} className="text-kadris-slate/50"/>
-                         <span className="text-kadris-slate font-medium">Cavités Souterraines</span>
-                     </div>
-                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${r.cavites?.count > 0 ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}`}>
-                        {r.cavites?.count > 0 ? `${r.cavites.count} DÉTECTÉE(S)` : "AUCUNE"}
-                     </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-kadris-cream/30 rounded-lg">
-                     <span className="text-kadris-slate font-medium">Mouvement Terrain</span>
-                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${r.mouvement_terrain ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}`}>
-                        {r.mouvement_terrain ? "OUI" : "NON"}
-                     </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-kadris-cream/30 rounded-lg">
-                     <span className="text-kadris-slate font-medium">Sismicité</span>
-                     <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-xs font-bold">
-                        ZONE {r.seisme}
-                     </span>
-                  </div>
-                   <div className="flex justify-between items-center p-3 bg-kadris-cream/30 rounded-lg">
-                     <span className="text-kadris-slate font-medium">Potentiel Radon</span>
-                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${r.radon === 'Elevé' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                        {r.radon.toUpperCase()}
-                     </span>
-                  </div>
-               </div>
-            </div>
-  
-            {/* Historique CatNat */}
-            <div className="bg-white p-6 rounded-2xl border border-kadris-slate/5 shadow-sm">
-               <div className="flex justify-between items-center mb-4">
-                   <h3 className="font-bold text-kadris-slate flex items-center gap-2 uppercase tracking-wider text-sm">
-                      <AlertTriangle size={18} className="text-orange-500"/> Sinistralité (CatNat)
-                   </h3>
-                   <span className="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded-full">{r.catnat.count} Arrêtés</span>
-               </div>
-               
-               {r.catnat.count > 0 ? (
-                   <div className="space-y-2">
-                      {r.catnat.types.map((type, i) => (
-                          <div key={i} className="text-sm text-kadris-slate/70 flex items-start gap-2">
-                              <span className="text-orange-500 mt-1">•</span>
-                              {type}
-                          </div>
-                      ))}
-                      {r.catnat.last_date && (
-                          <div className="mt-4 pt-4 border-t border-kadris-slate/10 text-xs text-kadris-slate/50 italic">
-                              Dernier événement : {new Date(r.catnat.last_date as string).toLocaleDateString()}
-                          </div>
-                      )}
-                   </div>
-               ) : (
-                   <p className="text-sm text-green-700 bg-green-50 p-3 rounded-lg">Aucun arrêté de catastrophe naturelle recensé.</p>
-               )}
-            </div>
+   // Sécurité : Vérification des données
+   if (!data?.risques_detailles) {
+      return (
+         <div className="p-12 text-center bg-slate-50 rounded-2xl border border-slate-100">
+            <Shield className="mx-auto h-12 w-12 text-slate-300 mb-4" />
+            <p className="text-slate-500">Les coordonnées du bien sont nécessaires pour générer l'État des Risques.</p>
          </div>
-  
-         {/* COLONNE 2 : RISQUES INDUSTRIELS & ENVIRONNEMENT */}
-         <div className="space-y-6">
-            
-            {/* Inondation & Canalisations */}
-            <div className="bg-white p-6 rounded-2xl border border-kadris-slate/5 shadow-sm">
-               <h3 className="font-bold text-kadris-slate mb-6 flex items-center gap-2 uppercase tracking-wider text-sm">
-                  <Shield size={18} className="text-blue-500"/> Risques Majeurs
-               </h3>
-               
-               <div className="space-y-3">
-                  <div className={`p-4 rounded-xl border flex items-start gap-3 ${r.inondation ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100'}`}>
-                      <div className={`mt-1 ${r.inondation ? 'text-red-600' : 'text-green-600'}`}>
-                          {r.inondation ? <Droplets size={20} /> : <CheckCircle size={20} />}
-                      </div>
-                      <div>
-                          <div className={`font-bold ${r.inondation ? 'text-red-800' : 'text-green-800'}`}>
-                              {r.inondation ? "Zone Inondable" : "Hors Zone Inondable"}
-                          </div>
-                          <p className={`text-xs mt-1 ${r.inondation ? 'text-red-600' : 'text-green-600'}`}>
-                              {r.inondation 
-                                  ? "Le bien est situé dans le périmètre d'un Plan de Prévention des Risques Inondation (PPRI)." 
-                                  : "Le bien n'est pas cartographié en zone inondable majeure."}
-                          </p>
-                      </div>
-                  </div>
-  
-                  {r.canalisations && (
-                      <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl flex items-start gap-3">
-                          <Flame className="text-orange-600 flex-shrink-0" size={20} />
-                          <div>
-                             <div className="font-bold text-orange-800">Transport Matières Dangereuses</div>
-                             <p className="text-orange-600 text-xs mt-1">Présence de canalisations de transport de matières dangereuses dans la commune.</p>
-                          </div>
-                      </div>
-                  )}
-                  {r.feu_foret && (
-                      <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl flex items-start gap-3">
-                          <Flame className="text-orange-600 flex-shrink-0" size={20} />
-                          <div>
-                             <div className="font-bold text-orange-800">Feu de Forêt</div>
-                             <p className="text-orange-600 text-xs mt-1">Zone exposée au risque feu de forêt.</p>
-                          </div>
-                      </div>
-                  )}
-               </div>
-            </div>
-  
-            {/* Carte Industriel (Usines) */}
-            <div className="bg-white p-6 rounded-2xl border border-kadris-slate/5 shadow-sm">
-               <h3 className="font-bold text-kadris-slate mb-4 flex items-center gap-2 uppercase tracking-wider text-sm">
-                  <Factory size={18} className="text-gray-600"/> Industrie & Pollution
-               </h3>
-               
-               {/* Pollutions BASOL */}
-               {r.pollutions && r.pollutions.length > 0 && (
-                  <div className="mb-4">
-                      <div className="text-xs font-bold text-kadris-slate/50 mb-2 flex items-center gap-1">
-                          <Skull size={12}/> SITES POLLUÉS (BASOL)
-                      </div>
-                      <ul className="space-y-2">
-                         {r.pollutions.map((pol, i) => (
-                            <li key={i} className="text-sm bg-gray-50 p-2 rounded border border-gray-200">
-                               <div className="font-bold text-gray-800">{pol.nom}</div>
-                               <div className="text-xs text-gray-500">{pol.etat}</div>
-                            </li>
-                         ))}
-                      </ul>
-                  </div>
-               )}
+      );
+   }
 
-               {/* Usines */}
-               {r.installations.length > 0 ? (
-                   <ul className="space-y-3">
-                      {r.installations.map((usine, i) => (
-                          <li key={i} className="flex justify-between items-center text-sm pb-2 border-b border-kadris-slate/5 last:border-0">
-                              <span className="font-medium text-kadris-slate truncate max-w-[60%]">{usine.nom}</span>
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                  usine.statut.includes('Seveso') ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
-                              }`}>
-                                  {usine.statut}
-                              </span>
-                          </li>
-                      ))}
-                   </ul>
-               ) : (
-                   <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 p-3 rounded-lg">
-                       <CheckCircle size={16}/>
-                       Pas d'industrie lourde à proximité immédiate (1km).
-                   </div>
-               )}
+   const { pdf_url } = data.risques_detailles as any;
+
+   return (
+      <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
+
+         {/* 1. HEADER & ACTION */}
+         <div className="bg-white p-8 rounded-2xl border border-kadris-slate/5 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+
+            <div className="flex-1">
+               <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-orange-100 text-orange-700 rounded-lg">
+                     <Shield size={24} />
+                  </div>
+                  <h3 className="font-serif text-2xl font-bold text-kadris-slate">
+                     État des Risques et Pollutions (ERP)
+                  </h3>
+               </div>
+               <p className="text-slate-600 max-w-2xl leading-relaxed">
+                  Ce document officiel est généré en temps réel par le Ministère de la Transition Écologique.
+                  Il recense les aléas naturels (inondation, argiles, sismicité), technologiques et miniers obligatoires pour la vente.
+               </p>
             </div>
-  
+
+            <div className="flex flex-col gap-3 w-full md:w-auto">
+               <a
+                  href={pdf_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center justify-center gap-3 bg-kadris-slate hover:bg-kadris-terracotta text-white px-8 py-4 rounded-xl font-bold transition-all shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
+               >
+                  <Download size={20} className="group-hover:scale-110 transition-transform" />
+                  <span>Télécharger le PDF Officiel</span>
+               </a>
+               <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
+                  <Info size={12} />
+                  <span>Source certifiée : Géorisques.gouv.fr</span>
+               </div>
+            </div>
+
          </div>
+
+         {/* 2. VISUALISATION (IFRAME) */}
+         <div className="bg-slate-100 rounded-2xl border border-slate-200 overflow-hidden shadow-inner h-[800px] relative group">
+
+            {/* Overlay de chargement / Message si pas de support */}
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-50 z-0">
+               <p className="text-slate-400 flex items-center gap-2">
+                  <Loader2 className="animate-spin" /> Chargement de la prévisualisation...
+               </p>
+            </div>
+
+            <iframe
+               src={`${pdf_url}#view=FitH`} // Ajout du paramètre pour adapter la vue
+               className="w-full h-full relative z-10"
+               title="Prévisualisation ERP"
+               loading="lazy"
+            />
+
+            {/* Bouton flottant "Ouvrir en grand" */}
+            <a
+               href={pdf_url}
+               target="_blank"
+               rel="noopener noreferrer"
+               className="absolute bottom-6 right-6 z-20 bg-white text-slate-800 px-4 py-2 rounded-lg shadow-lg border border-slate-200 text-sm font-bold flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-50"
+            >
+               <ExternalLink size={14} /> Ouvrir en plein écran
+            </a>
+
+         </div>
+
       </div>
-    );
+   );
 };
+
+// Petit composant Loader pour l'attente
+const Loader2 = ({ className }: { className?: string }) => (
+   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+);

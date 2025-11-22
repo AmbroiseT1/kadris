@@ -1,15 +1,16 @@
 "use client";
 import React, { useMemo } from 'react';
-import { TrendingUp, Euro, Target, History, ArrowUpRight, ArrowDownRight, MapPin, ExternalLink, AlertTriangle, Activity, Layers } from 'lucide-react';
+import { TrendingUp, Euro, Target, History, ArrowUpRight, ArrowDownRight, MapPin, ExternalLink, AlertTriangle, Activity, Layers, Info } from 'lucide-react';
 import { TransactionDVF, calculateMarketStats } from '@/app/lib/dvf';
 
 interface TabDVFProps {
    transactions: TransactionDVF[];
    loading: boolean;
    surface?: number; // Surface du bien actuel pour l'estimation
+   surface_terrain?: number; // Surface terrain du bien actuel
 }
 
-export const TabDVF = ({ transactions, loading, surface }: TabDVFProps) => {
+export const TabDVF = ({ transactions, loading, surface, surface_terrain }: TabDVFProps) => {
 
    const stats = useMemo(() => {
       return calculateMarketStats(transactions);
@@ -21,14 +22,26 @@ export const TabDVF = ({ transactions, loading, surface }: TabDVFProps) => {
 
    const estimation = useMemo(() => {
       if (!surface || !stats.prix_moyen_m2) return null;
-      // On pourrait affiner l'estimation en utilisant le prix du segment correspondant à la surface
+
+      // 1. Estimation du Bâti
       let basePrice = stats.prix_moyen_m2;
+      // Affinement par segment de surface
       if (surface < 50 && stats.prix_par_surface.small > 0) basePrice = stats.prix_par_surface.small;
       else if (surface >= 50 && surface < 120 && stats.prix_par_surface.medium > 0) basePrice = stats.prix_par_surface.medium;
       else if (surface >= 120 && stats.prix_par_surface.large > 0) basePrice = stats.prix_par_surface.large;
 
-      return Math.round(surface * basePrice);
-   }, [surface, stats]);
+      const valueBati = surface * basePrice;
+
+      // 2. Estimation du Terrain (Heuristique simple : 15% du prix au m² bâti si pas de donnée précise)
+      // C'est une approximation, l'idéal serait d'avoir un prix m² terrain distinct
+      let valueTerrain = 0;
+      if (surface_terrain && surface_terrain > 0) {
+         const estimatedLandPrice = basePrice * 0.15;
+         valueTerrain = surface_terrain * estimatedLandPrice;
+      }
+
+      return Math.round(valueBati + valueTerrain);
+   }, [surface, surface_terrain, stats]);
 
    const appreciation = useMemo(() => {
       if (!targetSale || !estimation) return null;
@@ -60,7 +73,12 @@ export const TabDVF = ({ transactions, loading, surface }: TabDVFProps) => {
          {/* BLOC 1 : TICKER DU MARCHÉ (KPIs) */}
          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* KPI 1 : PRIX MOYEN */}
-            <div className="bg-white p-5 rounded-2xl border border-kadris-slate/5 shadow-sm flex flex-col justify-between">
+            <div className="bg-white p-5 rounded-2xl border border-kadris-slate/5 shadow-sm flex flex-col justify-between group relative">
+               <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="bg-slate-800 text-white text-[10px] p-2 rounded max-w-[150px] shadow-lg">
+                     Moyenne des prix au m² des ventes enregistrées dans le rayon de 300m.
+                  </div>
+               </div>
                <div className="flex justify-between items-start mb-4">
                   <div className="p-2 bg-kadris-blue/10 rounded-lg text-kadris-blue">
                      <Euro size={20} />
@@ -74,7 +92,9 @@ export const TabDVF = ({ transactions, loading, surface }: TabDVFProps) => {
                </div>
                <div>
                   <div className="text-2xl font-bold text-kadris-slate">{stats.prix_moyen_m2.toLocaleString()} €/m²</div>
-                  <div className="text-xs text-kadris-slate/50 font-medium mt-1">Moyenne globale</div>
+                  <div className="text-xs text-kadris-slate/50 font-medium mt-1 flex items-center gap-1">
+                     Moyenne globale <Info size={10} />
+                  </div>
                </div>
             </div>
 
@@ -95,21 +115,26 @@ export const TabDVF = ({ transactions, loading, surface }: TabDVFProps) => {
                         {estimation ? `${estimation.toLocaleString()} €` : "N/A"}
                      </div>
                      <div className="text-sm text-kadris-slate/50 font-medium mt-1">
-                        Basé sur la surface ({surface || "?"} m²) et le segment de marché
+                        Basé sur la surface ({surface || "?"} m²) + terrain ({surface_terrain || 0} m²)
                      </div>
                   </div>
                </div>
             </div>
 
             {/* KPI 3 : TENSION DU MARCHÉ */}
-            <div className="bg-white p-5 rounded-2xl border border-kadris-slate/5 shadow-sm flex flex-col justify-between">
+            <div className="bg-white p-5 rounded-2xl border border-kadris-slate/5 shadow-sm flex flex-col justify-between group relative">
+               <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                  <div className="bg-slate-800 text-white text-[10px] p-2 rounded max-w-[150px] shadow-lg">
+                     Indicateur basé sur le volume de ventes des 12 derniers mois comparé à la moyenne historique.
+                  </div>
+               </div>
                <div className="flex justify-between items-start mb-4">
                   <div className="p-2 bg-kadris-sage/10 rounded-lg text-kadris-sage">
                      <Activity size={20} />
                   </div>
                   <div className={`text-xs font-bold px-2 py-1 rounded-full ${stats.tension_marche === 'Elevée' ? 'bg-red-100 text-red-700' :
-                        stats.tension_marche === 'Faible' ? 'bg-blue-100 text-blue-700' :
-                           'bg-green-100 text-green-700'
+                     stats.tension_marche === 'Faible' ? 'bg-blue-100 text-blue-700' :
+                        'bg-green-100 text-green-700'
                      }`}>
                      {stats.tension_marche.toUpperCase()}
                   </div>
@@ -118,8 +143,8 @@ export const TabDVF = ({ transactions, loading, surface }: TabDVFProps) => {
                   <div className="text-2xl font-bold text-kadris-slate">
                      {stats.volume_ventes} <span className="text-sm font-normal text-kadris-slate/50">ventes</span>
                   </div>
-                  <div className="text-xs text-kadris-slate/50 font-medium mt-1">
-                     Volume transactions
+                  <div className="text-xs text-kadris-slate/50 font-medium mt-1 flex items-center gap-1">
+                     Volume transactions <Info size={10} />
                   </div>
                </div>
             </div>
@@ -266,12 +291,13 @@ export const TabDVF = ({ transactions, loading, surface }: TabDVFProps) => {
                               </div>
                            </td>
                            <td className="px-6 py-4">
-                              <span className={`px-2 py-1 rounded-md text-xs font-bold ${t.prix_m2 < stats.prix_moyen_m2
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-red-100 text-red-700'
-                                 }`}>
-                                 {t.prix_m2.toLocaleString()} €
-                              </span>
+                              {t.surface_reelle_bati > 0 ? (
+                                 <span className="px-2 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-700">
+                                    {t.prix_m2.toLocaleString()} €
+                                 </span>
+                              ) : (
+                                 <span className="text-slate-400 italic text-xs">N/A</span>
+                              )}
                            </td>
                         </tr>
                      ))}
