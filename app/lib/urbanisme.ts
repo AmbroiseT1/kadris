@@ -1,78 +1,90 @@
 // Fichier : lib/urbanisme.ts
 
+export interface PrescriptionItem {
+  type: string;
+  titre: string;
+  libelle: string;
+  categorie: 'forte' | 'patrimoine' | 'technique' | 'autre';
+  description: string;
+  url_doc?: string | null;
+}
+
 export interface UrbanismeData {
   zonage: {
-    code: string;      // "Ua", "N", "1AU"
-    libelle: string;   // "Zone urbaine mixte"
-    type: string;      // "PLU"
-    conseil: string;   // NOTRE INTELLIGENCE AJOUTÉE
+    code: string;
+    libelle: string;
+    type: string;
+    conseil: string;
     is_constructible: boolean;
+    // 👇 C'est ici qu'on va stocker le lien direct (ex: UC1.pdf)
+    url_doc: string | null;
+    // 👇 Fallback si pas d'URL mais un nom de fichier
+    filename_doc?: string | null;
   } | null;
 
   document: {
-    nom: string;       // "PLU de Wambrechies"
+    nom: string;
     id: string;
-    url_reglement: string | null; // Le lien vers le PDF !
-    etat: string;      // "En vigueur"
+    url_reglement: string | null; // Lien du dossier global
+    etat: string;
   } | null;
 
-  prescriptions: Array<{
-    type: string;
-    libelle: string;
-    categorie: string; // Pour trier (Patrimoine, Risque...)
-  }>;
+  contraintes: PrescriptionItem[];
 
   servitudes: Array<{
-    code: string;     // "AC1"
+    code: string;
     libelle: string;
-    description: string; // Description générique du code
+    description: string;
+    url_doc?: string | null;
   }>;
+
+  _raw?: any;
 }
 
-// --- DICTIONNAIRE D'INTELLIGENCE (Code -> Conseil) ---
+// --- DICTIONNAIRES (Inchus) ---
+const CNIG_CODES: Record<string, { titre: string, cat: PrescriptionItem['categorie'], desc: string }> = {
+  "01": { titre: "Espace Boisé Classé (EBC)", cat: "forte", desc: "Interdiction stricte de défricher. Arbres protégés." },
+  "05": { titre: "Emplacement Réservé", cat: "forte", desc: "Terrain réservé par la collectivité (voirie, école...)." },
+  "16": { titre: "Zone de Risque", cat: "forte", desc: "Périmètre d'un Plan de Prévention des Risques (PPR)." },
+  "07": { titre: "Protection Patrimoine", cat: "patrimoine", desc: "Protection paysagère ou bâtie. Démolition interdite." },
+  "39": { titre: "Restriction Hauteur", cat: "technique", desc: "Limitation spécifique de la hauteur (cône de vue)." },
+  "44": { titre: "Règles Stationnement", cat: "technique", desc: "Obligations spécifiques pour les places de parking." },
+  "18": { titre: "OAP", cat: "technique", desc: "Orientation d'Aménagement : règles spécifiques au quartier." },
+  "19": { titre: "Mixité Sociale", cat: "technique", desc: "Servitude de mixité sociale ou fonctionnelle." },
+  "99": { titre: "Autre Prescription", cat: "autre", desc: "Règle locale spécifique." },
+};
+
 function interpreterZone(code: string, libelle: string) {
-  const c = code.toUpperCase();
-  
-  if (c.startsWith('U')) return {
-    conseil: "Zone Urbaine. Terrain a priori constructible. Vérifiez le coefficient d'emprise au sol (CES) et la hauteur maximale dans le règlement.",
-    constructible: true
-  };
-  if (c.startsWith('AU') || c.startsWith('1AU') || c.startsWith('2AU')) return {
-    conseil: "Zone À Urbaniser. Constructibilité soumise à conditions (réseaux, aménagements d'ensemble). Potentiel à moyen/long terme.",
-    constructible: true
-  };
-  if (c.startsWith('A')) return {
-    conseil: "Zone Agricole. Constructibilité très stricte (liée à l'activité agricole). Extensions souvent limitées ou interdites.",
-    constructible: false
-  };
-  if (c.startsWith('N')) return {
-    conseil: "Zone Naturelle et Forestière. Inconstructible (sauf exceptions rares). Préservation stricte de l'environnement.",
-    constructible: false
-  };
-  
-  return {
-    conseil: "Zone spécifique. Reportez-vous au règlement complet pour connaître les droits à bâtir.",
-    constructible: true // Dans le doute
-  };
+  const c = code ? code.toUpperCase() : "";
+  const l = libelle ? libelle.toLowerCase() : "";
+
+  if (c.startsWith('U') || l.includes('urbaine')) return { conseil: "Zone Urbaine. Terrain a priori constructible. Vérifiez le CES et la hauteur.", constructible: true };
+  if (c.startsWith('AU') || c.startsWith('1AU') || l.includes('urbaniser')) return { conseil: "Zone À Urbaniser. Constructibilité conditionnée (réseaux).", constructible: true };
+  if (c.startsWith('A') || l.includes('agricole')) return { conseil: "Zone Agricole. Inconstructible (sauf exploitation agri).", constructible: false };
+  if (c.startsWith('N') || l.includes('naturelle')) return { conseil: "Zone Naturelle. Inconstructible (protection environnement).", constructible: false };
+
+  return { conseil: "Zone Spécifique. Voir règlement.", constructible: true };
 }
 
-// --- DICTIONNAIRE SERVITUDES (Code -> Explication) ---
 function interpreterSUP(code: string) {
-  const dict: Record<string, string> = {
-    "AC1": "Protection des Monuments Historiques (ABF)",
-    "AC2": "Sites Patrimoniaux Remarquables",
-    "I4": "Passage de lignes électriques",
-    "I3": "Canalisations Gaz/Hydrocarbures",
-    "A5": "Canalisations d'eau potable",
-    "PM1": "Plan de Prévention des Risques (PPR)",
-    "EL7": "Alignement des voies (Recul obligatoire)"
+  const dict: Record<string, { label: string, impact: string }> = {
+    "AC1": { label: "Monument Historique", impact: "Périmètre ABF (500m). Avis conforme requis." },
+    "AC2": { label: "Site Patrimonial", impact: "Protection forte. Travaux soumis à autorisation." },
+    "I4": { label: "Ligne Électrique", impact: "Non aedificandi sous la ligne." },
+    "I3": { label: "Gazoduc / Pipeline", impact: "Canalisation dangereuse. Périmètre de sécurité." },
+    "PM1": { label: "Plan Prévention Risques", impact: "Zone à risque (Inondation). Voir PPR." },
+    "EL7": { label: "Alignement Voirie", impact: "Recul obligatoire (futur élargissement)." },
   };
-  return dict[code] || "Servitude d'utilité publique";
+  return dict[code] || { label: "Servitude d'Utilité Publique", impact: "Contrainte administrative." };
 }
 
+function removeDuplicates(array: any[], key: string) {
+  return array.filter((obj, index, self) => index === self.findIndex((t) => (t[key] === obj[key])));
+}
+
+// --- FETCH PRINCIPAL ---
 export async function fetchUrbanisme(lat: number, lon: number): Promise<UrbanismeData | null> {
   try {
-    // GeoJSON Point pour l'API
     const geojson = { type: "Point", coordinates: [lon, lat] };
     const geomParam = encodeURIComponent(JSON.stringify(geojson));
 
@@ -85,37 +97,48 @@ export async function fetchUrbanisme(lat: number, lon: number): Promise<Urbanism
       fetch(`https://apicarto.ign.fr/api/gpu/assiette-sup-s?geom=${geomParam}`)
     ]);
 
-    // 1. ZONAGE
+    // 1. ZONAGE (C'est ici qu'on récupère le lien URLFIC précieux)
     let zonage = null;
+    let rawZone = null;
     if (resZone.ok) {
       const data = await resZone.json();
-      if (data.features?.length > 0) {
+      rawZone = data;
+      if (data.features && data.features.length > 0) {
         const p = data.features[0].properties;
         const interpretation = interpreterZone(p.libelle || p.typezone, p.libelong);
-        
+
+        // 🚨 LE FIX EST ICI : On récupère 'urlfic' directement
+        const specificUrl = p.urlfic || null;
+        // Si pas d'URL, on tente de récupérer le nom du fichier pour l'afficher
+        const filename = !specificUrl && p.nomfic ? p.nomfic : null;
+
         zonage = {
-          code: p.libelle || p.typezone || "Zone Inconnue",
+          code: p.libelle || p.typezone || "INCONNU",
           libelle: p.libelong || "Zone réglementée",
           type: p.typezone || "PLU",
           conseil: interpretation.conseil,
-          is_constructible: interpretation.constructible
+          is_constructible: interpretation.constructible,
+          url_doc: specificUrl, // <--- On stocke le lien spécifique ici
+          filename_doc: filename // <--- On stocke le nom du fichier si pas de lien
         };
       }
     }
 
-    // 2. DOCUMENT (Pour le PDF)
+    // 2. DOCUMENT GLOBAL
     let document = null;
+    let rawDoc = null;
     if (resDoc.ok) {
       const data = await resDoc.json();
+      rawDoc = data;
       if (data.features?.length > 0) {
         const d = data.features[0].properties;
-        // L'URL de téléchargement est souvent dans 'urlfic' ou on la reconstruit via le Geoportail
-        // L'API renvoie parfois une url directe
-        const pdfUrl = d.urlfic || `https://www.geoportail-urbanisme.gouv.fr/document/${d.id}`;
-        
+        // Fallback si pas d'urlfic dans le zonage, on prend le doc global
+        let pdfUrl = d.urlfic;
+        if (!pdfUrl && d.partition) pdfUrl = `https://www.geoportail-urbanisme.gouv.fr/document/by-partition/${d.partition}`;
+
         document = {
-          nom: d.nom || `Document d'Urbanisme (${d.type})`,
-          id: d.id,
+          nom: d.nom || (d.type ? `Document Urbanisme (${d.type})` : "Document d'Urbanisme"),
+          id: d.partition || d.id,
           url_reglement: pdfUrl,
           etat: d.etat || "En vigueur"
         };
@@ -123,39 +146,55 @@ export async function fetchUrbanisme(lat: number, lon: number): Promise<Urbanism
     }
 
     // 3. PRESCRIPTIONS
-    const prescriptions = [];
+    let contraintes: PrescriptionItem[] = [];
+    let rawPrescr = null;
     if (resPrescr.ok) {
       const data = await resPrescr.json();
+      rawPrescr = data;
       if (data.features) {
-        prescriptions.push(...data.features.map((f: any) => ({
-            type: f.properties.typepsc,
-            libelle: f.properties.libelle || f.properties.txt || "Prescription surfacique",
-            categorie: f.properties.nomfic ? "Détail disponible" : "Général"
-        })));
+        const rawList = data.features.map((f: any) => {
+          const type = f.properties.typepsc;
+          const info = CNIG_CODES[type] || { titre: "Prescription Diverse", cat: "autre", desc: "Règle spécifique locale." };
+          return {
+            type: type,
+            titre: info.titre,
+            libelle: f.properties.libelle || f.properties.txt || info.titre,
+            categorie: info.cat,
+            description: info.desc,
+            url_doc: f.properties.urlfic || null
+          };
+        });
+        contraintes = removeDuplicates(rawList, 'libelle');
       }
     }
 
     // 4. SERVITUDES
-    const servitudes = [];
+    let servitudes: any[] = [];
+    let rawSup = null;
     if (resSup.ok) {
       const data = await resSup.json();
+      rawSup = data;
       if (data.features) {
-        servitudes.push(...data.features.map((f: any) => {
-            const code = f.properties.catsup || "SUP";
-            return {
-                code: code,
-                libelle: f.properties.nomgen || f.properties.libelle,
-                description: interpreterSUP(code)
-            };
-        }));
+        const rawList = data.features.map((f: any) => {
+          const code = f.properties.catsup || "SUP";
+          const info = interpreterSUP(code);
+          return {
+            code: code,
+            libelle: f.properties.nomgen || f.properties.libelle,
+            description: info.impact,
+            url_doc: f.properties.urlfic || null
+          };
+        });
+        servitudes = removeDuplicates(rawList, 'code');
       }
     }
 
     return {
       zonage,
       document,
-      prescriptions: prescriptions.slice(0, 5),
-      servitudes: servitudes.slice(0, 5)
+      contraintes,
+      servitudes,
+      _raw: { zonage: rawZone, document: rawDoc, prescriptions: rawPrescr, servitudes: rawSup }
     };
 
   } catch (error) {
