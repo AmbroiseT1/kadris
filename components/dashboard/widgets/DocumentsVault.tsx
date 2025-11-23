@@ -6,6 +6,7 @@ interface Document {
     title: string;
     date: string;
     type: string;
+    description?: string;
     url?: string;
 }
 
@@ -15,6 +16,23 @@ interface DocumentsVaultProps {
 }
 
 export default function DocumentsVault({ documents, onAddClick }: DocumentsVaultProps) {
+    const [activeCategory, setActiveCategory] = React.useState<string>("TOUS");
+
+    const categories = [
+        { id: "TOUS", label: "Tous" },
+        { id: "FACTURE", label: "Factures" },
+        { id: "DEVIS", label: "Devis" },
+        { id: "OFFICIEL", label: "Document officiel" },
+        { id: "TAXE", label: "Taxes" },
+        { id: "IMPOT", label: "Impôts" },
+        { id: "ASSURANCE", label: "Assurances" },
+        { id: "AUTRE", label: "Autre" }
+    ];
+
+    const filteredDocuments = activeCategory === "TOUS"
+        ? documents
+        : documents.filter(doc => doc.type === activeCategory);
+
     return (
         <div className="space-y-6">
             {/* Header Action */}
@@ -31,15 +49,37 @@ export default function DocumentsVault({ documents, onAddClick }: DocumentsVault
                 </button>
             </div>
 
+            {/* Category Filters */}
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                {categories.map(cat => (
+                    <button
+                        key={cat.id}
+                        onClick={() => setActiveCategory(cat.id)}
+                        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide whitespace-nowrap transition-colors ${activeCategory === cat.id
+                            ? 'bg-kadris-terracotta text-white'
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            }`}
+                    >
+                        {cat.label}
+                    </button>
+                ))}
+            </div>
+
             {/* Documents List */}
             <div className="space-y-3">
-                {documents.length === 0 ? (
+                {filteredDocuments.length === 0 ? (
                     <div className="text-center py-8 text-gray-500 font-mono text-sm">
-                        Aucun document pour le moment.
+                        Aucun document dans cette catégorie.
                     </div>
                 ) : (
-                    documents.map((doc) => (
-                        <DocItem key={doc.id} title={doc.title} date={doc.date} type={doc.type} />
+                    filteredDocuments.map((doc) => (
+                        <DocItem
+                            key={doc.id}
+                            title={doc.title}
+                            date={doc.date}
+                            type={doc.type}
+                            description={doc.description}
+                        />
                     ))
                 )}
             </div>
@@ -47,7 +87,7 @@ export default function DocumentsVault({ documents, onAddClick }: DocumentsVault
     );
 }
 
-const DocItem = ({ title, date, type }: { title: string, date: string, type: string }) => (
+const DocItem = ({ title, date, type, description }: { title: string, date: string, type: string, description?: string }) => (
     <div className="flex items-center justify-between p-3 border border-gray-200 hover:border-black transition-colors cursor-pointer group bg-white">
         <div className="flex items-center gap-3">
             <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-200 transition-colors">
@@ -55,7 +95,12 @@ const DocItem = ({ title, date, type }: { title: string, date: string, type: str
             </div>
             <div>
                 <p className="font-serif font-medium text-gray-900">{title}</p>
-                <p className="font-mono text-[10px] text-gray-400">{date}</p>
+                <div className="flex flex-col">
+                    <p className="font-mono text-[10px] text-gray-400">{date}</p>
+                    {description && (
+                        <p className="text-[10px] text-gray-500 mt-0.5 italic truncate max-w-[200px]">{description}</p>
+                    )}
+                </div>
             </div>
         </div>
         <div className="flex items-center gap-3">

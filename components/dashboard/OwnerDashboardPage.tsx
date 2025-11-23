@@ -15,6 +15,8 @@ import AddDocumentModal from "./modals/AddDocumentModal";
 import { fetchDVF, TransactionDVF } from "@/app/lib/dvf";
 import { fetchRisks } from "@/app/lib/georisques";
 import { fetchQuartier } from "@/app/lib/quartier";
+import NotepadWidget from "./widgets/NotepadWidget";
+import ProfileDropdown from "@/components/ui/ProfileDropdown";
 
 interface PropertyData {
     adresse_ban: string;
@@ -141,7 +143,8 @@ export default function OwnerDashboardPage() {
             id: Date.now().toString(),
             title: data.title,
             date: data.date,
-            type: data.type
+            type: data.type,
+            description: data.description
         };
         setDocuments(prev => [newDoc, ...prev]);
     };
@@ -187,7 +190,7 @@ export default function OwnerDashboardPage() {
                     <motion.div
                         className="absolute inset-0 z-0"
                         animate={{
-                            width: isDrawerOpen ? "60%" : "100%",
+                            width: isDrawerOpen ? "35%" : "100%",
                             paddingRight: isDrawerOpen ? "0px" : "0px"
                         }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -239,7 +242,7 @@ export default function OwnerDashboardPage() {
                     />
 
                     {/* Header / Title Overlay */}
-                    <div className="absolute top-6 left-6 z-10">
+                    <div className="absolute top-6 left-6 right-6 z-10 flex items-center justify-between">
                         <Link href="/properties" className="group flex items-center gap-3">
                             <img src="/kadris-logo.png" alt="Kadris Logo" className="w-12 h-12 object-contain mix-blend-multiply opacity-90" />
                             <div>
@@ -251,6 +254,12 @@ export default function OwnerDashboardPage() {
                                 </p>
                             </div>
                         </Link>
+                        <ProfileDropdown />
+                    </div>
+
+                    {/* Notepad Widget */}
+                    <div className="absolute bottom-24 left-6 z-20">
+                        <NotepadWidget />
                     </div>
                 </>
             )}

@@ -7,6 +7,7 @@ import { ArrowLeft, Upload, CheckCircle, Loader2, Shield, Mail, MapPin } from 'l
 import { motion, AnimatePresence } from 'framer-motion';
 import { AddressAutocompleteSimple } from '@/components/ui/AddressAutocompleteSimple';
 import { setCurrentUser, addPropertyToCurrentUser } from '@/utils/propertyStorage';
+import { createUserProfile, getUserProfile } from '@/utils/userStorage';
 
 type ViewState = 'LOGIN' | 'SIGNUP' | 'SUCCESS';
 
@@ -43,6 +44,9 @@ export default function LoginPage() {
     const [buildingData, setBuildingData] = useState<BuildingData | null>(null);
     const [isFetchingBuilding, setIsFetchingBuilding] = useState(false);
     const [email, setEmail] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [loginEmail, setLoginEmail] = useState('');
 
     // Admin bypass email
     const ADMIN_EMAIL = 'amb.torris@gmail.com';
@@ -50,6 +54,10 @@ export default function LoginPage() {
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+
+        // Set current user to persist session
+        setCurrentUser(loginEmail);
+
         // Simulate login delay
         setTimeout(() => {
             setIsLoading(false);
@@ -62,6 +70,9 @@ export default function LoginPage() {
         if (!file || !selectedAddress || !buildingData) return;
 
         setIsLoading(true);
+
+        // Create user profile
+        createUserProfile(email, firstName, lastName);
 
         // Set current user
         setCurrentUser(email);
@@ -206,6 +217,8 @@ export default function LoginPage() {
                                             <input
                                                 type="email"
                                                 required
+                                                value={loginEmail}
+                                                onChange={(e) => setLoginEmail(e.target.value)}
                                                 className="w-full px-4 py-3 bg-white border border-kadris-slate/20 rounded-sm focus:outline-none focus:border-kadris-terracotta transition-colors"
                                                 placeholder="nom@exemple.com"
                                             />
@@ -274,6 +287,8 @@ export default function LoginPage() {
                                                     <input
                                                         type="text"
                                                         required
+                                                        value={firstName}
+                                                        onChange={(e) => setFirstName(e.target.value)}
                                                         className="w-full px-4 py-3 bg-white border border-kadris-slate/20 rounded-sm focus:outline-none focus:border-kadris-terracotta transition-colors"
                                                         placeholder="Jean"
                                                     />
@@ -283,6 +298,8 @@ export default function LoginPage() {
                                                     <input
                                                         type="text"
                                                         required
+                                                        value={lastName}
+                                                        onChange={(e) => setLastName(e.target.value)}
                                                         className="w-full px-4 py-3 bg-white border border-kadris-slate/20 rounded-sm focus:outline-none focus:border-kadris-terracotta transition-colors"
                                                         placeholder="Dupont"
                                                     />

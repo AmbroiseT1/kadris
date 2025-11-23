@@ -22,7 +22,7 @@ export interface NuisanceItem {
   name: string;
   lat?: number;
   lon?: number;
-  type?: string; 
+  type?: string;
 }
 
 export interface QuartierData {
@@ -30,6 +30,7 @@ export interface QuartierData {
     education: CategoryData;
     sante: CategoryData;
     alimentation: CategoryData;
+    restauration: CategoryData; // [NEW]
     transport: CategoryData;
     loisirs: CategoryData;
     securite: CategoryData;
@@ -54,17 +55,17 @@ export interface QuartierData {
 
 // Poids du risque routier
 const ROAD_RISK_MAP: Record<string, number> = {
-    'motorway': 35, 'trunk': 35, 'primary': 20, 'secondary': 10, 'tertiary': 5,
+  'motorway': 35, 'trunk': 35, 'primary': 20, 'secondary': 10, 'tertiary': 5,
 };
 
 function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371e3; 
+  const R = 6371e3;
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return Math.round(R * c);
 }
 
@@ -74,9 +75,9 @@ function normalize(count: number, seuil: number): number {
 }
 
 const WEIGHTS = {
-  famille: { education: 5, sante: 3, alimentation: 3, transport: 2, loisirs: 4, securite: 3, administration: 1 },
-  investisseur: { education: 2, sante: 1, alimentation: 2, transport: 5, loisirs: 3, securite: 2, administration: 1 },
-  qualite_vie: { education: 2, sante: 4, alimentation: 5, transport: 3, loisirs: 5, securite: 3, administration: 2 }
+  famille: { education: 5, sante: 3, alimentation: 3, restauration: 1, transport: 2, loisirs: 4, securite: 3, administration: 1 },
+  investisseur: { education: 2, sante: 1, alimentation: 2, restauration: 3, transport: 5, loisirs: 3, securite: 2, administration: 1 },
+  qualite_vie: { education: 2, sante: 4, alimentation: 5, restauration: 5, transport: 3, loisirs: 5, securite: 3, administration: 2 }
 };
 
 // --- 3. CONNECTEUR API ---
@@ -89,8 +90,14 @@ export async function fetchQuartier(lat: number, lon: number): Promise<QuartierD
         node["amenity"~"school|kindergarten|college|university"](around:1000, ${lat}, ${lon});
         way["amenity"~"school|kindergarten|college|university"](around:1000, ${lat}, ${lon});
         node["amenity"~"doctors|pharmacy|hospital|dentist"](around:1000, ${lat}, ${lon});
-        node["shop"~"bakery|butcher|supermarket|convenience"](around:800, ${lat}, ${lon});
-        node["highway"="bus_stop"](around:800, ${lat}, ${lon});
+        
+        node["shop"~"bakery|butcher|supermarket|convenience|greengrocer|seafood|cheese|pastry"](around:1000, ${lat}, ${lon});
+        way["shop"~"bakery|butcher|supermarket|convenience|greengrocer|seafood|cheese|pastry"](around:1000, ${lat}, ${lon});
+        
+        node["amenity"~"restaurant|cafe|fast_food|bar|pub"](around:1000, ${lat}, ${lon});
+        way["amenity"~"restaurant|cafe|fast_food|bar|pub"](around:1000, ${lat}, ${lon});
+
+        node["highway"="bus_stop"](around:1000, ${lat}, ${lon});
         node["railway"~"station|tram_stop"](around:1000, ${lat}, ${lon});
         node["leisure"~"park|garden|sports_centre"](around:1000, ${lat}, ${lon});
         way["leisure"~"park|garden|sports_centre"](around:1000, ${lat}, ${lon});
@@ -114,135 +121,147 @@ export async function fetchQuartier(lat: number, lon: number): Promise<QuartierD
     const elements = data.elements || [];
 
     const getDist = (e: any) => {
-        const elLat = e.lat || e.center?.lat;
-        const elLon = e.lon || e.center?.lon;
-        if (!elLat || !elLon) return 9999;
-        return getDistanceFromLatLonInM(lat, lon, elLat, elLon);
+      const elLat = e.lat || e.center?.lat;
+      const elLon = e.lon || e.center?.lon;
+      if (!elLat || !elLon) return 9999;
+      return getDistanceFromLatLonInM(lat, lon, elLat, elLon);
     };
 
     const processCat = (filterFn: (e: any) => boolean, seuilMax: number): CategoryData => {
-       const filtered = elements.filter(filterFn);
-       const items = filtered.map((e: any) => ({
-              name: e.tags.name || "Non nommé",
-              type: e.tags.amenity || e.tags.shop || e.tags.leisure || e.tags.highway || "Divers",
-              distance: getDist(e),
-              lat: e.lat || e.center?.lat,
-              lon: e.lon || e.center?.lon
-          })).sort((a: AmenityItem, b: AmenityItem) => a.distance - b.distance); // <-- FIX: a and b sont typés
+      const filtered = elements.filter(filterFn);
+      const items = filtered.map((e: any) => ({
+        name: e.tags.name || "Non nommé",
+        type: e.tags.amenity || e.tags.shop || e.tags.leisure || e.tags.highway || "Divers",
+        distance: getDist(e),
+        lat: e.lat || e.center?.lat,
+        lon: e.lon || e.center?.lon
+      })).sort((a: AmenityItem, b: AmenityItem) => a.distance - b.distance); // <-- FIX: a and b sont typés
 
-       return {
-         count: items.length,
-         score_norm: normalize(items.length, seuilMax),
-         items: items
-       } as CategoryData;
+      return {
+        count: items.length,
+        score_norm: normalize(items.length, seuilMax),
+        items: items
+      } as CategoryData;
     };
 
     // --- LOGIQUE NUISANCES HIERARCHISÉE SÉCURISÉE ---
 
     // Type intermédiaire pour le tri
     interface RoadElement {
-        tags: Record<string, string>;
-        dist: number;
-        risk_score: number;
-        lat: number;
-        lon: number;
-        type: string;
+      tags: Record<string, string>;
+      dist: number;
+      risk_score: number;
+      lat: number;
+      lon: number;
+      type: string;
     }
 
-    const roadElements: RoadElement[] = elements
-        .filter((e: any) => ['motorway', 'trunk', 'primary', 'secondary', 'tertiary'].includes(e.tags.highway))
-        .map((e: any) => ({
-            ...e,
-            dist: getDist(e),
-            risk_score: (ROAD_RISK_MAP[e.tags.highway] || 5) * (1000 / (getDist(e) || 1000)),
-            type: e.tags.highway,
-            lat: e.lat || e.center?.lat,
-            lon: e.lon || e.center?.lon,
+    const processNuisance = (filterFn: (e: any) => boolean, type: 'road' | 'rail' | 'air' | 'industry'): NuisanceItem => {
+      const filtered = elements.filter(filterFn);
+      if (filtered.length === 0) return { present: false, distance: 0, name: "" };
+
+      // Pour la route, on prend la plus risquée ET la plus proche
+      if (type === 'road') {
+        const roads: RoadElement[] = filtered.map((e: any) => ({
+          tags: e.tags,
+          dist: getDist(e),
+          risk_score: ROAD_RISK_MAP[e.tags.highway] || 0,
+          lat: e.lat || e.center?.lat,
+          lon: e.lon || e.center?.lon,
+          type: e.tags.highway
         }));
 
-    // FIX: Le tri est maintenant typé et exécuté sur un tableau RoadElement[]
-    const sortedRoads = roadElements.sort((a, b) => b.risk_score - a.risk_score); 
-    const worstRoad = sortedRoads[0]; 
+        // Trier par risque décroissant, puis par distance croissante
+        roads.sort((a, b) => {
+          if (b.risk_score !== a.risk_score) return b.risk_score - a.risk_score;
+          return a.dist - b.dist;
+        });
 
-    
-    const findNuisance = (filterFn: (e: any) => boolean, type: string): NuisanceItem => {
-        const items = elements.filter(filterFn).map((e: any) => ({
-            name: e.tags.name || type,
-            dist: getDist(e),
-            lat: e.lat || e.center?.lat,
-            lon: e.lon || e.center?.lon,
-            type: e.tags.aeroway || e.tags.railway || e.tags.landuse
-        })).sort((a: any, b: any) => a.dist - b.dist);
-        
-        return items.length > 0 
-            ? { present: true, distance: items[0].dist, name: items[0].name, lat: items[0].lat, lon: items[0].lon, type: items[0].type } 
-            : { present: false, distance: 0, name: "" } as NuisanceItem;
+        const worst = roads[0];
+        return {
+          present: true,
+          distance: worst.dist,
+          name: worst.tags.name || "Voie importante",
+          lat: worst.lat,
+          lon: worst.lon,
+          type: worst.type
+        };
+      }
+
+      // Pour les autres, le plus proche suffit
+      const nearest = filtered.reduce((prev: any, curr: any) => {
+        return getDist(curr) < getDist(prev) ? curr : prev;
+      });
+
+      return {
+        present: true,
+        distance: getDist(nearest),
+        name: nearest.tags.name || (type === 'rail' ? "Voie ferrée" : type === 'air' ? "Aérodrome" : "Zone industrielle"),
+        lat: nearest.lat || nearest.center?.lat,
+        lon: nearest.lon || nearest.center?.lon,
+        type: nearest.tags.aeroway || nearest.tags.landuse || nearest.tags.railway
+      };
     };
 
-    const nuisances = {
-        autoroute: worstRoad ? 
-            { 
-                present: true, 
-                distance: worstRoad.dist, 
-                name: worstRoad.tags.name || worstRoad.tags.highway,
-                lat: worstRoad.lat,
-                lon: worstRoad.lon,
-                type: worstRoad.tags.highway
-            } : 
-            { present: false, distance: 0, name: "", type: "" } as NuisanceItem,
-        ferre: findNuisance((e: any) => e.tags.railway === 'rail', 'Voie Ferrée'),
-        aerien: findNuisance((e: any) => ['aerodrome', 'runway'].includes(e.tags.aeroway), 'Aéroport/Piste'),
-        industriel: findNuisance((e: any) => e.tags.landuse === 'industrial', 'Zone Industrielle'),
-        score_calme: 100 
+    // --- CATÉGORIES ---
+    const education = processCat((e: any) => e.tags.amenity && /school|kindergarten|college|university/.test(e.tags.amenity), 5);
+    const sante = processCat((e: any) => e.tags.amenity && /doctors|pharmacy|hospital|dentist/.test(e.tags.amenity), 3);
+    const alimentation = processCat((e: any) => e.tags.shop && /bakery|butcher|supermarket|convenience|greengrocer|seafood|cheese|pastry/.test(e.tags.shop), 5);
+    const restauration = processCat((e: any) => e.tags.amenity && /restaurant|cafe|fast_food|bar|pub/.test(e.tags.amenity), 10); // [NEW]
+    const transport = processCat((e: any) => (e.tags.highway === 'bus_stop') || (e.tags.railway && /station|tram_stop/.test(e.tags.railway)), 5);
+    const loisirs = processCat((e: any) => (e.tags.leisure && /park|garden|sports_centre/.test(e.tags.leisure)) || (e.tags.amenity && /library|cinema|theatre/.test(e.tags.amenity)), 4);
+    const securite = processCat((e: any) => e.tags.amenity && /police|fire_station/.test(e.tags.amenity), 1);
+    const administration = processCat((e: any) => e.tags.amenity && /post_office|town_hall/.test(e.tags.amenity), 2);
+
+    // --- NUISANCES ---
+    const autoroute = processNuisance((e: any) => e.tags.highway && /motorway|trunk|primary|secondary|tertiary/.test(e.tags.highway), 'road');
+    const ferre = processNuisance((e: any) => e.tags.railway === 'rail', 'rail');
+    const aerien = processNuisance((e: any) => e.tags.aeroway && /aerodrome|runway/.test(e.tags.aeroway), 'air');
+    const industriel = processNuisance((e: any) => e.tags.landuse === 'industrial', 'industry');
+
+    // --- CALCUL SCORE ---
+    const calculateScore = (weights: any) => {
+      let total =
+        education.score_norm * weights.education +
+        sante.score_norm * weights.sante +
+        alimentation.score_norm * weights.alimentation +
+        restauration.score_norm * weights.restauration + // [NEW]
+        transport.score_norm * weights.transport +
+        loisirs.score_norm * weights.loisirs +
+        securite.score_norm * weights.securite +
+        administration.score_norm * weights.administration;
+
+      // Pénalités nuisances
+      if (autoroute.present && autoroute.distance < 150) total *= 0.8;
+      if (ferre.present && ferre.distance < 150) total *= 0.9;
+      if (aerien.present && aerien.distance < 2000) total *= 0.9;
+      if (industriel.present && industriel.distance < 300) total *= 0.9;
+
+      const maxWeight = Object.values(weights).reduce((a: any, b: any) => a + b, 0) as number;
+      return Math.round((total / maxWeight) * 10);
     };
 
+    // Score Calme (100 - pénalités)
     let scoreCalme = 100;
-    if (nuisances.autoroute.present) {
-        const roadType = nuisances.autoroute.type || 'tertiary';
-        const baseMalus = ROAD_RISK_MAP[roadType] || 5;
-        const proximityMultiplier = Math.min(5, 300 / (nuisances.autoroute.distance || 300));
-        scoreCalme -= Math.round(baseMalus * proximityMultiplier);
-    }
-    if (nuisances.ferre.present) scoreCalme -= 20 * (300 / (nuisances.ferre.distance || 300));
-    if (nuisances.aerien.present) scoreCalme -= 15;
-    if (nuisances.industriel.present) scoreCalme -= 10;
-    nuisances.score_calme = Math.round(Math.max(0, scoreCalme));
-
-    const cats = {
-      education: processCat((e: any) => ['school', 'kindergarten', 'college', 'university'].includes(e.tags.amenity), 3),
-      sante: processCat((e: any) => ['doctors', 'pharmacy', 'hospital', 'dentist'].includes(e.tags.amenity), 3),
-      alimentation: processCat((e: any) => ['bakery', 'butcher', 'supermarket', 'convenience'].includes(e.tags.shop), 4),
-      transport: processCat((e: any) => e.tags.highway === 'bus_stop' || ['station', 'tram_stop'].includes(e.tags.railway), 5),
-      loisirs: processCat((e: any) => ['park', 'garden', 'sports_centre'].includes(e.tags.leisure) || ['library', 'cinema', 'theatre'].includes(e.tags.amenity), 4),
-      securite: processCat((e: any) => ['police', 'fire_station'].includes(e.tags.amenity), 1),
-      administration: processCat((e: any) => ['post_office', 'town_hall'].includes(e.tags.amenity), 2)
-    };
-
-    const calcScore = (weights: any) => {
-       let numerator = 0, denominator = 0;
-       Object.keys(weights).forEach((key) => {
-          const catKey = key as keyof typeof cats;
-          numerator += weights[key] * cats[catKey].score_norm;
-          denominator += weights[key];
-       });
-       let malus = (100 - nuisances.score_calme) / 200;
-       const rawScore = (numerator / denominator) * 100;
-       return Math.round(rawScore * (1 - malus));
-    };
+    if (autoroute.present) scoreCalme -= Math.max(0, 40 - (autoroute.distance / 10)); // -40 si 0m, -0 si 400m
+    if (ferre.present) scoreCalme -= Math.max(0, 30 - (ferre.distance / 10));
+    if (aerien.present) scoreCalme -= Math.max(0, 20 - (aerien.distance / 200));
+    if (industriel.present) scoreCalme -= Math.max(0, 20 - (industriel.distance / 20));
+    scoreCalme = Math.max(0, Math.round(scoreCalme));
 
     return {
-      categories: cats,
-      nuisances: nuisances,
+      categories: { education, sante, alimentation, restauration, transport, loisirs, securite, administration },
+      nuisances: { autoroute, ferre, aerien, industriel, score_calme: scoreCalme },
       scores: {
-        famille: calcScore(WEIGHTS.famille),
-        investisseur: calcScore(WEIGHTS.investisseur),
-        qualite_vie: calcScore(WEIGHTS.qualite_vie),
-        fiabilite: 0.95
+        famille: calculateScore(WEIGHTS.famille),
+        investisseur: calculateScore(WEIGHTS.investisseur),
+        qualite_vie: calculateScore(WEIGHTS.qualite_vie),
+        fiabilite: 8 // Score statique pour l'instant
       }
-    } as QuartierData;
+    };
 
   } catch (error) {
-    console.error("Erreur Quartier:", error);
+    console.error("Erreur fetchQuartier:", error);
     return null;
   }
 }

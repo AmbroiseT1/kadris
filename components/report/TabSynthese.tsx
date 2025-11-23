@@ -7,8 +7,8 @@ import { TransactionDVF } from '@/app/lib/dvf';
 
 // --- SOUS-COMPOSANTS UI ---
 
-const InfoCard = ({ label, value, icon: Icon, color, sub, className }: any) => (
-    <div className={`bg-white p-4 rounded-sm border border-kadris-slate/10 flex flex-col justify-between ${className}`}>
+const InfoCard = ({ label, value, icon: Icon, color, sub, className, tooltip }: any) => (
+    <div className={`bg-white p-4 rounded-sm border border-kadris-slate/10 flex flex-col justify-between ${className} group relative`} title={tooltip}>
         <div>
             <div className="flex items-center gap-2 mb-2">
                 <Icon size={14} className="text-kadris-terracotta" />
@@ -19,6 +19,14 @@ const InfoCard = ({ label, value, icon: Icon, color, sub, className }: any) => (
             </div>
         </div>
         {sub && <div className="text-xs text-kadris-slate/40 mt-1">{sub}</div>}
+
+        {/* Simple CSS Tooltip */}
+        {tooltip && (
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                {tooltip}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+            </div>
+        )}
     </div>
 );
 
@@ -79,12 +87,12 @@ export const TabSynthese = ({ data, dvf, loading }: { data: BuildingData | null,
                         <Building size={18} className="text-kadris-terracotta" /> Identité Structurelle
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <InfoCard label="Année Constr." value={data.annee_construction} icon={Building} />
-                        <InfoCard label="Matériaux Murs" value={data.materiaux_murs} icon={Shield} />
-                        <InfoCard label="Toiture" value={data.materiaux_toiture} icon={Shield} />
-                        <InfoCard label="Usage Principal" value={data.usage} icon={Home} />
-                        <InfoCard label="Logements" value={data.nb_logements} icon={Home} sub="Lot(s)" />
-                        <InfoCard label="Fiabilité Source" value={data.fiabilite} icon={CheckCircle} color="text-green-600" />
+                        <InfoCard label="Année Constr." value={data.annee_construction} icon={Building} tooltip="Année de construction estimée du bâtiment principal" />
+                        <InfoCard label="Matériaux Murs" value={data.materiaux_murs} icon={Shield} tooltip="Matériau dominant des murs extérieurs" />
+                        <InfoCard label="Toiture" value={data.materiaux_toiture} icon={Shield} tooltip="Matériau principal de la couverture" />
+                        <InfoCard label="Usage Principal" value={data.usage} icon={Home} tooltip="Usage déclaré (Habitation, Commerce, etc.)" />
+                        <InfoCard label="Logements" value={data.nb_logements} icon={Home} sub="Lot(s)" tooltip="Nombre de lots d'habitation recensés" />
+                        <InfoCard label="Fiabilité Source" value={data.fiabilite} icon={CheckCircle} color="text-green-600" tooltip="Indice de confiance des données (sur 10)" />
                     </div>
                 </div>
 

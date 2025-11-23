@@ -13,10 +13,11 @@ export default function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumen
         title: '',
         type: 'AUTRE',
         date: new Date().toISOString().split('T')[0],
+        description: '',
         file: null as File | null
     });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -35,6 +36,7 @@ export default function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumen
             title: '',
             type: 'AUTRE',
             date: new Date().toISOString().split('T')[0],
+            description: '',
             file: null
         });
     };
@@ -80,10 +82,12 @@ export default function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumen
                                     onChange={handleChange}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
                                 >
+                                    <option value="FACTURE">Factures</option>
                                     <option value="DEVIS">Devis</option>
-                                    <option value="FACTURE">Facture</option>
-                                    <option value="ACTE">Acte</option>
-                                    <option value="DPE">DPE</option>
+                                    <option value="OFFICIEL">Document officiel</option>
+                                    <option value="TAXE">Taxes</option>
+                                    <option value="IMPOT">Impôts</option>
+                                    <option value="ASSURANCE">Assurances</option>
                                     <option value="AUTRE">Autre</option>
                                 </select>
                             </div>
@@ -97,6 +101,18 @@ export default function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumen
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
                                 />
                             </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
+                                placeholder="Ajoutez une description optionnelle..."
+                                rows={3}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white resize-none"
+                            />
                         </div>
 
                         <div>

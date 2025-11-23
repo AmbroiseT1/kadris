@@ -92,7 +92,7 @@ export default function DetailDrawer({
                     animate={{ x: 0 }}
                     exit={{ x: "100%" }}
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    className="fixed top-0 right-0 bottom-20 w-[40%] z-40 bg-white/90 backdrop-blur-sm border-l border-black shadow-2xl overflow-hidden"
+                    className="fixed top-0 right-0 bottom-20 w-[65%] z-40 bg-white/90 backdrop-blur-sm border-l border-black shadow-2xl overflow-hidden"
                     style={{
                         backgroundImage: `url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E")`,
                     }}

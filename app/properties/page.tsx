@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Building, MapPin, Calendar, Home, ArrowRight, Shield, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getCurrentUser, getCurrentUserProperties } from '@/utils/propertyStorage';
+import ProfileDropdown from '@/components/ui/ProfileDropdown';
 
 interface Property {
     id: string;
@@ -67,13 +68,7 @@ export default function PropertiesPage() {
                     <span className="text-3xl font-bold font-serif tracking-tighter text-kadris-slate">Kadris</span>
                 </Link>
                 <div className="flex items-center gap-4">
-                    <div className="text-right hidden md:block">
-                        <p className="text-sm font-bold text-kadris-slate">Ambroise Torris</p>
-                        <p className="text-xs text-kadris-slate/50">Propriétaire</p>
-                    </div>
-                    <div className="w-10 h-10 bg-kadris-slate text-white rounded-full flex items-center justify-center font-serif font-bold">
-                        AT
-                    </div>
+                    <ProfileDropdown />
                 </div>
             </header>
 
