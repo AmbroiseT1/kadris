@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import React, { useState } from 'react';
-import { Menu, X, Shield, CheckCircle, BrickWall, TrendingUp, ArrowRight, Compass, Map as MapIcon, HardHat, TriangleAlert, FileText } from 'lucide-react';
+import { Menu, X, Shield, CheckCircle, TrendingUp, ArrowRight, Compass, Map as MapIcon, HardHat, TriangleAlert, FileText } from 'lucide-react';
 
 // --- IMPORTS DES COMPOSANTS ---
 import { MapLayersViz, DataSynthesisCard } from '@/components/ui/Diagrams';
@@ -29,10 +29,8 @@ export default function Home() {
 
           {/* Logo */}
           <div className="flex items-center gap-3 cursor-pointer">
-            <div className="text-kadris-slate p-1 border border-kadris-slate/20 bg-white rounded-sm">
-              <BrickWall strokeWidth={2} size={24} />
-            </div>
-            <span className="font-serif font-bold text-xl tracking-tight text-kadris-slate">
+            <img src="/kadris-logo.png" alt="Kadris Logo" className="w-10 h-10 object-contain mix-blend-multiply" />
+            <span className="text-2xl font-bold font-serif tracking-tighter text-kadris-slate">
               Kadris
             </span>
           </div>
@@ -41,10 +39,10 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-kadris-slate" suppressHydrationWarning>
             <a href="#how-it-works" className="hover:text-kadris-terracotta hover:underline decoration-2 underline-offset-4 transition-all">Comment ça marche</a>
             <a href="#pricing" className="hover:text-kadris-terracotta hover:underline decoration-2 underline-offset-4 transition-all">Tarifs</a>
-            <a href="#login" className="px-5 py-2 border border-kadris-slate/20 hover:bg-kadris-slate hover:text-white rounded-sm transition-colors">
+            <Link href="/login" className="px-5 py-2 border border-kadris-slate/20 hover:bg-kadris-slate hover:text-white rounded-sm transition-colors">
               Connexion
-            </a>
-            <Link href="/dashboard" className="px-5 py-2 bg-kadris-slate text-white rounded-sm hover:bg-kadris-slate/90 transition-colors shadow-sm">
+            </Link>
+            <Link href="/login" className="px-5 py-2 bg-kadris-slate text-white rounded-sm hover:bg-kadris-slate/90 transition-colors shadow-sm">
               Espace Propriétaire
             </Link>
           </div>
@@ -61,8 +59,8 @@ export default function Home() {
         <div className="fixed inset-0 z-40 bg-kadris-cream flex flex-col items-center justify-center gap-8 text-xl font-serif animate-fade-in">
           <a href="#how-it-works" onClick={() => setMenuOpen(false)}>Comment ça marche</a>
           <a href="#pricing" onClick={() => setMenuOpen(false)}>Tarifs</a>
-          <a href="#login" onClick={() => setMenuOpen(false)}>Connexion</a>
-          <a href="#owner" onClick={() => setMenuOpen(false)} className="px-6 py-3 bg-kadris-terracotta text-white rounded-sm">Espace Propriétaire</a>
+          <Link href="/login" onClick={() => setMenuOpen(false)}>Connexion</Link>
+          <Link href="/login" onClick={() => setMenuOpen(false)} className="px-6 py-3 bg-kadris-terracotta text-white rounded-sm">Espace Propriétaire</Link>
         </div>
       )}
 
@@ -383,10 +381,8 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div className="md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                <div className="text-kadris-slate p-1 border border-kadris-slate/10">
-                  <BrickWall strokeWidth={2} size={20} />
-                </div>
-                <span className="font-serif font-bold text-lg text-kadris-slate">
+                <img src="/kadris-logo.png" alt="Kadris Logo" className="w-8 h-8 object-contain mix-blend-multiply" />
+                <span className="font-serif font-bold text-lg text-kadris-slate tracking-tighter">
                   Kadris
                 </span>
               </div>

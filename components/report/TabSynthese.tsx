@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { MapLayersViz } from '@/components/ui/Diagrams';
-import { Building, BrickWall, Shield, Home, CheckCircle, Ruler, MapPin, ArrowLeft, Mountain, FileText, Loader2, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Building, Shield, Home, CheckCircle, Ruler, MapPin, ArrowLeft, Mountain, FileText, Loader2, AlertTriangle, TrendingUp } from 'lucide-react';
 import { BuildingData } from '@/app/lib/types';
 import { TransactionDVF } from '@/app/lib/dvf';
 
@@ -80,7 +80,7 @@ export const TabSynthese = ({ data, dvf, loading }: { data: BuildingData | null,
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <InfoCard label="Année Constr." value={data.annee_construction} icon={Building} />
-                        <InfoCard label="Matériaux Murs" value={data.materiaux_murs} icon={BrickWall} />
+                        <InfoCard label="Matériaux Murs" value={data.materiaux_murs} icon={Shield} />
                         <InfoCard label="Toiture" value={data.materiaux_toiture} icon={Shield} />
                         <InfoCard label="Usage Principal" value={data.usage} icon={Home} />
                         <InfoCard label="Logements" value={data.nb_logements} icon={Home} sub="Lot(s)" />

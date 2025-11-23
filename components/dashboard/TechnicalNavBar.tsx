@@ -34,7 +34,7 @@ interface TechnicalNavBarProps {
 
 export default function TechnicalNavBar({ activeId, onSelect }: TechnicalNavBarProps) {
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-20 bg-[#fdfbf7] border-t-2 border-black h-40 px-8 flex items-center justify-center">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#fdfbf7] border-t-2 border-black h-40 px-8 flex items-center justify-center">
             {/* Texture overlay for the bar itself to match background */}
             <div
                 className="absolute inset-0 pointer-events-none opacity-20 mix-blend-multiply"

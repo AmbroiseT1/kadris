@@ -137,8 +137,9 @@ export default function ReportPage({ params }: { params: Promise<{ cityCode: str
       <header className="bg-white border-b border-kadris-slate/10 sticky top-0 z-40 shadow-sm">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 font-bold text-kadris-slate text-sm uppercase tracking-wider hover:text-kadris-terracotta transition-colors">
-              <ArrowLeft size={16} /> Retour
+            <Link href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
+              <img src="/kadris-logo.png" alt="Kadris Logo" className="w-6 h-6 object-contain mix-blend-multiply" />
+              <span className="font-serif font-bold text-lg text-kadris-slate tracking-tighter">Kadris</span>
             </Link>
             <div className="h-6 w-px bg-kadris-slate/10 hidden md:block"></div>
             <div className="hidden md:flex items-center gap-2 text-sm text-kadris-slate/60">
