@@ -12,6 +12,9 @@ import AddWorkModal from "./modals/AddWorkModal";
 import AddTaskModal from "./modals/AddTaskModal";
 import AddExpenseModal from "./modals/AddExpenseModal";
 import AddDocumentModal from "./modals/AddDocumentModal";
+import { fetchDVF, TransactionDVF } from "@/app/lib/dvf";
+import { fetchRisks } from "@/app/lib/georisques";
+import { fetchQuartier } from "@/app/lib/quartier";
 
 interface PropertyData {
     adresse_ban: string;
@@ -26,6 +29,8 @@ interface PropertyData {
     usage: string;
     coords?: { lat: number; lon: number };
     cle_interop?: string;
+    risques_detailles?: any;
+    quartier?: any;
 }
 
 export default function OwnerDashboardPage() {
@@ -34,13 +39,15 @@ export default function OwnerDashboardPage() {
     const [isDrawerOpen, setIsDrawerOpen] = useState(true);
     const [propertyData, setPropertyData] = useState<PropertyData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [dvfData, setDvfData] = useState<TransactionDVF[]>([]);
+    const [loadingDVF, setLoadingDVF] = useState(false);
 
     // Mock Documents State
     const [documents, setDocuments] = useState([
         { id: '1', title: "Titre de Propriété", date: "12/05/2018", type: "ACTE" },
         { id: '2', title: "DPE Validé", date: "24/01/2023", type: "DPE" },
         { id: '3', title: "Facture Toiture", date: "10/09/2020", type: "FACTURE" },
-        { id: ' 4', title: "Taxe Foncière 2023", date: "15/10/2023", type: "AUTRE" },
+        { id: '4', title: "Taxe Foncière 2023", date: "15/10/2023", type: "AUTRE" },
     ]);
 
     // Modal States
@@ -51,28 +58,59 @@ export default function OwnerDashboardPage() {
 
     // Load property data on mount
     useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser) {
+        async function loadPropertyData() {
+            const currentUser = getCurrentUser();
+            if (!currentUser) {
+                setIsLoading(false);
+                return;
+            }
+
+            const propertyId = searchParams.get('propertyId');
+            let selectedProperty: PropertyData | null = null;
+
+            if (propertyId) {
+                const userProperties = getCurrentUserProperties();
+                const property = userProperties.find((p: StoredProperty) => p.id === propertyId);
+                if (property) {
+                    selectedProperty = property.data as PropertyData;
+                }
+            } else {
+                const userProperties = getCurrentUserProperties();
+                if (userProperties.length > 0) {
+                    selectedProperty = userProperties[0].data as PropertyData;
+                }
+            }
+
+            setPropertyData(selectedProperty);
             setIsLoading(false);
-            return;
+
+            // Load supplementary data if coordinates are available
+            if (selectedProperty?.coords) {
+                setLoadingDVF(true);
+                try {
+                    const [dvf, risques, quartier] = await Promise.all([
+                        fetchDVF(selectedProperty.coords.lat, selectedProperty.coords.lon),
+                        fetchRisks(selectedProperty.coords.lat, selectedProperty.coords.lon),
+                        fetchQuartier(selectedProperty.coords.lat, selectedProperty.coords.lon)
+                    ]);
+
+                    setDvfData(dvf || []);
+
+                    // Update property data with supplementary info
+                    const updatedProperty = { ...selectedProperty };
+                    if (risques) updatedProperty.risques_detailles = risques;
+                    if (quartier) updatedProperty.quartier = quartier;
+
+                    setPropertyData(updatedProperty);
+                } catch (error) {
+                    console.error('Error loading supplementary data:', error);
+                } finally {
+                    setLoadingDVF(false);
+                }
+            }
         }
 
-        const propertyId = searchParams.get('propertyId');
-
-        if (propertyId) {
-            const userProperties = getCurrentUserProperties();
-            const property = userProperties.find((p: StoredProperty) => p.id === propertyId);
-            if (property) {
-                setPropertyData(property.data);
-            }
-        } else {
-            const userProperties = getCurrentUserProperties();
-            if (userProperties.length > 0) {
-                setPropertyData(userProperties[0].data);
-            }
-        }
-
-        setIsLoading(false);
+        loadPropertyData();
     }, [searchParams]);
 
     // Mock Save Handlers
@@ -149,7 +187,7 @@ export default function OwnerDashboardPage() {
                     <motion.div
                         className="absolute inset-0 z-0"
                         animate={{
-                            width: isDrawerOpen ? "50%" : "100%",
+                            width: isDrawerOpen ? "60%" : "100%",
                             paddingRight: isDrawerOpen ? "0px" : "0px"
                         }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -174,6 +212,8 @@ export default function OwnerDashboardPage() {
                         documents={documents}
                         onAddDocument={() => setIsAddDocumentOpen(true)}
                         propertyData={propertyData}
+                        dvfData={dvfData}
+                        loadingDVF={loadingDVF}
                     />
 
                     {/* Modals */}
@@ -199,14 +239,14 @@ export default function OwnerDashboardPage() {
                     />
 
                     {/* Header / Title Overlay */}
-                    <div className="absolute top-8 left-8 z-10">
-                        <Link href="/properties" className="group flex items-center gap-4">
-                            <img src="/kadris-logo.png" alt="Kadris Logo" className="w-16 h-16 object-contain mix-blend-multiply opacity-90" />
+                    <div className="absolute top-6 left-6 z-10">
+                        <Link href="/properties" className="group flex items-center gap-3">
+                            <img src="/kadris-logo.png" alt="Kadris Logo" className="w-12 h-12 object-contain mix-blend-multiply opacity-90" />
                             <div>
-                                <h1 className="text-4xl font-bold font-serif tracking-tighter text-black group-hover:opacity-70 transition-opacity">
+                                <h1 className="text-3xl font-bold font-serif tracking-tighter text-black group-hover:opacity-70 transition-opacity">
                                     Kadris
                                 </h1>
-                                <p className="font-mono text-xs tracking-[0.3em] mt-1 border-t border-black pt-1 inline-block group-hover:border-gray-400 transition-colors">
+                                <p className="font-mono text-[10px] tracking-[0.3em] mt-1 border-t border-black pt-1 inline-block group-hover:border-gray-400 transition-colors">
                                     ESPACE PROPRIÉTAIRE
                                 </p>
                             </div>

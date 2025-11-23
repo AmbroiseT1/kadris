@@ -34,7 +34,7 @@ interface TechnicalNavBarProps {
 
 export default function TechnicalNavBar({ activeId, onSelect }: TechnicalNavBarProps) {
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#fdfbf7] border-t-2 border-black h-40 px-8 flex items-center justify-center">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#fdfbf7] border-t border-black/20 h-20 px-4 flex items-center justify-center">
             {/* Texture overlay for the bar itself to match background */}
             <div
                 className="absolute inset-0 pointer-events-none opacity-20 mix-blend-multiply"
@@ -53,45 +53,32 @@ export default function TechnicalNavBar({ activeId, onSelect }: TechnicalNavBarP
                             key={item.id}
                             onClick={() => onSelect(item.id)}
                             className={cn(
-                                "group flex flex-col items-center justify-center w-40 h-32 transition-all duration-300 relative",
-                                "focus:outline-none"
+                                "group flex flex-col items-center justify-center gap-1 px-3 py-2 transition-all duration-300 relative rounded-sm",
+                                "focus:outline-none",
+                                isActive ? "bg-black/5" : "hover:bg-black/5"
                             )}
                         >
                             {/* Icon */}
-                            <div className={cn(
-                                "relative z-10 p-2 transition-all duration-300 transform",
-                                isActive || "group-hover:scale-110" ? "scale-110" : "scale-100",
-                                isActive ? "-translate-y-2" : "group-hover:-translate-y-1"
-                            )}>
-                                <Icon
-                                    size={60}
-                                    strokeWidth={isActive ? 2.5 : 1}
-                                    className={cn(
-                                        "text-black transition-all duration-300",
-                                        isActive ? "drop-shadow-lg" : "group-hover:drop-shadow-md"
-                                    )}
-                                />
-                            </div>
+                            <Icon
+                                size={20}
+                                strokeWidth={isActive ? 2.5 : 1.5}
+                                className={cn(
+                                    "text-black transition-all duration-200",
+                                    isActive ? "opacity-100" : "opacity-60 group-hover:opacity-100"
+                                )}
+                            />
 
                             {/* Label */}
                             <span className={cn(
-                                "mt-3 text-[12px] font-mono tracking-widest text-black uppercase transition-all duration-300",
-                                isActive ? "font-black opacity-100" : "font-medium opacity-60 group-hover:font-bold group-hover:opacity-100"
+                                "text-[9px] font-mono tracking-wide text-black uppercase transition-all duration-200",
+                                isActive ? "font-bold opacity-100" : "font-medium opacity-50 group-hover:opacity-100"
                             )}>
                                 {item.label}
                             </span>
 
-                            {/* Description */}
-                            <span className={cn(
-                                "text-[10px] font-mono text-gray-600 tracking-wide mt-1 transition-all duration-300",
-                                isActive ? "opacity-100 font-bold" : "opacity-0 group-hover:opacity-100"
-                            )}>
-                                {item.description}
-                            </span>
-
-                            {/* Active Indicator Line */}
+                            {/* Active Indicator */}
                             {isActive && (
-                                <div className="absolute bottom-0 w-12 h-1 bg-black" />
+                                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-black" />
                             )}
                         </button>
                     );
