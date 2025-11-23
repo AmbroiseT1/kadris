@@ -60,21 +60,6 @@ function Model({ url }: { url: string }) {
     return (
         <group ref={modelRef} dispose={null}>
             <primitive object={scene} scale={2.2} />
-
-            {/* Hotspots */}
-            <Html position={[1, 2, 1]}>
-                <div className="group relative cursor-pointer">
-                    <div className="w-4 h-4 rounded-full border-2 border-black bg-transparent hover:bg-black/10 transition-colors" />
-                    <div className="absolute left-6 top-0 w-48 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        <div className="bg-white/90 border border-black p-2 text-xs font-mono shadow-sm">
-                            <p className="font-bold">Rénovation Toiture</p>
-                            <p>Voir carnet 2020</p>
-                        </div>
-                        {/* Line connecting dot to text */}
-                        <div className="absolute right-full top-2 h-px w-6 bg-black" />
-                    </div>
-                </div>
-            </Html>
         </group>
     );
 }

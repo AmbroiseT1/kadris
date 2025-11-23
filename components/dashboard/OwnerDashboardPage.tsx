@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import ArchitecturalViewer from "./ArchitecturalViewer";
 import TechnicalNavBar from "./TechnicalNavBar";
 import DetailDrawer from "./DetailDrawer";
+import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function OwnerDashboardPage() {
     const [activeCategory, setActiveCategory] = useState<string>("works");
@@ -21,9 +23,17 @@ export default function OwnerDashboardPage() {
     return (
         <div className="relative w-full h-screen overflow-hidden bg-[#fdfbf7]">
             {/* LAYER 1: 3D Background */}
-            <div className="absolute inset-0 z-0">
+            {/* We animate the container width/position to shift the center of the 3D view */}
+            <motion.div
+                className="absolute inset-0 z-0"
+                animate={{
+                    width: isDrawerOpen ? "50%" : "100%",
+                    paddingRight: isDrawerOpen ? "0px" : "0px"
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            >
                 <ArchitecturalViewer />
-            </div>
+            </motion.div>
 
             {/* LAYER 2: Navigation Bar (Fixed Bottom) */}
             <TechnicalNavBar
@@ -38,14 +48,16 @@ export default function OwnerDashboardPage() {
                 category={activeCategory}
             />
 
-            {/* Header / Title Overlay (Optional) */}
-            <div className="absolute top-8 left-8 z-10 pointer-events-none">
-                <h1 className="text-4xl font-bold font-serif tracking-tighter text-black">
-                    BRIQUE<span className="font-light">BY</span>BRIQUE
-                </h1>
-                <p className="font-mono text-xs tracking-[0.3em] mt-2 border-t border-black pt-2 inline-block">
-                    DASHBOARD PROPRIÉTAIRE v2.0
-                </p>
+            {/* Header / Title Overlay */}
+            <div className="absolute top-8 left-8 z-10">
+                <Link href="/" className="group">
+                    <h1 className="text-4xl font-bold font-serif tracking-tighter text-black group-hover:opacity-70 transition-opacity">
+                        Kadris
+                    </h1>
+                    <p className="font-mono text-xs tracking-[0.3em] mt-2 border-t border-black pt-2 inline-block group-hover:border-gray-400 transition-colors">
+                        ESPACE PROPRIÉTAIRE
+                    </p>
+                </Link>
             </div>
         </div>
     );
