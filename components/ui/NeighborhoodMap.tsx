@@ -2,20 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { AmenityItem } from '@/app/lib/quartier';
 import { Building, ShoppingCart, GraduationCap, Stethoscope, Bus, TreePine, Shield, Utensils } from 'lucide-react';
 import { renderToStaticMarkup } from 'react-dom/server';
-
-// Fix for default Leaflet icons in Next.js
-const DefaultIcon = L.icon({
-    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-});
-L.Marker.prototype.options.icon = DefaultIcon;
 
 interface NeighborhoodMapProps {
     center: { lat: number; lon: number };
@@ -26,7 +16,9 @@ interface NeighborhoodMapProps {
 function MapUpdater({ center }: { center: { lat: number; lon: number } }) {
     const map = useMap();
     useEffect(() => {
-        map.setView([center.lat, center.lon], 15);
+        if (center && !isNaN(center.lat) && !isNaN(center.lon)) {
+            map.setView([center.lat, center.lon], 15);
+        }
     }, [center, map]);
     return null;
 }
@@ -62,10 +54,29 @@ export default function NeighborhoodMap({ center, pois }: NeighborhoodMapProps) 
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
+        // Fix for default Leaflet icons in Next.js
+        // This must run on client side
+        const DefaultIcon = L.icon({
+            iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+            shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+        });
+        L.Marker.prototype.options.icon = DefaultIcon;
+
         setIsMounted(true);
     }, []);
 
     if (!isMounted) return <div className="h-full w-full bg-gray-100 animate-pulse rounded-xl" />;
+
+    // Validate center
+    if (!center || isNaN(center.lat) || isNaN(center.lon)) {
+        return (
+            <div className="h-full w-full bg-gray-100 flex items-center justify-center text-gray-500 rounded-xl">
+                Coordonnées invalides
+            </div>
+        );
+    }
 
     // Icons
     const homeIcon = createCustomIcon(<Building size={18} color="white" />, '#e76e50'); // Kadris Terracotta
@@ -102,7 +113,7 @@ export default function NeighborhoodMap({ center, pois }: NeighborhoodMapProps) 
         <MapContainer
             center={[center.lat, center.lon]}
             zoom={15}
-            style={{ height: '100%', width: '100%', borderRadius: '0.75rem' }}
+            style={{ height: '100%', width: '100%', borderRadius: '0.75rem', zIndex: 0 }}
             scrollWheelZoom={false}
         >
             <TileLayer

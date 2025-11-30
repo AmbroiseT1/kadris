@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import { Inter, Merriweather } from "next/font/google";
 import "./globals.css";
+import "leaflet/dist/leaflet.css";
 
-const inter = Inter({ 
-  subsets: ["latin"], 
-  variable: "--font-inter" 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter"
 });
 
-const merriweather = Merriweather({ 
-  weight: ["300", "400", "700", "900"], 
-  subsets: ["latin"], 
-  variable: "--font-merriweather" 
+const merriweather = Merriweather({
+  weight: ["300", "400", "700", "900"],
+  subsets: ["latin"],
+  variable: "--font-merriweather"
 });
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       {/* 👇 LA LIGNE MAGIQUE EST JUSTE EN DESSOUS */}
-      <body 
+      <body
         className={`${inter.variable} ${merriweather.variable} bg-kadris-cream text-kadris-slate font-sans antialiased`}
         suppressHydrationWarning={true}
       >

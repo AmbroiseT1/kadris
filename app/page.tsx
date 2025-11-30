@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import React, { useState } from 'react';
 import { Menu, X, Shield, CheckCircle, TrendingUp, ArrowRight, Compass, Map as MapIcon, HardHat, TriangleAlert, FileText } from 'lucide-react';
+import { getCurrentUser } from '@/utils/propertyStorage';
 
 // --- IMPORTS DES COMPOSANTS ---
 import { MapLayersViz, DataSynthesisCard } from '@/components/ui/Diagrams';
@@ -18,6 +19,15 @@ export default function Home() {
     const buildingId = addressData.properties.id;
     console.log("🚀 Redirection vers le rapport pour l'ID :", buildingId);
     router.push(`/report/${buildingId}`);
+  };
+
+  const handleOwnerSpaceClick = () => {
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+      router.push('/properties');
+    } else {
+      router.push('/login');
+    }
   };
 
   return (
@@ -37,14 +47,14 @@ export default function Home() {
 
           {/* Liens Desktop */}
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-kadris-slate" suppressHydrationWarning>
-            <a href="#how-it-works" className="hover:text-kadris-terracotta hover:underline decoration-2 underline-offset-4 transition-all">Comment ça marche</a>
+            <Link href="/how-it-works" className="hover:text-kadris-terracotta hover:underline decoration-2 underline-offset-4 transition-all">Comment ça marche</Link>
             <a href="#pricing" className="hover:text-kadris-terracotta hover:underline decoration-2 underline-offset-4 transition-all">Tarifs</a>
             <Link href="/login" className="px-5 py-2 border border-kadris-slate/20 hover:bg-kadris-slate hover:text-white rounded-sm transition-colors">
               Connexion
             </Link>
-            <Link href="/login" className="px-5 py-2 bg-kadris-slate text-white rounded-sm hover:bg-kadris-slate/90 transition-colors shadow-sm">
+            <button onClick={handleOwnerSpaceClick} className="px-5 py-2 bg-kadris-slate text-white rounded-sm hover:bg-kadris-slate/90 transition-colors shadow-sm">
               Espace Propriétaire
-            </Link>
+            </button>
           </div>
 
           {/* Bouton Menu Mobile */}
@@ -57,10 +67,10 @@ export default function Home() {
       {/* Menu Mobile (Overlay) */}
       {menuOpen && (
         <div className="fixed inset-0 z-40 bg-kadris-cream flex flex-col items-center justify-center gap-8 text-xl font-serif animate-fade-in">
-          <a href="#how-it-works" onClick={() => setMenuOpen(false)}>Comment ça marche</a>
+          <Link href="/how-it-works" onClick={() => setMenuOpen(false)}>Comment ça marche</Link>
           <a href="#pricing" onClick={() => setMenuOpen(false)}>Tarifs</a>
           <Link href="/login" onClick={() => setMenuOpen(false)}>Connexion</Link>
-          <Link href="/login" onClick={() => setMenuOpen(false)} className="px-6 py-3 bg-kadris-terracotta text-white rounded-sm">Espace Propriétaire</Link>
+          <button onClick={() => { setMenuOpen(false); handleOwnerSpaceClick(); }} className="px-6 py-3 bg-kadris-terracotta text-white rounded-sm">Espace Propriétaire</button>
         </div>
       )}
 
@@ -337,10 +347,10 @@ export default function Home() {
                 </li>
               </ul>
 
-              <Link href="/login" className="group flex items-center gap-3 bg-kadris-slate text-white px-8 py-4 rounded-sm font-serif font-bold uppercase tracking-wider hover:bg-kadris-slate/90 transition-all">
+              <button onClick={handleOwnerSpaceClick} className="group flex items-center gap-3 bg-kadris-slate text-white px-8 py-4 rounded-sm font-serif font-bold uppercase tracking-wider hover:bg-kadris-slate/90 transition-all">
                 Revendiquer mon bien
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
+              </button>
             </div>
 
             {/* Aperçu Dashboard Abstrait */}
