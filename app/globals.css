@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
-/* Kadris Custom Properties */
+/* Bricq Custom Properties */
 @theme {
-  --color-kadris-terracotta: #C05640;
-  --color-kadris-slate: #1A2B3C;
-  --color-kadris-sage: #8FA89B;
-  --color-kadris-cream: #F7F5F2;
+  --color-bricq-terracotta: #C05640;
+  --color-bricq-slate: #1A2B3C;
+  --color-bricq-sage: #8FA89B;
+  --color-bricq-cream: #F7F5F2;
 
   --font-sans: var(--font-inter);
   --font-serif: var(--font-merriweather);
@@ -18,8 +18,8 @@
 
 /* Base Styles */
 body {
-  background-color: var(--color-kadris-cream);
-  color: var(--color-kadris-slate);
+  background-color: var(--color-bricq-cream);
+  color: var(--color-bricq-slate);
   font-family: var(--font-sans);
 }
 
@@ -30,5 +30,5 @@ h4,
 h5,
 h6 {
   font-family: var(--font-serif);
-  color: var(--color-kadris-slate);
+  color: var(--color-bricq-slate);
 }

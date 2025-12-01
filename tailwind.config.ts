@@ -13,7 +13,7 @@ const config: Config = {
         sans: ['var(--font-inter)', 'sans-serif'],
       },
       colors: {
-        kadris: {
+        bricq: {
           terracotta: '#C05640',
           slate: '#1A2B3C',
           sage: '#8FA89B',

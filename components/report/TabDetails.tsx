@@ -11,22 +11,22 @@ const JsonViewer = ({ data, title, icon: Icon }: { data: any, title: string, ico
     if (!data) return null;
 
     return (
-        <div className="border border-kadris-slate/10 rounded-xl overflow-hidden bg-white mb-4 shadow-sm">
+        <div className="border border-bricq-slate/10 rounded-xl overflow-hidden bg-white mb-4 shadow-sm">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between p-4 bg-kadris-cream/30 hover:bg-kadris-cream/60 transition-colors text-left"
+                className="w-full flex items-center justify-between p-4 bg-bricq-cream/30 hover:bg-bricq-cream/60 transition-colors text-left"
             >
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white rounded-lg border border-kadris-slate/5 text-kadris-slate">
+                    <div className="p-2 bg-white rounded-lg border border-bricq-slate/5 text-bricq-slate">
                         <Icon size={18} />
                     </div>
-                    <span className="font-bold text-kadris-slate text-sm uppercase tracking-wide">{title}</span>
+                    <span className="font-bold text-bricq-slate text-sm uppercase tracking-wide">{title}</span>
                 </div>
-                {isOpen ? <ChevronDown size={18} className="text-kadris-slate/50" /> : <ChevronRight size={18} className="text-kadris-slate/50" />}
+                {isOpen ? <ChevronDown size={18} className="text-bricq-slate/50" /> : <ChevronRight size={18} className="text-bricq-slate/50" />}
             </button>
 
             {isOpen && (
-                <div className="p-4 bg-slate-50 border-t border-kadris-slate/10 overflow-x-auto">
+                <div className="p-4 bg-slate-50 border-t border-bricq-slate/10 overflow-x-auto">
                     <pre className="text-xs text-slate-600 font-mono whitespace-pre-wrap">
                         {JSON.stringify(data, null, 2)}
                     </pre>
@@ -37,7 +37,7 @@ const JsonViewer = ({ data, title, icon: Icon }: { data: any, title: string, ico
 };
 
 export const TabDetails = ({ data }: { data: BuildingData | null }) => {
-    if (!data) return <div className="p-8 text-center text-kadris-slate/50">Chargement des données brutes...</div>;
+    if (!data) return <div className="p-8 text-center text-bricq-slate/50">Chargement des données brutes...</div>;
 
     return (
         <div className="animate-in fade-in zoom-in-95 duration-300 space-y-8">
@@ -45,12 +45,12 @@ export const TabDetails = ({ data }: { data: BuildingData | null }) => {
             {/* Nouveau composant de détails techniques */}
             <TabBatiment data={data.raw_bdnb} />
 
-            <div className="bg-white p-8 rounded-2xl border border-kadris-slate/5 shadow-sm">
+            <div className="bg-white p-8 rounded-2xl border border-bricq-slate/5 shadow-sm">
                 <div className="mb-8">
-                    <h2 className="font-serif text-2xl font-bold text-kadris-slate mb-2 flex items-center gap-2">
-                        <Database className="text-kadris-terracotta" /> Données Brutes & API
+                    <h2 className="font-serif text-2xl font-bold text-bricq-slate mb-2 flex items-center gap-2">
+                        <Database className="text-bricq-terracotta" /> Données Brutes & API
                     </h2>
-                    <p className="text-kadris-slate/60">
+                    <p className="text-bricq-slate/60">
                         Accès complet aux données non traitées pour les experts (BDNB, Géorisques, IGN).
                     </p>
                 </div>

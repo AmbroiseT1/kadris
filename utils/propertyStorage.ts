@@ -100,6 +100,29 @@ export const addPropertyToCurrentUser = (property: PropertyData): void => {
 };
 
 /**
+ * Remove a property from the current user's collection
+ */
+export const removePropertyFromCurrentUser = (propertyId: string): void => {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+
+    if (typeof window === 'undefined') return;
+
+    const allData = localStorage.getItem('userProperties');
+    if (!allData) return;
+
+    try {
+        const parsed = JSON.parse(allData);
+        if (parsed[currentUser]) {
+            parsed[currentUser] = parsed[currentUser].filter((p: PropertyData) => p.id !== propertyId);
+            localStorage.setItem('userProperties', JSON.stringify(parsed));
+        }
+    } catch (error) {
+        console.error('Error removing property:', error);
+    }
+};
+
+/**
  * Check if current user is admin
  */
 export const isAdminUser = (): boolean => {

@@ -164,15 +164,15 @@ const DataRow = ({ label, value, tooltip }: { label: string, value: any, tooltip
                 <span className="text-sm text-slate-600 font-medium flex items-center gap-1">{label}</span>
                 {tooltip && (
                     <div className="relative group/tooltip">
-                        <Info size={12} className="text-slate-300 hover:text-kadris-terracotta cursor-help transition-colors" />
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-kadris-slate text-white text-xs rounded-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center leading-relaxed font-light">
+                        <Info size={12} className="text-slate-300 hover:text-bricq-terracotta cursor-help transition-colors" />
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-bricq-slate text-white text-xs rounded-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center leading-relaxed font-light">
                             {tooltip}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-kadris-slate"></div>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-bricq-slate"></div>
                         </div>
                     </div>
                 )}
             </div>
-            <span className="text-sm text-kadris-slate font-bold text-right max-w-[60%] break-words">
+            <span className="text-sm text-bricq-slate font-bold text-right max-w-[60%] break-words">
                 {displayValue}
                 {unit && <span className="font-normal text-slate-500 pl-1 font-mono text-xs">{unit}</span>}
             </span>
@@ -187,11 +187,11 @@ const BentoCard = ({ title, icon: Icon, description, data, keys }: any) => {
     return (
         <div className="bg-white border border-stone-200 rounded-sm p-5">
             <div className="flex items-start gap-3 mb-5 border-b border-stone-100 pb-3">
-                <div className="p-2 bg-kadris-cream/50 rounded-sm text-kadris-terracotta border border-kadris-terracotta/10">
+                <div className="p-2 bg-bricq-cream/50 rounded-sm text-bricq-terracotta border border-bricq-terracotta/10">
                     <Icon size={20} />
                 </div>
                 <div>
-                    <h3 className="font-serif font-bold text-kadris-slate text-base">{title}</h3>
+                    <h3 className="font-serif font-bold text-bricq-slate text-base">{title}</h3>
                     <p className="text-xs text-slate-400 mt-0.5 leading-tight font-light">{description}</p>
                 </div>
             </div>
@@ -234,13 +234,13 @@ export const TabBatiment = ({ data }: { data: any }) => {
 
             {/* HERO */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-kadris-slate text-white p-8 rounded-sm border border-kadris-slate col-span-1 md:col-span-2 relative overflow-hidden">
+                <div className="bg-bricq-slate text-white p-8 rounded-sm border border-bricq-slate col-span-1 md:col-span-2 relative overflow-hidden">
                     <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
                     <div className="p-3 bg-white/10 rounded-sm backdrop-blur-sm border border-white/10 inline-block">
                         <Building size={32} className="text-white" />
                     </div>
                     <div className="relative z-10 mt-4">
-                        <div className="text-xs uppercase text-kadris-terracotta font-bold tracking-widest mb-2 flex items-center gap-2 font-mono">
+                        <div className="text-xs uppercase text-bricq-terracotta font-bold tracking-widest mb-2 flex items-center gap-2 font-mono">
                             <Info size={10} /> Fiche Technique Officielle
                         </div>
                         <h2 className="text-2xl md:text-3xl font-serif font-bold mb-2">
@@ -253,11 +253,11 @@ export const TabBatiment = ({ data }: { data: any }) => {
                 </div>
 
                 <div className="bg-white border border-stone-200 p-6 rounded-sm flex flex-col justify-center items-center text-center relative group">
-                    <div className="absolute top-3 right-3 text-stone-200 group-hover:text-kadris-terracotta transition-colors">
+                    <div className="absolute top-3 right-3 text-stone-200 group-hover:text-bricq-terracotta transition-colors">
                         <Calendar size={18} />
                     </div>
                     <div className="text-xs uppercase text-slate-400 font-bold tracking-wider mb-2 font-mono">Année d'Origine</div>
-                    <div className="text-5xl font-black text-kadris-slate group-hover:scale-105 transition-transform duration-300">
+                    <div className="text-5xl font-black text-bricq-slate group-hover:scale-105 transition-transform duration-300">
                         {smartYear}
                     </div>
                     {data.annee_construction_dpe && (
@@ -283,7 +283,7 @@ export const TabBatiment = ({ data }: { data: any }) => {
                 <div className="border-t border-stone-100 pt-8">
                     <button
                         onClick={() => setShowAll(!showAll)}
-                        className="flex items-center justify-center gap-3 w-full py-4 text-sm font-bold text-kadris-slate bg-white border border-stone-200 hover:bg-stone-50 hover:border-kadris-slate/30 rounded-sm transition-all group"
+                        className="flex items-center justify-center gap-3 w-full py-4 text-sm font-bold text-bricq-slate bg-white border border-stone-200 hover:bg-stone-50 hover:border-bricq-slate/30 rounded-sm transition-all group"
                     >
                         {showAll ? "Masquer les données brutes" : `Afficher les ${remainingKeys.length} autres données techniques`}
                         <span className="bg-stone-100 p-1 rounded-sm group-hover:bg-stone-200 transition-colors">

@@ -79,7 +79,7 @@ export default function NeighborhoodMap({ center, pois }: NeighborhoodMapProps) 
     }
 
     // Icons
-    const homeIcon = createCustomIcon(<Building size={18} color="white" />, '#e76e50'); // Kadris Terracotta
+    const homeIcon = createCustomIcon(<Building size={18} color="white" />, '#e76e50'); // bricq Terracotta
 
     // Filter POIs to avoid overcrowding - prioritize supermarkets and key amenities
     const displayPois = pois.filter(p =>
@@ -125,7 +125,7 @@ export default function NeighborhoodMap({ center, pois }: NeighborhoodMapProps) 
             {/* Property Marker */}
             <Marker position={[center.lat, center.lon]} icon={homeIcon}>
                 <Popup>
-                    <div className="font-bold text-kadris-terracotta">Votre Bien</div>
+                    <div className="font-bold text-bricq-terracotta">Votre Bien</div>
                 </Popup>
             </Marker>
 

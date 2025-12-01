@@ -56,7 +56,7 @@ export default function DocumentsVault({ documents, onAddClick }: DocumentsVault
                         key={cat.id}
                         onClick={() => setActiveCategory(cat.id)}
                         className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide whitespace-nowrap transition-colors ${activeCategory === cat.id
-                            ? 'bg-kadris-terracotta text-white'
+                            ? 'bg-bricq-terracotta text-white'
                             : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                             }`}
                     >

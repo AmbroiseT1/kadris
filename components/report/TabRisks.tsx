@@ -21,14 +21,14 @@ export const TabRisks = ({ data }: { data: BuildingData | null }) => {
       <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
 
          {/* 1. HEADER & ACTION */}
-         <div className="bg-white p-8 rounded-2xl border border-kadris-slate/5 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+         <div className="bg-white p-8 rounded-2xl border border-bricq-slate/5 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
 
             <div className="flex-1">
                <div className="flex items-center gap-3 mb-2">
                   <div className="p-2 bg-orange-100 text-orange-700 rounded-lg">
                      <Shield size={24} />
                   </div>
-                  <h3 className="font-serif text-2xl font-bold text-kadris-slate">
+                  <h3 className="font-serif text-2xl font-bold text-bricq-slate">
                      État des Risques et Pollutions (ERP)
                   </h3>
                </div>
@@ -43,7 +43,7 @@ export const TabRisks = ({ data }: { data: BuildingData | null }) => {
                   href={pdf_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center justify-center gap-3 bg-kadris-slate hover:bg-kadris-terracotta text-white px-8 py-4 rounded-xl font-bold transition-all shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
+                  className="group flex items-center justify-center gap-3 bg-bricq-slate hover:bg-bricq-terracotta text-white px-8 py-4 rounded-xl font-bold transition-all shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
                >
                   <Download size={20} className="group-hover:scale-110 transition-transform" />
                   <span>Télécharger le PDF Officiel</span>

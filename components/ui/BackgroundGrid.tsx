@@ -4,7 +4,7 @@ export const BackgroundGrid: React.FC = () => {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
        {/* Base Tint */}
-       <div className="absolute inset-0 bg-kadris-cream"></div>
+       <div className="absolute inset-0 bg-bricq-cream"></div>
        
        {/* Grid Pattern */}
        <div className="absolute inset-0 opacity-[0.03]" 
@@ -15,8 +15,8 @@ export const BackgroundGrid: React.FC = () => {
        </div>
 
        {/* Soft Gradients */}
-       <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-kadris-terracotta/5 rounded-full blur-[120px]"></div>
-       <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-kadris-sage/10 rounded-full blur-[100px]"></div>
+       <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-bricq-terracotta/5 rounded-full blur-[120px]"></div>
+       <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-bricq-sage/10 rounded-full blur-[100px]"></div>
 
        {/* Sharp Geometric Accent Lines */}
        {/* On définit une boite de 100x100 unités, et on dessine dedans */}

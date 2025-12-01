@@ -99,7 +99,7 @@ const PrescriptionCard = ({ item }: { item: PrescriptionItem }) => {
 // --- COMPOSANT PRINCIPAL ---
 
 export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
-   if (!data?.urbanisme) return <div className="p-8 text-center text-kadris-slate/50">Chargement des règles d'urbanisme...</div>;
+   if (!data?.urbanisme) return <div className="p-8 text-center text-bricq-slate/50">Chargement des règles d'urbanisme...</div>;
 
    const u = data.urbanisme as UrbanismeData;
    const zone = u.zonage;
@@ -114,25 +114,25 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
 
             {/* Zone PLU */}
             <div className="lg:col-span-2 bg-white border border-stone-200 rounded-sm p-5">
-               <h3 className="font-serif text-lg font-bold text-kadris-slate mb-4 border-b border-stone-100 pb-2 flex items-center gap-2">
-                  <Scroll size={20} className="text-kadris-terracotta" /> Zonage Réglementaire
+               <h3 className="font-serif text-lg font-bold text-bricq-slate mb-4 border-b border-stone-100 pb-2 flex items-center gap-2">
+                  <Scroll size={20} className="text-bricq-terracotta" /> Zonage Réglementaire
                </h3>
 
                {zone ? (
                   <div className="space-y-4">
-                     <div className="flex items-start gap-4 p-4 bg-kadris-cream/30 rounded-sm border border-kadris-slate/10">
+                     <div className="flex items-start gap-4 p-4 bg-bricq-cream/30 rounded-sm border border-bricq-slate/10">
                         <div className={`text-3xl font-black px-4 py-3 rounded-sm border-2 ${zone.is_constructible ? 'text-blue-600 border-blue-200 bg-blue-50' : 'text-red-600 border-red-200 bg-red-50'}`}>
                            {zone.code}
                         </div>
                         <div className="flex-1">
-                           <div className="font-bold text-kadris-slate text-lg leading-tight">{zone.libelle}</div>
+                           <div className="font-bold text-bricq-slate text-lg leading-tight">{zone.libelle}</div>
                            <div className="flex items-center gap-2 mt-2">
                               {zone.is_constructible ? (
                                  <span className="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-sm flex items-center gap-1 border border-blue-200"><CheckCircle size={10} /> Constructible</span>
                               ) : (
                                  <span className="text-xs font-bold bg-red-100 text-red-800 px-2 py-0.5 rounded-sm flex items-center gap-1 border border-red-200"><Ban size={10} /> Restreint</span>
                               )}
-                              <span className="text-xs text-kadris-slate/50 border-l border-kadris-slate/20 pl-2 font-mono">Type : {zone.type}</span>
+                              <span className="text-xs text-bricq-slate/50 border-l border-bricq-slate/20 pl-2 font-mono">Type : {zone.type}</span>
                            </div>
                         </div>
                      </div>
@@ -148,7 +148,7 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
             </div>
 
             {/* Document Officiel */}
-            <div className="bg-kadris-slate text-white p-6 rounded-sm border border-kadris-slate flex flex-col justify-between">
+            <div className="bg-bricq-slate text-white p-6 rounded-sm border border-bricq-slate flex flex-col justify-between">
                <div>
                   <h4 className="font-bold text-lg mb-2 flex items-center gap-2 font-serif">
                      <FileDown size={18} /> Document Officiel
@@ -166,7 +166,7 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
                      href={zone.url_doc}
                      target="_blank"
                      rel="noopener noreferrer"
-                     className="group flex items-center justify-center gap-2 w-full bg-kadris-terracotta hover:bg-[#A04530] text-white font-medium py-3 rounded-sm transition-colors text-sm"
+                     className="group flex items-center justify-center gap-2 w-full bg-bricq-terracotta hover:bg-[#A04530] text-white font-medium py-3 rounded-sm transition-colors text-sm"
                   >
                      <Download size={16} className="group-hover:scale-110 transition-transform" />
                      Télécharger le Règlement ({zone.code})
@@ -191,7 +191,7 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
                      href={doc.url_reglement}
                      target="_blank"
                      rel="noopener noreferrer"
-                     className="group flex items-center justify-center gap-2 w-full bg-kadris-terracotta hover:bg-[#A04530] text-white font-medium py-3 rounded-sm transition-colors text-sm"
+                     className="group flex items-center justify-center gap-2 w-full bg-bricq-terracotta hover:bg-[#A04530] text-white font-medium py-3 rounded-sm transition-colors text-sm"
                   >
                      <Download size={16} className="group-hover:scale-110 transition-transform" />
                      Consulter le Dossier Complet
@@ -211,7 +211,7 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
 
          {/* 2. CONTRAINTES & PRESCRIPTIONS */}
          <div className="bg-white border border-stone-200 rounded-sm p-5">
-            <h3 className="font-serif text-lg font-bold text-kadris-slate mb-6 border-b border-stone-100 pb-2 flex items-center gap-2">
+            <h3 className="font-serif text-lg font-bold text-bricq-slate mb-6 border-b border-stone-100 pb-2 flex items-center gap-2">
                <Building2 size={20} className="text-blue-600" /> Règles & Prescriptions Locales
             </h3>
 
@@ -228,7 +228,7 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
 
          {/* 3. SERVITUDES (SUP) */}
          <div className="bg-white border border-stone-200 rounded-sm p-5">
-            <h3 className="font-serif text-lg font-bold text-kadris-slate mb-6 border-b border-stone-100 pb-2 flex items-center gap-2">
+            <h3 className="font-serif text-lg font-bold text-bricq-slate mb-6 border-b border-stone-100 pb-2 flex items-center gap-2">
                <Landmark size={20} className="text-gray-600" /> Servitudes d'Utilité Publique (SUP)
             </h3>
             {u.servitudes.length > 0 ? (
@@ -256,7 +256,7 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
          {/* 4. RÉSEAUX & SANTÉ PUBLIQUE */}
          {data.eau_potable && (
             <div className="bg-white border border-stone-200 rounded-sm p-5">
-               <h3 className="font-serif text-lg font-bold text-kadris-slate mb-4 border-b border-stone-100 pb-2 flex items-center gap-2">
+               <h3 className="font-serif text-lg font-bold text-bricq-slate mb-4 border-b border-stone-100 pb-2 flex items-center gap-2">
                   <Droplets size={20} className="text-blue-500" /> Qualité de l'Eau Potable
                </h3>
 
@@ -287,7 +287,7 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
 
                {data.eau_potable.parametres_cles.length > 0 && (
                   <div>
-                     <h4 className="font-bold text-sm text-kadris-slate mb-3 uppercase tracking-wider opacity-70">Analyses Physico-Chimiques</h4>
+                     <h4 className="font-bold text-sm text-bricq-slate mb-3 uppercase tracking-wider opacity-70">Analyses Physico-Chimiques</h4>
                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
                         {data.eau_potable.parametres_cles.map((param, idx) => (
                            <div key={idx} className="p-3 rounded-sm border border-stone-100 bg-stone-50/50 flex flex-col items-center text-center">
@@ -312,7 +312,7 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
          {/* 5. CONNECTIVITÉ NUMÉRIQUE */}
          {data.connectivite && (
             <div className="bg-white border border-stone-200 rounded-sm p-5">
-               <h3 className="font-serif text-lg font-bold text-kadris-slate mb-6 border-b border-stone-100 pb-2 flex items-center gap-2">
+               <h3 className="font-serif text-lg font-bold text-bricq-slate mb-6 border-b border-stone-100 pb-2 flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-600"><path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" /></svg>
                   Connectivité & Réseaux Numériques
                </h3>

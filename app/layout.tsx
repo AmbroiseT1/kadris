@@ -15,7 +15,7 @@ const merriweather = Merriweather({
 });
 
 export const metadata: Metadata = {
-  title: "Kadris - L'histoire invisible de votre logement",
+  title: "bricq - L'histoire invisible de votre logement",
   description: "Passeport numérique immobilier et analyse de risques.",
 };
 
@@ -28,7 +28,7 @@ export default function RootLayout({
     <html lang="fr">
       {/* 👇 LA LIGNE MAGIQUE EST JUSTE EN DESSOUS */}
       <body
-        className={`${inter.variable} ${merriweather.variable} bg-kadris-cream text-kadris-slate font-sans antialiased`}
+        className={`${inter.variable} ${merriweather.variable} bg-bricq-cream text-bricq-slate font-sans antialiased`}
         suppressHydrationWarning={true}
       >
         {children}

@@ -10,7 +10,7 @@ export default function NotepadWidget() {
 
     // Load from local storage on mount
     useEffect(() => {
-        const savedNote = localStorage.getItem('kadris_user_notes');
+        const savedNote = localStorage.getItem('bricq_user_notes');
         if (savedNote) {
             setNote(savedNote);
         }
@@ -19,7 +19,7 @@ export default function NotepadWidget() {
     // Save to local storage whenever note changes
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            localStorage.setItem('kadris_user_notes', note);
+            localStorage.setItem('bricq_user_notes', note);
         }, 500); // Debounce save
         return () => clearTimeout(timeoutId);
     }, [note]);
@@ -27,7 +27,7 @@ export default function NotepadWidget() {
     const handleClear = () => {
         if (confirm("Voulez-vous vraiment effacer vos notes ?")) {
             setNote("");
-            localStorage.removeItem('kadris_user_notes');
+            localStorage.removeItem('bricq_user_notes');
         }
     };
 

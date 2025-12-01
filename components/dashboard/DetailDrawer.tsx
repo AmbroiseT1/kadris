@@ -8,6 +8,7 @@ import { TabSynthese } from "@/components/report/TabSynthese";
 import { TabQuartier } from "@/components/report/TabQuartier";
 import { TabRisks } from "@/components/report/TabRisks";
 import { TabDVF } from "@/components/report/TabDVF";
+import { TabAnalyse } from "@/components/report/TabAnalyse";
 import { TransactionDVF } from "@/app/lib/dvf";
 import TimelineFeed from "./widgets/TimelineFeed";
 import SmartActionPlan from "./widgets/SmartActionPlan";
@@ -76,6 +77,9 @@ export default function DetailDrawer({
             case "risks":
                 return <TabRisks data={data} />;
 
+            case "analyse":
+                return <TabAnalyse data={data} dvf={dvfData} />;
+
             case "documents":
                 return <DocumentsVault documents={documents} onAddClick={onAddDocument} />;
 
@@ -104,8 +108,9 @@ export default function DetailDrawer({
                                 category === "market" ? "Estimation" :
                                     category === "neighborhood" ? "Quartier" :
                                         category === "risks" ? "Risques" :
-                                            category === "documents" ? "Documents" :
-                                                "Vue d'ensemble"}
+                                            category === "analyse" ? "Analyse 360°" :
+                                                category === "documents" ? "Documents" :
+                                                    "Vue d'ensemble"}
                         </h2>
                         <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-full transition-colors">
                             <X size={20} />

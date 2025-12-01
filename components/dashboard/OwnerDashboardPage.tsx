@@ -164,8 +164,8 @@ export default function OwnerDashboardPage() {
             {isLoading && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-white">
                     <div className="text-center">
-                        <div className="w-16 h-16 border-4 border-kadris-terracotta border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-kadris-slate font-medium">Chargement de votre bien...</p>
+                        <div className="w-16 h-16 border-4 border-bricq-terracotta border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-bricq-slate font-medium">Chargement de votre bien...</p>
                     </div>
                 </div>
             )}
@@ -174,9 +174,9 @@ export default function OwnerDashboardPage() {
             {!isLoading && !propertyData && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-white">
                     <div className="text-center max-w-md px-6">
-                        <h2 className="text-2xl font-serif font-bold text-kadris-slate mb-4">Aucun bien revendiqué</h2>
-                        <p className="text-kadris-slate/60 mb-6">Vous n'avez pas encore revendiqué de propriété. Commencez par créer un compte propriétaire.</p>
-                        <Link href="/properties/add" className="inline-block px-6 py-3 bg-kadris-slate text-white font-bold uppercase tracking-wider hover:bg-kadris-slate/90 transition-colors">
+                        <h2 className="text-2xl font-serif font-bold text-bricq-slate mb-4">Aucun bien revendiqué</h2>
+                        <p className="text-bricq-slate/60 mb-6">Vous n'avez pas encore revendiqué de propriété. Commencez par créer un compte propriétaire.</p>
+                        <Link href="/properties/add" className="inline-block px-6 py-3 bg-bricq-slate text-white font-bold uppercase tracking-wider hover:bg-bricq-slate/90 transition-colors">
                             Revendiquer un bien
                         </Link>
                     </div>
@@ -203,8 +203,6 @@ export default function OwnerDashboardPage() {
                         activeId={isDrawerOpen ? activeCategory : ""}
                         onSelect={handleCategorySelect}
                     />
-
-                    {/* LAYER 3: Detail Drawer (Slide-in) */}
                     <DetailDrawer
                         isOpen={isDrawerOpen}
                         onClose={() => setIsDrawerOpen(false)}
@@ -244,10 +242,10 @@ export default function OwnerDashboardPage() {
                     {/* Header / Title Overlay */}
                     <div className="absolute top-6 left-6 right-6 z-10 flex items-center justify-between">
                         <Link href="/properties" className="group flex items-center gap-3">
-                            <img src="/kadris-logo.png" alt="Kadris Logo" className="w-12 h-12 object-contain mix-blend-multiply opacity-90" />
+                            <img src="/bricq-logo.png" alt="bricq Logo" className="w-12 h-12 object-contain mix-blend-multiply opacity-90" />
                             <div>
                                 <h1 className="text-3xl font-bold font-serif tracking-tighter text-black group-hover:opacity-70 transition-opacity">
-                                    Kadris
+                                    bricq
                                 </h1>
                                 <p className="font-mono text-[10px] tracking-[0.3em] mt-1 border-t border-black pt-1 inline-block group-hover:border-gray-400 transition-colors">
                                     ESPACE PROPRIÉTAIRE

@@ -74,24 +74,24 @@ export const AddressAutocomplete: React.FC<Props> = ({ onSelect }) => {
   return (
     <div ref={wrapperRef} className="relative w-full max-w-3xl mx-auto font-sans">
       {/* Barre de recherche - Style Sharp & Mineral */}
-      <div className="relative flex flex-col md:flex-row bg-white border-2 border-kadris-slate/10 focus-within:border-kadris-slate/30 transition-colors z-20">
+      <div className="relative flex flex-col md:flex-row bg-white border-2 border-bricq-slate/10 focus-within:border-bricq-slate/30 transition-colors z-20">
         <div className="flex-1 flex items-center px-4 py-4">
           {isLoading ? (
-            <Loader2 className="text-kadris-terracotta mr-4 animate-spin" size={20} />
+            <Loader2 className="text-bricq-terracotta mr-4 animate-spin" size={20} />
           ) : (
-            <Search className="text-kadris-slate/40 mr-4" size={20} />
+            <Search className="text-bricq-slate/40 mr-4" size={20} />
           )}
           <input
             type="text"
             placeholder="Entrez une adresse, une parcelle..."
-            className="w-full bg-transparent outline-none text-lg text-kadris-slate placeholder:text-kadris-slate/30 font-medium"
+            className="w-full bg-transparent outline-none text-lg text-bricq-slate placeholder:text-bricq-slate/30 font-medium"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => query.length >= 3 && setShowSuggestions(true)}
           />
         </div>
         <button
-          className="bg-kadris-terracotta hover:bg-[#A04530] text-white font-serif font-bold text-sm uppercase tracking-wider px-8 py-4 transition-all duration-300 flex items-center justify-center gap-2 md:border-l-2 md:border-white/10"
+          className="bg-bricq-terracotta hover:bg-[#A04530] text-white font-serif font-bold text-sm uppercase tracking-wider px-8 py-4 transition-all duration-300 flex items-center justify-center gap-2 md:border-l-2 md:border-white/10"
           onClick={() => console.log("Recherche manuelle déclenchée")}
         >
           Découvrir <ArrowRight size={16} />
@@ -100,23 +100,23 @@ export const AddressAutocomplete: React.FC<Props> = ({ onSelect }) => {
 
       {/* Liste des suggestions - Style Dossier */}
       {showSuggestions && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-kadris-slate/10 z-30 animate-in fade-in zoom-in-95 duration-100 shadow-none">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-bricq-slate/10 z-30 animate-in fade-in zoom-in-95 duration-100 shadow-none">
           <ul>
             {results.map((feature) => (
               <li
                 key={feature.properties.id}
                 onClick={() => handleSelect(feature)}
-                className="px-6 py-4 hover:bg-kadris-cream cursor-pointer border-b border-kadris-slate/5 last:border-0 transition-colors flex items-start gap-3 group"
+                className="px-6 py-4 hover:bg-bricq-cream cursor-pointer border-b border-bricq-slate/5 last:border-0 transition-colors flex items-start gap-3 group"
               >
-                <MapPin className="text-kadris-sage mt-1 flex-shrink-0 group-hover:text-kadris-terracotta transition-colors" size={16} />
+                <MapPin className="text-bricq-sage mt-1 flex-shrink-0 group-hover:text-bricq-terracotta transition-colors" size={16} />
                 <div className="text-left">
-                  <div className="font-bold text-kadris-slate text-sm">{feature.properties.label}</div>
-                  <div className="text-xs text-kadris-slate/50 font-mono mt-0.5">{feature.properties.context}</div>
+                  <div className="font-bold text-bricq-slate text-sm">{feature.properties.label}</div>
+                  <div className="text-xs text-bricq-slate/50 font-mono mt-0.5">{feature.properties.context}</div>
                 </div>
               </li>
             ))}
           </ul>
-          <div className="bg-kadris-cream/50 px-4 py-2 text-[10px] text-kadris-slate/30 text-center uppercase tracking-widest font-bold border-t border-kadris-slate/5">
+          <div className="bg-bricq-cream/50 px-4 py-2 text-[10px] text-bricq-slate/30 text-center uppercase tracking-widest font-bold border-t border-bricq-slate/5">
             Source : Base Adresse Nationale
           </div>
         </div>

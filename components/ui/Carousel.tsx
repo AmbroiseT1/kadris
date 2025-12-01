@@ -78,7 +78,7 @@ export const AppleCarousel = ({ items }: { items: any[] }) => {
         <button 
             onClick={() => scroll("left")} 
             disabled={!canScrollLeft}
-            className="bg-white/80 backdrop-blur p-3 rounded-full shadow-lg disabled:opacity-50 hover:bg-white text-kadris-slate"
+            className="bg-white/80 backdrop-blur p-3 rounded-full shadow-lg disabled:opacity-50 hover:bg-white text-bricq-slate"
         >
             <ArrowLeft size={20} />
         </button>
@@ -87,7 +87,7 @@ export const AppleCarousel = ({ items }: { items: any[] }) => {
         <button 
             onClick={() => scroll("right")} 
             disabled={!canScrollRight}
-            className="bg-white/80 backdrop-blur p-3 rounded-full shadow-lg disabled:opacity-50 hover:bg-white text-kadris-slate"
+            className="bg-white/80 backdrop-blur p-3 rounded-full shadow-lg disabled:opacity-50 hover:bg-white text-bricq-slate"
         >
             <ArrowRight size={20} />
         </button>

@@ -16,21 +16,21 @@ const AmenityDetailList = ({ title, data, icon: Icon }: { title: string, data: C
     if (!data || data.count === 0) return null; // N'affiche rien si la catégorie est vide
 
     return (
-        <div className="bg-white rounded-xl border border-kadris-slate/5 shadow-sm overflow-hidden">
-            <div className="p-4 bg-kadris-cream/70 border-b border-kadris-slate/5 flex justify-between items-center">
-                <h4 className="font-bold text-kadris-slate flex items-center gap-3">
-                    <Icon size={20} className="text-kadris-terracotta" />
+        <div className="bg-white rounded-xl border border-bricq-slate/5 shadow-sm overflow-hidden">
+            <div className="p-4 bg-bricq-cream/70 border-b border-bricq-slate/5 flex justify-between items-center">
+                <h4 className="font-bold text-bricq-slate flex items-center gap-3">
+                    <Icon size={20} className="text-bricq-terracotta" />
                     {title}
                 </h4>
-                <span className="bg-white border border-kadris-slate/10 text-kadris-slate text-xs font-bold px-3 py-1 rounded-full">
+                <span className="bg-white border border-bricq-slate/10 text-bricq-slate text-xs font-bold px-3 py-1 rounded-full">
                     {data.count} résultats
                 </span>
             </div>
 
             <div className="max-h-[300px] overflow-y-auto">
-                <ul className="divide-y divide-kadris-slate/5">
+                <ul className="divide-y divide-bricq-slate/5">
                     {data.items.map((item: AmenityItem, i: number) => (
-                        <li key={i} className="group hover:bg-kadris-cream/20 transition-colors">
+                        <li key={i} className="group hover:bg-bricq-cream/20 transition-colors">
                             <a
                                 href={`https://www.google.com/maps/search/?api=1&query=${item.lat},${item.lon}`}
                                 target="_blank"
@@ -38,15 +38,15 @@ const AmenityDetailList = ({ title, data, icon: Icon }: { title: string, data: C
                                 className="p-3 flex justify-between items-center w-full h-full"
                             >
                                 <div>
-                                    <div className="text-sm font-bold text-kadris-slate group-hover:text-kadris-terracotta transition-colors flex items-center gap-2">
+                                    <div className="text-sm font-bold text-bricq-slate group-hover:text-bricq-terracotta transition-colors flex items-center gap-2">
                                         {item.name}
                                         <ExternalLink size={10} className="opacity-0 group-hover:opacity-50 transition-opacity" />
                                     </div>
-                                    <div className="text-xs text-kadris-slate/50 capitalize">
+                                    <div className="text-xs text-bricq-slate/50 capitalize">
                                         {item.type.replace(/_/g, ' ')}
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1 text-xs font-bold text-kadris-sage bg-kadris-sage/10 px-2 py-1 rounded group-hover:bg-kadris-terracotta/10 group-hover:text-kadris-terracotta transition-colors">
+                                <div className="flex items-center gap-1 text-xs font-bold text-bricq-sage bg-bricq-sage/10 px-2 py-1 rounded group-hover:bg-bricq-terracotta/10 group-hover:text-bricq-terracotta transition-colors">
                                     <MapPin size={10} />
                                     {item.distance}m
                                 </div>
@@ -96,7 +96,7 @@ const NuisanceRow = ({ label, data, icon: Icon }: { label: string, data: Nuisanc
 
 
 export const TabQuartier = ({ data }: { data: BuildingData | null }) => {
-    if (!data?.quartier) return <div className="p-8 text-center text-kadris-slate/50">Chargement de l'analyse quartier...</div>;
+    if (!data?.quartier) return <div className="p-8 text-center text-bricq-slate/50">Chargement de l'analyse quartier...</div>;
 
     const q = data.quartier;
     if (!q.categories) return <div className="p-8 text-center bg-red-50 text-red-600 rounded-xl">Données incomplètes.</div>;
@@ -121,7 +121,7 @@ export const TabQuartier = ({ data }: { data: BuildingData | null }) => {
             <div className="space-y-6">
 
                 {/* CARTE INTERACTIVE */}
-                <div className="h-80 w-full rounded-xl border border-kadris-slate/10 shadow-sm overflow-hidden relative z-0">
+                <div className="h-80 w-full rounded-xl border border-bricq-slate/10 shadow-sm overflow-hidden relative z-0">
                     {data.coords ? (
                         <NeighborhoodMap center={data.coords} pois={allPois} />
                     ) : (
@@ -131,19 +131,19 @@ export const TabQuartier = ({ data }: { data: BuildingData | null }) => {
                     )}
                 </div>
 
-                {/* SCORE CALME KADRIS - Mis en avant */}
-                <div className="bg-white rounded-xl border border-kadris-slate/10 shadow-md p-6 relative overflow-hidden group">
+                {/* SCORE CALME bricq - Mis en avant */}
+                <div className="bg-white rounded-xl border border-bricq-slate/10 shadow-md p-6 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Volume2 size={100} className="text-kadris-terracotta" />
+                        <Volume2 size={100} className="text-bricq-terracotta" />
                     </div>
 
-                    <h3 className="font-serif text-xl font-bold text-kadris-slate mb-4 flex items-center gap-2 relative z-10">
-                        <Volume2 className="text-kadris-terracotta" /> Score Calme Kadris
+                    <h3 className="font-serif text-xl font-bold text-bricq-slate mb-4 flex items-center gap-2 relative z-10">
+                        <Volume2 className="text-bricq-terracotta" /> Score Calme bricq
                     </h3>
 
                     <div className="flex items-end gap-4 relative z-10">
-                        <div className="text-6xl font-black text-kadris-slate leading-none">
-                            {n.score_calme}<span className="text-2xl text-kadris-slate/40 font-medium">/100</span>
+                        <div className="text-6xl font-black text-bricq-slate leading-none">
+                            {n.score_calme}<span className="text-2xl text-bricq-slate/40 font-medium">/100</span>
                         </div>
                         <div className={`px-4 py-1.5 rounded-full text-sm font-bold mb-2 ${n.score_calme > 80 ? 'bg-green-100 text-green-800' :
                             n.score_calme > 50 ? 'bg-orange-100 text-orange-800' :
@@ -165,7 +165,7 @@ export const TabQuartier = ({ data }: { data: BuildingData | null }) => {
 
             {/* COLONNE DROITE : Commodités */}
             <div className="space-y-6 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
-                <h3 className="font-serif text-lg font-bold text-kadris-slate sticky top-0 bg-[#fdfbf7] z-10 py-2 border-b border-kadris-slate/10">
+                <h3 className="font-serif text-lg font-bold text-bricq-slate sticky top-0 bg-[#fdfbf7] z-10 py-2 border-b border-bricq-slate/10">
                     Commodités à proximité
                 </h3>
 

@@ -62,11 +62,11 @@ export default function ProfileDropdown() {
                         className="absolute right-0 top-full mt-2 w-64 bg-white border border-black/10 rounded-lg shadow-xl z-50 overflow-hidden"
                     >
                         {/* User Info Header */}
-                        <div className="px-4 py-3 border-b border-black/10 bg-kadris-sage/5">
-                            <p className="font-serif font-bold text-kadris-slate">
+                        <div className="px-4 py-3 border-b border-black/10 bg-bricq-sage/5">
+                            <p className="font-serif font-bold text-bricq-slate">
                                 {userProfile.firstName} {userProfile.lastName}
                             </p>
-                            <p className="text-xs text-kadris-slate/60 mt-0.5">{userProfile.email}</p>
+                            <p className="text-xs text-bricq-slate/60 mt-0.5">{userProfile.email}</p>
                         </div>
 
                         {/* Menu Items */}
@@ -74,7 +74,7 @@ export default function ProfileDropdown() {
                             <Link
                                 href="/profile"
                                 onClick={() => setIsOpen(false)}
-                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-kadris-slate hover:bg-kadris-sage/10 transition-colors"
+                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-bricq-slate hover:bg-bricq-sage/10 transition-colors"
                             >
                                 <Settings size={16} />
                                 <span>Mon Profil</span>

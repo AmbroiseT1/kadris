@@ -7,7 +7,8 @@ import {
     TrendingUp,
     HardHat,
     TriangleAlert,
-    FileText
+    FileText,
+    Sparkles
 } from "lucide-react";
 import { cn } from "../../app/lib/utils";
 
@@ -24,6 +25,7 @@ const NAV_ITEMS: NavItem[] = [
     { id: "market", label: "ESTIMATION", description: "Valeur & Marché", icon: TrendingUp },
     { id: "works", label: "TRAVAUX & CARNET", description: "Suivi & Entretien", icon: HardHat },
     { id: "risks", label: "RISQUES", description: "Aléas Naturels", icon: TriangleAlert },
+    { id: "analyse", label: "ANALYSE", description: "Vision 360°", icon: Sparkles },
     { id: "documents", label: "DOCUMENTS", description: "Actes & Factures", icon: FileText },
 ];
 

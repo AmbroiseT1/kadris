@@ -84,18 +84,18 @@ export const AddressAutocompleteSimple: React.FC<Props> = ({ onSelect }) => {
                 <input
                     type="text"
                     placeholder="Tapez une adresse..."
-                    className="w-full px-4 py-3 pr-20 bg-white border border-kadris-slate/20 rounded-sm focus:outline-none focus:border-kadris-terracotta transition-colors text-kadris-slate"
+                    className="w-full px-4 py-3 pr-20 bg-white border border-bricq-slate/20 rounded-sm focus:outline-none focus:border-bricq-terracotta transition-colors text-bricq-slate"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onFocus={() => query.length >= 3 && setShowSuggestions(true)}
                 />
                 <div className="absolute right-3 flex items-center gap-2">
-                    {isLoading && <Loader2 className="text-kadris-terracotta animate-spin" size={16} />}
+                    {isLoading && <Loader2 className="text-bricq-terracotta animate-spin" size={16} />}
                     {query && !isLoading && (
                         <button
                             type="button"
                             onClick={clearQuery}
-                            className="text-kadris-slate/40 hover:text-kadris-slate transition-colors"
+                            className="text-bricq-slate/40 hover:text-bricq-slate transition-colors"
                         >
                             <X size={16} />
                         </button>
@@ -105,18 +105,18 @@ export const AddressAutocompleteSimple: React.FC<Props> = ({ onSelect }) => {
 
             {/* Liste des suggestions */}
             {showSuggestions && results.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-kadris-slate/20 rounded-sm z-50 shadow-lg max-h-60 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-bricq-slate/20 rounded-sm z-50 shadow-lg max-h-60 overflow-y-auto">
                     <ul>
                         {results.map((feature) => (
                             <li
                                 key={feature.properties.id}
                                 onClick={() => handleSelect(feature)}
-                                className="px-4 py-3 hover:bg-kadris-cream cursor-pointer border-b border-kadris-slate/5 last:border-0 transition-colors flex items-start gap-3 group"
+                                className="px-4 py-3 hover:bg-bricq-cream cursor-pointer border-b border-bricq-slate/5 last:border-0 transition-colors flex items-start gap-3 group"
                             >
-                                <MapPin className="text-kadris-sage mt-0.5 flex-shrink-0 group-hover:text-kadris-terracotta transition-colors" size={14} />
+                                <MapPin className="text-bricq-sage mt-0.5 flex-shrink-0 group-hover:text-bricq-terracotta transition-colors" size={14} />
                                 <div className="text-left">
-                                    <div className="font-medium text-kadris-slate text-sm">{feature.properties.label}</div>
-                                    <div className="text-xs text-kadris-slate/50 mt-0.5">{feature.properties.context}</div>
+                                    <div className="font-medium text-bricq-slate text-sm">{feature.properties.label}</div>
+                                    <div className="text-xs text-bricq-slate/50 mt-0.5">{feature.properties.context}</div>
                                 </div>
                             </li>
                         ))}
