@@ -69,10 +69,10 @@ export default function RegisterPage() {
             <div className="hidden md:flex w-1/2 bg-bricq-terracotta text-white items-center justify-center p-12 relative overflow-hidden">
                 <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10"></div>
                 <div className="relative z-10 max-w-lg">
-                    <div className="flex items-center gap-3 mb-8">
+                    <Link href="/" className="flex items-center gap-3 mb-8 hover:opacity-80 transition-opacity cursor-pointer">
                         <img src="/bricq-logo.png" alt="bricq Logo" className="w-10 h-10 object-contain mix-blend-screen brightness-0 invert" />
                         <span className="text-3xl font-bold font-serif tracking-tighter">bricq</span>
-                    </div>
+                    </Link>
                     <h1 className="font-serif text-4xl font-bold mb-6 leading-tight">
                         Rejoignez la communauté des propriétaires éclairés.
                     </h1>
@@ -97,7 +97,7 @@ export default function RegisterPage() {
             <div className="flex-1 flex items-center justify-center p-6 md:p-12">
                 <div className="w-full max-w-md space-y-8">
                     <div className="text-center md:text-left">
-                        <Link href="/" className="md:hidden inline-flex items-center gap-2 mb-8">
+                        <Link href="/" className="inline-flex items-center gap-2 mb-8">
                             <img src="/bricq-logo.png" alt="bricq Logo" className="w-8 h-8 object-contain mix-blend-multiply" />
                             <span className="text-2xl font-bold font-serif tracking-tighter text-bricq-slate">bricq</span>
                         </Link>
