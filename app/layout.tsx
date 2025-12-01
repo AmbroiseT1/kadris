@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Merriweather } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
+import { AuthProvider } from "@/app/context/AuthContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,7 +32,9 @@ export default function RootLayout({
         className={`${inter.variable} ${merriweather.variable} bg-bricq-cream text-bricq-slate font-sans antialiased`}
         suppressHydrationWarning={true}
       >
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

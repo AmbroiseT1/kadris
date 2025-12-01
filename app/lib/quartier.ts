@@ -1,4 +1,4 @@
-// Fichier : lib/quartier.ts (FIXED: Type Explicite pour les fonctions internes)
+// Fichier : lib/quartier.ts
 
 // --- 1. DÉFINITION DES TYPES ---
 
@@ -30,7 +30,7 @@ export interface QuartierData {
     education: CategoryData;
     sante: CategoryData;
     alimentation: CategoryData;
-    restauration: CategoryData; // [NEW]
+    restauration: CategoryData;
     transport: CategoryData;
     loisirs: CategoryData;
     securite: CategoryData;
@@ -84,37 +84,11 @@ const WEIGHTS = {
 
 export async function fetchQuartier(lat: number, lon: number): Promise<QuartierData | null> {
   try {
-    const query = `
-      [out:json][timeout:25];
-      (
-        node["amenity"~"school|kindergarten|college|university"](around:1000, ${lat}, ${lon});
-        way["amenity"~"school|kindergarten|college|university"](around:1000, ${lat}, ${lon});
-        node["amenity"~"doctors|pharmacy|hospital|dentist"](around:1000, ${lat}, ${lon});
-        
-        node["shop"~"bakery|butcher|supermarket|convenience|greengrocer|seafood|cheese|pastry"](around:1000, ${lat}, ${lon});
-        way["shop"~"bakery|butcher|supermarket|convenience|greengrocer|seafood|cheese|pastry"](around:1000, ${lat}, ${lon});
-        
-        node["amenity"~"restaurant|cafe|fast_food|bar|pub"](around:1000, ${lat}, ${lon});
-        way["amenity"~"restaurant|cafe|fast_food|bar|pub"](around:1000, ${lat}, ${lon});
+    // [MODIFIED] Appel via le Proxy Backend pour le cache
+    // On utilise l'URL de l'API définie dans les variables d'environnement
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+    const url = `${apiUrl}/proxy/quartier?lat=${lat}&lon=${lon}`;
 
-        node["highway"="bus_stop"](around:1000, ${lat}, ${lon});
-        node["railway"~"station|tram_stop"](around:1000, ${lat}, ${lon});
-        node["leisure"~"park|garden|sports_centre"](around:1000, ${lat}, ${lon});
-        way["leisure"~"park|garden|sports_centre"](around:1000, ${lat}, ${lon});
-        node["amenity"~"library|cinema|theatre"](around:1000, ${lat}, ${lon});
-        node["amenity"~"police|fire_station"](around:1500, ${lat}, ${lon});
-        node["amenity"~"post_office|town_hall"](around:1000, ${lat}, ${lon});
-        
-        way["highway"~"motorway|trunk|primary|secondary|tertiary"](around:300, ${lat}, ${lon});
-        way["railway"="rail"](around:300, ${lat}, ${lon});
-        way["aeroway"~"aerodrome|runway"](around:3000, ${lat}, ${lon});
-        node["aeroway"~"aerodrome"](around:3000, ${lat}, ${lon});
-        way["landuse"="industrial"](around:500, ${lat}, ${lon});
-      );
-      out center; 
-    `;
-
-    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -135,7 +109,7 @@ export async function fetchQuartier(lat: number, lon: number): Promise<QuartierD
         distance: getDist(e),
         lat: e.lat || e.center?.lat,
         lon: e.lon || e.center?.lon
-      })).sort((a: AmenityItem, b: AmenityItem) => a.distance - b.distance); // <-- FIX: a and b sont typés
+      })).sort((a: AmenityItem, b: AmenityItem) => a.distance - b.distance);
 
       return {
         count: items.length,
@@ -207,7 +181,7 @@ export async function fetchQuartier(lat: number, lon: number): Promise<QuartierD
     const education = processCat((e: any) => e.tags.amenity && /school|kindergarten|college|university/.test(e.tags.amenity), 5);
     const sante = processCat((e: any) => e.tags.amenity && /doctors|pharmacy|hospital|dentist/.test(e.tags.amenity), 3);
     const alimentation = processCat((e: any) => e.tags.shop && /bakery|butcher|supermarket|convenience|greengrocer|seafood|cheese|pastry/.test(e.tags.shop), 5);
-    const restauration = processCat((e: any) => e.tags.amenity && /restaurant|cafe|fast_food|bar|pub/.test(e.tags.amenity), 10); // [NEW]
+    const restauration = processCat((e: any) => e.tags.amenity && /restaurant|cafe|fast_food|bar|pub/.test(e.tags.amenity), 10);
     const transport = processCat((e: any) => (e.tags.highway === 'bus_stop') || (e.tags.railway && /station|tram_stop/.test(e.tags.railway)), 5);
     const loisirs = processCat((e: any) => (e.tags.leisure && /park|garden|sports_centre/.test(e.tags.leisure)) || (e.tags.amenity && /library|cinema|theatre/.test(e.tags.amenity)), 4);
     const securite = processCat((e: any) => e.tags.amenity && /police|fire_station/.test(e.tags.amenity), 1);
@@ -225,7 +199,7 @@ export async function fetchQuartier(lat: number, lon: number): Promise<QuartierD
         education.score_norm * weights.education +
         sante.score_norm * weights.sante +
         alimentation.score_norm * weights.alimentation +
-        restauration.score_norm * weights.restauration + // [NEW]
+        restauration.score_norm * weights.restauration +
         transport.score_norm * weights.transport +
         loisirs.score_norm * weights.loisirs +
         securite.score_norm * weights.securite +
@@ -243,7 +217,7 @@ export async function fetchQuartier(lat: number, lon: number): Promise<QuartierD
 
     // Score Calme (100 - pénalités)
     let scoreCalme = 100;
-    if (autoroute.present) scoreCalme -= Math.max(0, 40 - (autoroute.distance / 10)); // -40 si 0m, -0 si 400m
+    if (autoroute.present) scoreCalme -= Math.max(0, 40 - (autoroute.distance / 10));
     if (ferre.present) scoreCalme -= Math.max(0, 30 - (ferre.distance / 10));
     if (aerien.present) scoreCalme -= Math.max(0, 20 - (aerien.distance / 200));
     if (industriel.present) scoreCalme -= Math.max(0, 20 - (industriel.distance / 20));

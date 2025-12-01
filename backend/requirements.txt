@@ -4,5 +4,10 @@ sqlalchemy
 psycopg2-binary
 geoalchemy2
 pydantic-settings
+pydantic[email]
 python-multipart
 google-generativeai
+passlib[argon2]
+diskcache
+httpx
+python-jose[cryptography]

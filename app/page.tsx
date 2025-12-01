@@ -3,7 +3,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import React, { useState } from 'react';
 import { Menu, X, Shield, CheckCircle, TrendingUp, ArrowRight, Compass, Map as MapIcon, HardHat, TriangleAlert, FileText } from 'lucide-react';
-import { getCurrentUser } from '@/utils/propertyStorage';
+import { useAuth } from '@/app/context/AuthContext';
+import ProfileDropdown from '@/components/ui/ProfileDropdown';
 
 // --- IMPORTS DES COMPOSANTS ---
 import { MapLayersViz, DataSynthesisCard } from '@/components/ui/Diagrams';
@@ -13,6 +14,7 @@ import ArchitecturalViewer from '@/components/dashboard/ArchitecturalViewer';
 
 export default function Home() {
   const router = useRouter();
+  const { isAuthenticated, user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleAddressSelect = (addressData: any) => {
@@ -22,9 +24,8 @@ export default function Home() {
   };
 
   const handleOwnerSpaceClick = () => {
-    const currentUser = getCurrentUser();
-    if (currentUser) {
-      router.push('/properties');
+    if (isAuthenticated) {
+      router.push('/dashboard');
     } else {
       router.push('/login');
     }
@@ -49,12 +50,24 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-bricq-slate" suppressHydrationWarning>
             <Link href="/how-it-works" className="hover:text-bricq-terracotta hover:underline decoration-2 underline-offset-4 transition-all">Comment ça marche</Link>
             <a href="#pricing" className="hover:text-bricq-terracotta hover:underline decoration-2 underline-offset-4 transition-all">Tarifs</a>
-            <Link href="/login" className="px-5 py-2 border border-bricq-slate/20 hover:bg-bricq-slate hover:text-white rounded-sm transition-colors">
-              Connexion
-            </Link>
-            <button onClick={handleOwnerSpaceClick} className="px-5 py-2 bg-bricq-slate text-white rounded-sm hover:bg-bricq-slate/90 transition-colors shadow-sm">
-              Espace Propriétaire
-            </button>
+
+            {isAuthenticated ? (
+              <div className="flex items-center gap-4">
+                <Link href="/dashboard" className="px-5 py-2 bg-bricq-slate text-white rounded-sm hover:bg-bricq-slate/90 transition-colors shadow-sm">
+                  Mon Tableau de Bord
+                </Link>
+                <ProfileDropdown />
+              </div>
+            ) : (
+              <>
+                <Link href="/login" className="px-5 py-2 border border-bricq-slate/20 hover:bg-bricq-slate hover:text-white rounded-sm transition-colors">
+                  Connexion
+                </Link>
+                <button onClick={handleOwnerSpaceClick} className="px-5 py-2 bg-bricq-slate text-white rounded-sm hover:bg-bricq-slate/90 transition-colors shadow-sm">
+                  Espace Propriétaire
+                </button>
+              </>
+            )}
           </div>
 
           {/* Bouton Menu Mobile */}
@@ -69,8 +82,17 @@ export default function Home() {
         <div className="fixed inset-0 z-40 bg-bricq-cream flex flex-col items-center justify-center gap-8 text-xl font-serif animate-fade-in">
           <Link href="/how-it-works" onClick={() => setMenuOpen(false)}>Comment ça marche</Link>
           <a href="#pricing" onClick={() => setMenuOpen(false)}>Tarifs</a>
-          <Link href="/login" onClick={() => setMenuOpen(false)}>Connexion</Link>
-          <button onClick={() => { setMenuOpen(false); handleOwnerSpaceClick(); }} className="px-6 py-3 bg-bricq-terracotta text-white rounded-sm">Espace Propriétaire</button>
+          {isAuthenticated ? (
+            <>
+              <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Mon Tableau de Bord</Link>
+              <button onClick={() => { setMenuOpen(false); /* logout logic here if needed or link to profile */ }} className="text-red-500">Déconnexion</button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" onClick={() => setMenuOpen(false)}>Connexion</Link>
+              <button onClick={() => { setMenuOpen(false); handleOwnerSpaceClick(); }} className="px-6 py-3 bg-bricq-terracotta text-white rounded-sm">Espace Propriétaire</button>
+            </>
+          )}
         </div>
       )}
 
