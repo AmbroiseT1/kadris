@@ -126,7 +126,7 @@ export default function RegisterPage() {
                                 )}
                             </div>
                             <div>
-                                <label htmlFor="password" class="block text-sm font-medium text-bricq-slate mb-1">
+                                <label htmlFor="password" className="block text-sm font-medium text-bricq-slate mb-1">
                                     Mot de passe
                                 </label>
                                 <input
@@ -142,7 +142,7 @@ export default function RegisterPage() {
                                 )}
                             </div>
                             <div>
-                                <label htmlFor="confirmPassword" class="block text-sm font-medium text-bricq-slate mb-1">
+                                <label htmlFor="confirmPassword" className="block text-sm font-medium text-bricq-slate mb-1">
                                     Confirmer le mot de passe
                                 </label>
                                 <input

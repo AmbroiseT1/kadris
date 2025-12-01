@@ -104,7 +104,7 @@ export default function LoginPage() {
                             </div>
                             <div>
                                 <div className="flex items-center justify-between mb-1">
-                                    <label htmlFor="password" class="block text-sm font-medium text-bricq-slate">
+                                    <label htmlFor="password" className="block text-sm font-medium text-bricq-slate">
                                         Mot de passe
                                     </label>
                                     <a href="#" className="text-xs font-medium text-bricq-terracotta hover:text-bricq-terracotta/80">

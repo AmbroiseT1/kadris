@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // On utilise la variable d'environnement ou une valeur par défaut pour le dev local
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+// On utilise la variable d'environnement ou une valeur par défaut pour le dev local
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
 
 export const api = axios.create({
     baseURL: API_URL,

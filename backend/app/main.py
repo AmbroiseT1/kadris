@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://SERVER_IP"], # Dev local + Prod VPS
+    allow_origins=["*"],  # Allow all origins for development - CHANGE IN PRODUCTION!
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
