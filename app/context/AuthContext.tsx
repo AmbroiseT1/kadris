@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Protection des routes (Client-Side)
     useEffect(() => {
         if (!isLoading) {
-            const isPublicRoute = publicRoutes.includes(pathname);
+            const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/report/');
             if (!user && !isPublicRoute) {
                 router.push('/login');
             } else if (user && pathname === '/login') {

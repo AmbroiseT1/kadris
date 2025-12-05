@@ -1,4 +1,10 @@
-// lib/dvf.ts
+import { api } from './api';
+import proj4 from 'proj4';
+import { reverseGeocode } from './ban';
+
+// Définition des projections
+const LAMBERT_93 = '+proj=lcc +lat_1=44 +lat_2=49 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';
+const WGS84 = 'EPSG:4326';
 
 export interface TransactionDVF {
   id_mutation: string;
@@ -38,102 +44,58 @@ const INFLATION_RATE = 0.025; // 2.5% par an en moyenne lissée
 
 export async function fetchDVF(lat: number, lon: number): Promise<TransactionDVF[]> {
   try {
-    const latFixed = lat.toFixed(6);
-    const lonFixed = lon.toFixed(6);
+    console.log(`[DVF] Fetching for ${lat}, ${lon} using new API`);
 
-    console.log(`[DVF] Fetching for ${latFixed}, ${lonFixed}`);
+    // Appel à la nouvelle API
+    // Note: L'API attend lat/lon en WGS84 (ce qu'on a en entrée)
+    const response = await api.get('/transactions/search', {
+      params: {
+        lat: lat,
+        lon: lon,
+        radius: 500, // Rayon par défaut
+        limit: 5000  // Limite par défaut
+      }
+    });
 
-    const url = `https://api.cquest.org/dvf?lat=${latFixed}&lon=${lonFixed}&dist=300`;
+    const data = response.data;
 
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.error(`[DVF] API Error: ${res.status}`);
+    if (!Array.isArray(data)) {
+      console.error('[DVF] Invalid data format received');
       return [];
     }
 
-    const data = await res.json();
-
-    if (!data.features) return [];
-
-    // 1. GROUPEMENT PAR MUTATION (Pour gérer les ventes en lots)
-    const mutationsMap = new Map<string, any>();
-
-    data.features.forEach((f: any) => {
-      const p = f.properties;
-
-      // Création d'un ID stable pour le regroupement si id_mutation est absent
-      // On utilise Date + Montant + Disposition (c'est la clé unique d'une vente DVF)
-      const idMutation = p.id_mutation || `${p.date_mutation}_${p.valeur_fonciere}_${p.numero_disposition}`;
-
-      if (!mutationsMap.has(idMutation)) {
-        mutationsMap.set(idMutation, {
-          id_mutation: idMutation,
-          date_mutation: p.date_mutation,
-          valeur_fonciere: p.valeur_fonciere,
-          adresse: `${p.numero_voie || ''} ${p.type_voie || ''} ${p.voie || ''}, ${p.code_postal || ''} ${p.commune || ''}`.replace(/\s+/g, ' ').trim(),
-          // On garde le premier numero_plan trouvé comme référence, mais on stockera tous les plans pour le calcul terrain
-          numero_plan: p.numero_plan,
-          coords: { lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0] },
-          lots: []
-        });
-      }
-
-      const mutation = mutationsMap.get(idMutation);
-
-      // Gestion de la typo potentielle dans l'API (surface_relle_bati vs surface_reelle_bati)
-      const surface = p.surface_reelle_bati || p.surface_relle_bati || 0;
-
-      mutation.lots.push({
-        type_local: p.type_local,
-        surface_bati: surface,
-        surface_terrain: p.surface_terrain || 0,
-        numero_plan: p.numero_plan // Important pour dédoublonner le terrain
-      });
-    });
-
-    // 2. TRANSFORMATION EN TRANSACTIONS UNIQUES
     const transactions: TransactionDVF[] = [];
 
-    mutationsMap.forEach((m) => {
-      // Filtres Qualité
-      if (!m.valeur_fonciere) return;
+    // Traitement des données
+    data.forEach((m: any) => {
+      // Filtres de base
+      if (!m.valeur_fonciere || !m.date_mutation) return;
 
-      // Calcul des surfaces totales de la mutation
-      const totalSurfaceBati = m.lots.reduce((acc: number, lot: any) => acc + lot.surface_bati, 0);
-
-      // Calcul intelligent de la surface terrain : Somme des surfaces des parcelles UNIQUES
-      // (Evite de compter 3x le terrain si 3 lots sont sur la même parcelle, mais additionne si plusieurs parcelles)
-      const uniqueParcels = new Set<string>();
-      let totalSurfaceTerrain = 0;
-
-      m.lots.forEach((lot: any) => {
-        if (lot.surface_terrain > 0) {
-          // Si on a un numero_plan, on l'utilise pour l'unicité
-          if (lot.numero_plan && !uniqueParcels.has(lot.numero_plan)) {
-            uniqueParcels.add(lot.numero_plan);
-            totalSurfaceTerrain += lot.surface_terrain;
-          }
-          // Fallback si pas de numero_plan (rare), on prend le max pour ne pas exploser le compteur
-          else if (!lot.numero_plan) {
-            totalSurfaceTerrain = Math.max(totalSurfaceTerrain, lot.surface_terrain);
-          }
+      // Conversion des coordonnées Lambert-93 vers WGS84
+      let coords = { lat: 0, lon: 0 };
+      if (m.latitude && m.longitude) {
+        try {
+          // proj4 prend [x, y] donc [longitude, latitude] pour Lambert
+          // et retourne [lon, lat] pour WGS84
+          const converted = proj4(LAMBERT_93, WGS84, [m.longitude, m.latitude]);
+          coords = { lat: converted[1], lon: converted[0] };
+        } catch (e) {
+          console.warn(`[DVF] Erreur conversion coordonnées pour mutation ${m.id_mutation}`, e);
         }
-      });
+      }
 
       // Détermination du type principal
-      const types = m.lots.map((l: any) => l.type_local);
-      // Hiérarchie : Maison > Appartement > Local > Dépendance
-      const mainType = types.includes('Maison') ? 'Maison' :
-        types.includes('Appartement') ? 'Appartement' :
-          types.includes('Local industriel. commercial ou assimilé') ? 'Local' :
-            types[0];
+      let mainType = 'Autre';
+      if (m.nombre_maisons > 0) mainType = 'Maison';
+      else if (m.nombre_appartements > 0) mainType = 'Appartement';
+      else if (m.nombre_locaux_activite > 0) mainType = 'Local';
+      else if (m.nombre_dependances > 0) mainType = 'Dépendance';
+      else if (m.surface_terrain > 0) mainType = 'Terrain';
 
       // Calcul Prix/m²
-      // Si c'est un terrain nu (Bati = 0), on met 0 pour l'instant (sera affiché N/A)
-      // On ne mélange pas prix m² bati et prix m² terrain dans la même colonne
       let prix_m2 = 0;
-      if (totalSurfaceBati > 0) {
-        prix_m2 = Math.round(m.valeur_fonciere / totalSurfaceBati);
+      if (m.surface_bati > 0) {
+        prix_m2 = Math.round(m.valeur_fonciere / m.surface_bati);
       }
 
       // Correction Inflation
@@ -143,24 +105,29 @@ export async function fetchDVF(lat: number, lon: number): Promise<TransactionDVF
       const adjustedValue = Math.round(m.valeur_fonciere * Math.pow(1 + INFLATION_RATE, yearsDiff));
 
       transactions.push({
-        id_mutation: m.id_mutation,
+        id_mutation: m.id_mutation.toString(),
         date_mutation: m.date_mutation,
         valeur_fonciere: m.valeur_fonciere,
         valeur_fonciere_corrigee: adjustedValue,
         type_local: mainType,
-        surface_reelle_bati: totalSurfaceBati,
-        surface_terrain: totalSurfaceTerrain,
+        surface_reelle_bati: m.surface_bati,
+        surface_terrain: m.surface_terrain,
         prix_m2: prix_m2,
-        adresse: m.adresse,
-        numero_plan: m.numero_plan,
-        coords: m.coords
+        adresse: 'Adresse non fournie par API', // L'API ne retourne pas encore l'adresse
+        numero_plan: undefined, // Pas de plan dans la nouvelle API pour l'instant
+        coords: coords
       });
     });
 
-    // 3. POST-TRAITEMENT AVANCÉ
+    // 3. POST-TRAITEMENT AVANCÉ (Similaire à l'ancien, adapté aux nouvelles données)
 
     // A. Calcul Distance & Sniper
     const transactionsWithDist = transactions.map((t) => {
+      // Si pas de coords valides, distance infinie
+      if (t.coords.lat === 0 && t.coords.lon === 0) {
+        return { ...t, distance: 9999, is_target: false };
+      }
+
       const dist = getDistanceFromLatLonInM(lat, lon, t.coords.lat, t.coords.lon);
       return {
         ...t,
@@ -170,9 +137,13 @@ export async function fetchDVF(lat: number, lon: number): Promise<TransactionDVF
     });
 
     // B. Flip Radar
+    // Note: Sans adresse précise ni numero_plan, le regroupement est moins fiable.
+    // On va utiliser une clé basée sur les coordonnées approximatives (arrondies) pour tenter de grouper
     const historyMap = new Map<string, TransactionDVF[]>();
     transactionsWithDist.forEach(t => {
-      const key = t.numero_plan || t.adresse;
+      if (t.coords.lat === 0) return;
+      // Clé de regroupement : lat_lon (arrondi à 4 décimales ~11m)
+      const key = `${t.coords.lat.toFixed(4)}_${t.coords.lon.toFixed(4)}`;
       if (!historyMap.has(key)) historyMap.set(key, []);
       historyMap.get(key)?.push(t);
     });
@@ -184,6 +155,8 @@ export async function fetchDVF(lat: number, lon: number): Promise<TransactionDVF
           const recent = sales[i];
           const old = sales[i + 1];
           const monthsDiff = (new Date(recent.date_mutation).getTime() - new Date(old.date_mutation).getTime()) / (1000 * 60 * 60 * 24 * 30);
+
+          // Détection Flip : Revente entre 1 et 36 mois avec plus-value
           if (monthsDiff < 36 && monthsDiff > 1 && recent.valeur_fonciere > old.valeur_fonciere) {
             recent.is_flip = true;
             recent.flip_details = {
@@ -198,11 +171,27 @@ export async function fetchDVF(lat: number, lon: number): Promise<TransactionDVF
     });
 
     // Tri final
-    return transactionsWithDist.sort((a, b) => {
+    const sortedTransactions = transactionsWithDist.sort((a, b) => {
       if (a.is_target && !b.is_target) return -1;
       if (!a.is_target && b.is_target) return 1;
       return new Date(b.date_mutation).getTime() - new Date(a.date_mutation).getTime();
     });
+
+    // 4. [NEW] Enrichissement d'adresse via BAN (Reverse Geocoding)
+    // On limite aux 20 premiers pour ne pas exploser le rate limit de l'API BAN
+    const transactionsToGeocode = sortedTransactions.slice(0, 20);
+
+    // On lance les requêtes en parallèle
+    await Promise.all(transactionsToGeocode.map(async (t) => {
+      if (t.coords.lat && t.coords.lon) {
+        const address = await reverseGeocode(t.coords.lat, t.coords.lon);
+        if (address) {
+          t.adresse = address;
+        }
+      }
+    }));
+
+    return sortedTransactions;
 
   } catch (error) {
     console.error("Erreur DVF:", error);

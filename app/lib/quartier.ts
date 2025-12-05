@@ -84,12 +84,47 @@ const WEIGHTS = {
 
 export async function fetchQuartier(lat: number, lon: number): Promise<QuartierData | null> {
   try {
-    // [MODIFIED] Appel via le Proxy Backend pour le cache
-    // On utilise l'URL de l'API définie dans les variables d'environnement
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-    const url = `${apiUrl}/proxy/quartier?lat=${lat}&lon=${lon}`;
+    // [MODIFIED] Appel direct à l'API Overpass (OpenStreetMap)
+    // On contourne le backend pour cette fonctionnalité spécifique comme demandé.
+    const overpassUrl = "https://overpass-api.de/api/interpreter";
+    const query = `
+      [out:json][timeout:25];
+      (
+        node["amenity"~"school|kindergarten|college|university"](around:1000, ${lat}, ${lon});
+        way["amenity"~"school|kindergarten|college|university"](around:1000, ${lat}, ${lon});
+        node["amenity"~"doctors|pharmacy|hospital|dentist"](around:1000, ${lat}, ${lon});
+        
+        node["shop"~"bakery|butcher|supermarket|convenience|greengrocer|seafood|cheese|pastry"](around:1000, ${lat}, ${lon});
+        way["shop"~"bakery|butcher|supermarket|convenience|greengrocer|seafood|cheese|pastry"](around:1000, ${lat}, ${lon});
+        
+        node["amenity"~"restaurant|cafe|fast_food|bar|pub"](around:1000, ${lat}, ${lon});
+        way["amenity"~"restaurant|cafe|fast_food|bar|pub"](around:1000, ${lat}, ${lon});
 
-    const res = await fetch(url);
+        node["highway"="bus_stop"](around:1000, ${lat}, ${lon});
+        node["railway"~"station|tram_stop"](around:1000, ${lat}, ${lon});
+        node["leisure"~"park|garden|sports_centre"](around:1000, ${lat}, ${lon});
+        way["leisure"~"park|garden|sports_centre"](around:1000, ${lat}, ${lon});
+        node["amenity"~"library|cinema|theatre"](around:1000, ${lat}, ${lon});
+        node["amenity"~"police|fire_station"](around:1500, ${lat}, ${lon});
+        node["amenity"~"post_office|town_hall"](around:1000, ${lat}, ${lon});
+        
+        way["highway"~"motorway|trunk|primary|secondary|tertiary"](around:300, ${lat}, ${lon});
+        way["railway"="rail"](around:300, ${lat}, ${lon});
+        way["aeroway"~"aerodrome|runway"](around:3000, ${lat}, ${lon});
+        node["aeroway"~"aerodrome"](around:3000, ${lat}, ${lon});
+        way["landuse"="industrial"](around:500, ${lat}, ${lon});
+      );
+      out center;
+    `;
+
+    const res = await fetch(overpassUrl, {
+      method: 'POST',
+      body: `data=${encodeURIComponent(query)}`,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+
     if (!res.ok) return null;
     const data = await res.json();
     const elements = data.elements || [];
