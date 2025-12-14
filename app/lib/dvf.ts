@@ -199,6 +199,26 @@ export async function fetchDVF(lat: number, lon: number): Promise<TransactionDVF
   }
 }
 
+export interface BackendMarketStats {
+  prix_moyen_m2: number;
+  prix_median_m2: number;
+  nombre_transactions: number;
+  prix_min_m2: number;
+  prix_max_m2: number;
+}
+
+export async function fetchMarketStats(lat: number, lon: number, radius: number = 500): Promise<BackendMarketStats | null> {
+  try {
+    const response = await api.get('/stats/market', {
+      params: { lat, lon, radius }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Erreur fetchMarketStats:", error);
+    return null;
+  }
+}
+
 export function calculateMarketStats(transactions: TransactionDVF[], typeFilter?: string): MarketStats {
   // On filtre les transactions selon le type SI demandé
   // ET on exclut celles qui n'ont pas de prix au m² (donc pas de surface batie)

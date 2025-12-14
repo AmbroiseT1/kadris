@@ -33,10 +33,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const fetchUser = async () => {
         try {
+            const token = localStorage.getItem('token');
+            console.log("AuthContext: Fetching user with token:", token ? token.substring(0, 20) + '...' : 'null');
             const response = await api.get('/users/me');
             setUser(response.data);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Erreur récupération user:", error);
+            if (error?.response?.status === 403) {
+                console.error("AuthContext: 403 Forbidden - Token invalide ou expiré");
+                console.error("Token utilisé:", localStorage.getItem('token'));
+            }
             logout();
         } finally {
             setIsLoading(false);
@@ -66,6 +72,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [user, isLoading, pathname, router]);
 
     const login = (token: string) => {
+        console.log("AuthContext: Login called with token:", token);
+        if (!token) {
+            console.error("AuthContext: Token vide !");
+            return;
+        }
         localStorage.setItem('token', token);
         // On recharge l'utilisateur immédiatement
         setIsLoading(true);

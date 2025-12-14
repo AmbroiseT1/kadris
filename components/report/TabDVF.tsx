@@ -1,20 +1,36 @@
 "use client";
 import React, { useMemo } from 'react';
 import { TrendingUp, Euro, Target, History, ArrowUpRight, ArrowDownRight, MapPin, ExternalLink, AlertTriangle, Activity, Layers, Info } from 'lucide-react';
-import { TransactionDVF, calculateMarketStats } from '@/app/lib/dvf';
+import { TransactionDVF, calculateMarketStats, BackendMarketStats } from '@/app/lib/dvf';
 
 interface TabDVFProps {
    transactions: TransactionDVF[];
    loading: boolean;
+   marketStats: BackendMarketStats | null;
    surface?: number; // Surface du bien actuel pour l'estimation
    surface_terrain?: number; // Surface terrain du bien actuel
 }
 
-export const TabDVF = ({ transactions, loading, surface, surface_terrain }: TabDVFProps) => {
+export const TabDVF = ({ transactions, loading, marketStats, surface, surface_terrain }: TabDVFProps) => {
 
    const stats = useMemo(() => {
-      return calculateMarketStats(transactions);
-   }, [transactions]);
+      // Si on a des stats venant du backend, on les mixe avec le client side pour les parties manquantes (comme la segmentation surface)
+      const clientStats = calculateMarketStats(transactions);
+
+      if (marketStats) {
+         return {
+            ...clientStats,
+            prix_moyen_m2: marketStats.prix_moyen_m2,
+            prix_min: marketStats.prix_min_m2,
+            prix_max: marketStats.prix_max_m2,
+            volume_ventes: marketStats.nombre_transactions,
+            // On peut aussi utiliser la médiane si on veut l'afficher qqpart
+            prix_median_m2: marketStats.prix_median_m2
+         };
+      }
+
+      return clientStats;
+   }, [transactions, marketStats]);
 
    const targetSale = useMemo(() => {
       return transactions.find(t => t.is_target);

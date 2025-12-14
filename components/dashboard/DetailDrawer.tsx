@@ -9,7 +9,7 @@ import { TabQuartier } from "@/components/report/TabQuartier";
 import { TabRisks } from "@/components/report/TabRisks";
 import { TabDVF } from "@/components/report/TabDVF";
 import { TabAnalyse } from "@/components/report/TabAnalyse";
-import { TransactionDVF } from "@/app/lib/dvf";
+import { TransactionDVF, BackendMarketStats } from "@/app/lib/dvf";
 import TimelineFeed from "./widgets/TimelineFeed";
 import SmartActionPlan from "./widgets/SmartActionPlan";
 import DocumentsVault from "./widgets/DocumentsVault";
@@ -25,6 +25,7 @@ interface DetailDrawerProps {
     onAddDocument: () => void;
     propertyData: any;
     dvfData: TransactionDVF[];
+    marketStats: BackendMarketStats | null;
     loadingDVF: boolean;
 }
 
@@ -39,6 +40,7 @@ export default function DetailDrawer({
     onAddDocument,
     propertyData,
     dvfData,
+    marketStats,
     loadingDVF
 }: DetailDrawerProps) {
     const data = propertyData || MOCK_BUILDING_DATA;
@@ -56,6 +58,7 @@ export default function DetailDrawer({
                     <TabDVF
                         transactions={dvfData}
                         loading={loadingDVF}
+                        marketStats={marketStats}
                         surface={data.surface_sol}
                         surface_terrain={data.surface_terrain}
                     />

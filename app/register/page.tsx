@@ -39,16 +39,28 @@ export default function RegisterPage() {
         try {
             // 1. Inscription
             await api.post('/auth/register', {
-                email: data.email,
+                email: data.email.trim(),
                 password: data.password,
             });
 
             // 2. Connexion automatique après inscription
-            const formData = new FormData();
-            formData.append('username', data.email);
-            formData.append('password', data.password);
+            const loginParams = new URLSearchParams();
+            loginParams.append('username', data.email.trim());
+            loginParams.append('password', data.password);
 
-            const loginResponse = await api.post('/auth/login', formData);
+            const loginResponse = await api.post('/auth/login', loginParams, {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+            console.log("RegisterPage: Login response:", loginResponse);
+            console.log("RegisterPage: Token received:", loginResponse.data?.access_token);
+
+            if (!loginResponse.data?.access_token) {
+                console.error("RegisterPage: No access token in response!");
+                throw new Error("Erreur technique: Token manquant après inscription.");
+            }
+
             login(loginResponse.data.access_token);
 
         } catch (err: any) {

@@ -12,7 +12,7 @@ import AddWorkModal from "./modals/AddWorkModal";
 import AddTaskModal from "./modals/AddTaskModal";
 import AddExpenseModal from "./modals/AddExpenseModal";
 import AddDocumentModal from "./modals/AddDocumentModal";
-import { fetchDVF, TransactionDVF } from "@/app/lib/dvf";
+import { fetchDVF, TransactionDVF, fetchMarketStats, BackendMarketStats } from "@/app/lib/dvf";
 import { fetchRisks } from "@/app/lib/georisques";
 import { fetchQuartier } from "@/app/lib/quartier";
 import NotepadWidget from "./widgets/NotepadWidget";
@@ -42,6 +42,7 @@ export default function OwnerDashboardPage() {
     const [propertyData, setPropertyData] = useState<PropertyData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [dvfData, setDvfData] = useState<TransactionDVF[]>([]);
+    const [marketStats, setMarketStats] = useState<BackendMarketStats | null>(null);
     const [loadingDVF, setLoadingDVF] = useState(false);
 
     // Mock Documents State
@@ -90,17 +91,19 @@ export default function OwnerDashboardPage() {
             if (selectedProperty?.coords) {
                 setLoadingDVF(true);
                 try {
-                    const [dvf, risques, quartier] = await Promise.all([
+                    const [dvf, risks, quartier, stats] = await Promise.all([
                         fetchDVF(selectedProperty.coords.lat, selectedProperty.coords.lon),
                         fetchRisks(selectedProperty.coords.lat, selectedProperty.coords.lon),
-                        fetchQuartier(selectedProperty.coords.lat, selectedProperty.coords.lon)
+                        fetchQuartier(selectedProperty.coords.lat, selectedProperty.coords.lon),
+                        fetchMarketStats(selectedProperty.coords.lat, selectedProperty.coords.lon)
                     ]);
 
                     setDvfData(dvf || []);
+                    setMarketStats(stats);
 
                     // Update property data with supplementary info
                     const updatedProperty = { ...selectedProperty };
-                    if (risques) updatedProperty.risques_detailles = risques;
+                    if (risks) updatedProperty.risques_detailles = risks;
                     if (quartier) updatedProperty.quartier = quartier;
 
                     setPropertyData(updatedProperty);
@@ -214,6 +217,7 @@ export default function OwnerDashboardPage() {
                         onAddDocument={() => setIsAddDocumentOpen(true)}
                         propertyData={propertyData}
                         dvfData={dvfData}
+                        marketStats={marketStats}
                         loadingDVF={loadingDVF}
                     />
 
