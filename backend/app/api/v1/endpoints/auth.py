@@ -23,10 +23,14 @@ def login_access_token(
     OAuth2 compatible token login, get an access token for future requests
     """
     email = form_data.username.strip().lower()
+    # Derrière un reverse proxy, request.client.host n'est la vraie IP que si uvicorn
+    # tourne avec --proxy-headers et FORWARDED_ALLOW_IPS (voir Dockerfile).
     client_ip = request.client.host if request.client else "unknown"
+    # Clé IP + compte : un attaquant ne bloque que ses propres essais, pas le compte de la victime
     limiter_key = f"{client_ip}:{email}"
+    ip_key = f"ip:{client_ip}"
 
-    if security.login_rate_limiter.is_blocked(limiter_key):
+    if security.login_rate_limiter.is_blocked(limiter_key) or security.ip_rate_limiter.is_blocked(ip_key):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Trop de tentatives. Réessayez dans quelques minutes.",
@@ -39,6 +43,7 @@ def login_access_token(
     )
     if not user or not password_ok or not user.is_active:
         security.login_rate_limiter.record_failure(limiter_key)
+        security.ip_rate_limiter.record_failure(ip_key)
         raise HTTPException(status_code=400, detail="Incorrect email or password")
 
     security.login_rate_limiter.reset(limiter_key)

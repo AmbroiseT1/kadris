@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     # Anti brute-force sur /auth/login
     LOGIN_MAX_ATTEMPTS: int = 5
     LOGIN_WINDOW_SECONDS: int = 300
+    LOGIN_MAX_ATTEMPTS_PER_IP: int = 30
 
     @field_validator("SECRET_KEY")
     @classmethod
@@ -46,5 +47,6 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"  # .env peut aussi contenir des variables lues par uvicorn ou Docker
 
 settings = Settings()

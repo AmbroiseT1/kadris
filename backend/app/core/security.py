@@ -57,3 +57,5 @@ class LoginRateLimiter:
 
 
 login_rate_limiter = LoginRateLimiter(settings.LOGIN_MAX_ATTEMPTS, settings.LOGIN_WINDOW_SECONDS)
+# Plafond par IP, tous comptes confondus, contre le test d'un mot de passe sur beaucoup d'emails
+ip_rate_limiter = LoginRateLimiter(settings.LOGIN_MAX_ATTEMPTS_PER_IP, settings.LOGIN_WINDOW_SECONDS)
