@@ -1,18 +1,24 @@
+import logging
 from fastapi import APIRouter, HTTPException, Query
 import httpx
 from diskcache import Cache
-import os
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 # Cache persistent sur le disque (dans le dossier .cache du backend)
 cache = Cache(".cache")
 
 @router.get("/quartier")
-async def proxy_quartier(lat: float, lon: float):
+async def proxy_quartier(
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180),
+):
     """
     Proxy pour l'API Overpass avec mise en cache (7 jours).
     """
+    # Arrondi (~10 m) : limite le nombre de clés de cache qu'un client peut créer
+    lat, lon = round(lat, 4), round(lon, 4)
     cache_key = f"quartier_{lat}_{lon}"
     
     # 1. Vérifier le cache
@@ -65,6 +71,8 @@ async def proxy_quartier(lat: float, lon: float):
             return data
             
     except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail=f"Overpass API Error: {e}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Proxy Error: {str(e)}")
+        logger.warning("Overpass API error: %s", e)
+        raise HTTPException(status_code=502, detail="Overpass API Error")
+    except Exception:
+        logger.exception("Proxy quartier error")
+        raise HTTPException(status_code=500, detail="Proxy Error")

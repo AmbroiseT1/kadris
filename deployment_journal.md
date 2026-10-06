@@ -42,7 +42,7 @@ services:
     environment:
       POSTGRES_DB: kadris_data
       POSTGRES_USER: kadris
-      POSTGRES_PASSWORD: ***REMOVED_DB_PASSWORD***
+      POSTGRES_PASSWORD: <MOT_DE_PASSE_POSTGRES>
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     ports:
@@ -78,7 +78,7 @@ services:
     networks:
       - kadris_network
     environment:
-      DATABASE_URL: postgresql://kadris:***REMOVED_DB_PASSWORD***@postgres/kadris_data
+      DATABASE_URL: postgresql://kadris:<MOT_DE_PASSE_POSTGRES>@postgres/kadris_data
     depends_on:
       postgres:
         condition: service_healthy
@@ -97,7 +97,7 @@ services:
     networks:
       - kadris_network
     environment:
-      DATABASE_URL: postgresql://kadris:***REMOVED_DB_PASSWORD***@postgres/kadris_data
+      DATABASE_URL: postgresql://kadris:<MOT_DE_PASSE_POSTGRES>@postgres/kadris_data
     depends_on:
       postgres:
         condition: service_healthy

@@ -3,7 +3,7 @@ import sys
 import os
 
 # Add the current directory (backend) to sys.path
-sys.path.append(os.path.join(os.getcwd(), 'backend'))
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -21,10 +21,10 @@ def list_users():
         users = db.query(User).all()
         print(f"Total users found: {len(users)}")
         print("-" * 50)
-        print(f"{'ID':<5} | {'Email':<30} | {'Active'}")
+        print(f"{'ID':<36} | {'Email':<30} | {'Active':<7} | {'Admin'}")
         print("-" * 50)
         for user in users:
-            print(f"{user.id:<5} | {user.email:<30} | {user.is_active}")
+            print(f"{user.id:<36} | {user.email:<30} | {str(user.is_active):<7} | {user.is_admin}")
     finally:
         db.close()
 

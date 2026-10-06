@@ -45,14 +45,11 @@ export default function LoginPage() {
                 }
             });
 
-            console.log("Login Success:", response.data);
             login(response.data.access_token);
         } catch (err: any) {
-            console.error("Login error object:", err);
-            console.error("Login error response:", err.response);
-            console.error("Login error data:", err.response?.data);
-
-            if (err.response?.status === 400 || err.response?.status === 401 || err.response?.status === 422) {
+            if (err.response?.status === 429) {
+                setError("Trop de tentatives. Réessayez dans quelques minutes.");
+            } else if (err.response?.status === 400 || err.response?.status === 401 || err.response?.status === 422) {
                 // Si le backend renvoie un detail précis, on l'affiche (utile pour debug)
                 const detail = err.response?.data?.detail;
                 if (detail) {

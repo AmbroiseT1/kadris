@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, FileText, X, Loader2, Sparkles } from 'lucide-react';
+import { api } from '@/app/lib/api';
 
 interface AddDocumentModalProps {
     isOpen: boolean;
@@ -29,16 +30,9 @@ export default function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumen
             const formData = new FormData();
             formData.append('file', file);
 
-            // Appel à l'API sur le VPS
-            const response = await fetch('http://SERVER_IP:8000/api/v1/documents/analyze', {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) throw new Error('Erreur analyse IA');
-
-            const data = await response.json();
-            console.log("IA Response:", data);
+            // Appel authentifié à l'API (URL via NEXT_PUBLIC_API_URL, token ajouté par l'intercepteur)
+            const response = await api.post('/documents/analyze', formData);
+            const data = response.data;
 
             // Mapping intelligent des données
             let newTitle = formData.title;

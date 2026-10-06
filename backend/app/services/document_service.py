@@ -1,8 +1,8 @@
 import base64
 import json
 import re
+import logging
 import google.generativeai as genai
-from fastapi import UploadFile
 from pydantic import TypeAdapter
 from app.core.config import settings
 from app.schemas.document import AnalyzedDocument, UnknownData
@@ -10,10 +10,10 @@ from app.schemas.document import AnalyzedDocument, UnknownData
 # Configuration de Google Gemini
 genai.configure(api_key=settings.GEMINI_API_KEY)
 
-async def analyze_document_with_ai(file: UploadFile) -> AnalyzedDocument:
-    # 1. Lecture du fichier
-    content = await file.read()
-    mime_type = file.content_type or "image/jpeg"
+logger = logging.getLogger(__name__)
+
+async def analyze_document_with_ai(content: bytes, mime_type: str) -> AnalyzedDocument:
+    # 1. Le fichier est déjà lu et validé (type, taille) par l'endpoint
 
     # 2. Choix du Modèle "Chirurgical"
     # On utilise gemini-2.0-flash comme demandé
@@ -126,6 +126,7 @@ async def analyze_document_with_ai(file: UploadFile) -> AnalyzedDocument:
 
     except json.JSONDecodeError:
         return UnknownData(summary="L'IA a renvoyé un format non-JSON. Impossible de lire les données.")
-    except Exception as e:
-        print(f"Erreur Gemini: {e}")
-        return UnknownData(summary=f"Erreur technique lors de l'analyse : {str(e)}")
+    except Exception:
+        # Le détail technique reste dans les logs serveur, pas dans la réponse client
+        logger.exception("Erreur lors de l'analyse Gemini")
+        return UnknownData(summary="Erreur technique lors de l'analyse du document.")

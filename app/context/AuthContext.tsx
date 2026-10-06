@@ -3,11 +3,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { api } from '@/app/lib/api';
+import { setCurrentUser, clearCurrentUser } from '@/utils/propertyStorage';
 
 interface User {
     id: string;
     email: string;
     is_active: boolean;
+    is_admin: boolean;
     created_at: string;
     // Ajoute ici d'autres champs si nécessaire (ex: properties)
 }
@@ -33,16 +35,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const fetchUser = async () => {
         try {
-            const token = localStorage.getItem('token');
-            console.log("AuthContext: Fetching user with token:", token ? token.substring(0, 20) + '...' : 'null');
             const response = await api.get('/users/me');
             setUser(response.data);
+            // Le tableau de bord lit les biens de l'utilisateur via cette clé
+            setCurrentUser(response.data.email);
         } catch (error: any) {
-            console.error("Erreur récupération user:", error);
-            if (error?.response?.status === 403) {
-                console.error("AuthContext: 403 Forbidden - Token invalide ou expiré");
-                console.error("Token utilisé:", localStorage.getItem('token'));
-            }
+            console.error("Erreur récupération user:", error?.response?.status);
             logout();
         } finally {
             setIsLoading(false);
@@ -72,7 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [user, isLoading, pathname, router]);
 
     const login = (token: string) => {
-        console.log("AuthContext: Login called with token:", token);
         if (!token) {
             console.error("AuthContext: Token vide !");
             return;
@@ -86,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = () => {
         localStorage.removeItem('token');
+        clearCurrentUser();
         setUser(null);
         router.push('/login');
     };

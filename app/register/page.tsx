@@ -11,7 +11,7 @@ import { ArrowRight, Loader2, Check } from 'lucide-react';
 
 const registerSchema = z.object({
     email: z.string().email("Email invalide"),
-    password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+    password: z.string().min(10, "Le mot de passe doit contenir au moins 10 caractères"),
     confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Les mots de passe ne correspondent pas",

@@ -1,31 +1,51 @@
+import logging
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.router import api_router
+from app.db.session import engine, SessionLocal
+from app.db.base_class import Base
+from app.db.models import user  # Import pour que Base connaisse le modèle User
+from app.db.init_db import ensure_user_columns, upsert_admin
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-from fastapi.middleware.cors import CORSMiddleware
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for development - CHANGE IN PRODUCTION!
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.cors_origins_list,
+    allow_credentials=False,  # Auth par header Bearer, pas de cookies
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
+
+@app.middleware("http")
+async def security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    return response
 
 # Inclusion des routes
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 # Création des tables au démarrage (Simple pour le MVP)
-from app.db.session import engine
-from app.db.base_class import Base
-from app.db.models import user  # Import pour que Base connaisse le modèle User
-
 Base.metadata.create_all(bind=engine)
+ensure_user_columns(engine)
+
+# Compte admin depuis l'environnement (ADMIN_EMAIL + ADMIN_PASSWORD), jamais en dur dans le code
+if settings.ADMIN_EMAIL and settings.ADMIN_PASSWORD:
+    _db = SessionLocal()
+    try:
+        upsert_admin(_db, settings.ADMIN_EMAIL, settings.ADMIN_PASSWORD)
+        logger.info("Compte admin synchronisé : %s", settings.ADMIN_EMAIL)
+    finally:
+        _db.close()
 
 @app.get("/")
 def root():
