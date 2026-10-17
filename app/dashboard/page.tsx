@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import OwnerDashboardPage from "@/components/dashboard/OwnerDashboardPage";
 
 export default function Page() {
-    return <OwnerDashboardPage />;
+    return (
+        <Suspense fallback={null}>
+            <OwnerDashboardPage />
+        </Suspense>
+    );
 }
