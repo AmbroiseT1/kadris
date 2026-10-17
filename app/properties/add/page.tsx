@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Upload, CheckCircle, Loader2, Shield, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { AddressAutocompleteSimple } from '@/components/ui/AddressAutocompleteSimple';
-import { getCurrentUser, isAdminUser, addPropertyToCurrentUser } from '@/utils/propertyStorage';
+import { useAuth } from '@/app/context/AuthContext';
+import { apiErrorMessage, propertiesApi } from '@/app/lib/api';
 import { fetchRnbBuilding } from '@/app/lib/rnb';
 
 interface AddressData {
@@ -14,6 +15,7 @@ interface AddressData {
     coordinates: [number, number];
     city: string;
     postcode: string;
+    citycode?: string;
     context: string;
 }
 
@@ -40,20 +42,11 @@ export default function AddPropertyPage() {
     const [selectedAddress, setSelectedAddress] = useState<AddressData | null>(null);
     const [buildingData, setBuildingData] = useState<BuildingData | null>(null);
     const [isFetchingBuilding, setIsFetchingBuilding] = useState(false);
-    const [currentUser, setCurrentUser] = useState<string | null>(null);
-    const [isAdmin, setIsAdmin] = useState(false);
-
-    useEffect(() => {
-        // Check authentication on mount
-        const user = getCurrentUser();
-        if (!user) {
-            // No user logged in, redirect to login
-            router.push('/login');
-            return;
-        }
-        setCurrentUser(user);
-        setIsAdmin(isAdminUser());
-    }, [router]);
+    const [submitError, setSubmitError] = useState<string | null>(null);
+    // Indicatif pour l'interface (is_admin de /users/me) : l'API exige elle-même le
+    // justificatif pour tout compte non administrateur.
+    // La redirection des visiteurs non connectés vers /login est faite par AuthContext.
+    const { isAdmin } = useAuth();
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -67,6 +60,7 @@ export default function AddPropertyPage() {
             coordinates: feature.geometry.coordinates,
             city: feature.properties.city,
             postcode: feature.properties.postcode,
+            citycode: feature.properties.citycode,
             context: feature.properties.context,
         };
         setSelectedAddress(addressData);
@@ -105,36 +99,38 @@ export default function AddPropertyPage() {
                     setBuildingData(buildingInfo);
                 }
             }
-        } catch (error) {
-            console.error("Error fetching building data:", error);
+        } catch {
+            // Données bâtiment indisponibles : le bien peut être ajouté sans elles
         } finally {
             setIsFetchingBuilding(false);
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedAddress || !buildingData) return;
-        if (!isAdmin && !file) return; // Require file upload for non-admin users
+        if (!selectedAddress) return;
+        if (!isAdmin && !file) return;
 
         setIsLoading(true);
-
-        // Create property object
-        const propertyId = Date.now().toString();
-        const newProperty = {
-            id: propertyId,
-            data: buildingData,
-            claimedAt: new Date().toISOString()
-        };
-
-        // Add to current user's properties
-        addPropertyToCurrentUser(newProperty);
-
-        setTimeout(() => {
+        setSubmitError(null);
+        const [lon, lat] = selectedAddress.coordinates;
+        try {
+            const property = await propertiesApi.create(
+                {
+                    address_label: buildingData?.adresse_ban || selectedAddress.label,
+                    cle_interop: buildingData?.cle_interop ?? null,
+                    lat,
+                    lon,
+                    code_insee: selectedAddress.citycode ?? null,
+                    building_data: buildingData ? { ...buildingData } : null,
+                },
+                file,
+            );
+            router.push(`/dashboard?propertyId=${encodeURIComponent(property.id)}`);
+        } catch (error) {
+            setSubmitError(apiErrorMessage(error, "Impossible d'ajouter ce bien. Veuillez réessayer."));
             setIsLoading(false);
-            // Redirect to the new property's dashboard
-            router.push(`/dashboard?propertyId=${propertyId}`);
-        }, 1000);
+        }
     };
 
     return (
@@ -160,8 +156,8 @@ export default function AddPropertyPage() {
                         <h1 className="font-serif text-4xl font-bold text-bricq-slate mb-4">Revendiquer un nouveau bien</h1>
                         <p className="text-bricq-slate/60 text-lg">
                             {isAdmin
-                                ? "En tant qu'admin, vous pouvez ajouter un bien simplement en saisissant son adresse."
-                                : "Renseignez l'adresse et le titre de propriété pour ajouter un nouveau bien à votre portefeuille."
+                                ? "En tant qu'administrateur, vous pouvez ajouter un bien simplement en saisissant son adresse."
+                                : "Renseignez l'adresse et un justificatif de propriété. Votre bien sera ensuite vérifié par notre équipe."
                             }
                         </p>
                     </div>
@@ -252,7 +248,7 @@ export default function AddPropertyPage() {
                                         type="file"
                                         id="title-upload"
                                         className="hidden"
-                                        accept=".pdf,.jpg,.png"
+                                        accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif"
                                         onChange={handleFileChange}
                                         required={!isAdmin}
                                     />
@@ -277,7 +273,7 @@ export default function AddPropertyPage() {
                                     </label>
                                 </div>
                                 <p className="mt-2 text-xs text-bricq-slate/50 flex items-center gap-1">
-                                    <Shield size={12} /> Vos documents sont chiffrés et traités confidentiellement.
+                                    <Shield size={12} /> Votre justificatif n'est visible que par vous et par l'équipe chargée de la vérification.
                                 </p>
                             </div>
                         )}
@@ -286,15 +282,21 @@ export default function AddPropertyPage() {
                         {isAdmin && (
                             <div className="p-4 bg-blue-50 border border-blue-200 rounded-sm">
                                 <p className="text-sm text-blue-800">
-                                    <strong>Mode développeur activé</strong> - Le titre de propriété n'est pas requis pour votre compte.
+                                    <strong>Compte administrateur</strong> - Le justificatif est facultatif et le bien est vérifié d'office.
                                 </p>
+                            </div>
+                        )}
+
+                        {submitError && (
+                            <div role="alert" className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-sm">
+                                {submitError}
                             </div>
                         )}
 
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            disabled={isLoading || !selectedAddress || !buildingData || (!isAdmin && !file)}
+                            disabled={isLoading || !selectedAddress || isFetchingBuilding || (!isAdmin && !file)}
                             className="w-full py-4 bg-bricq-slate text-white font-bold uppercase tracking-wider hover:bg-bricq-slate/90 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {isLoading ? <Loader2 className="animate-spin" size={20} /> : 'Ajouter ce bien'}

@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { api } from '@/app/lib/api';
-import { setCurrentUser, clearCurrentUser } from '@/utils/propertyStorage';
 
 interface User {
     id: string;
@@ -11,7 +10,6 @@ interface User {
     is_active: boolean;
     is_admin: boolean;
     created_at: string;
-    // Ajoute ici d'autres champs si nécessaire (ex: properties)
 }
 
 interface AuthContextType {
@@ -20,6 +18,8 @@ interface AuthContextType {
     login: (token: string) => void;
     logout: () => void;
     isAuthenticated: boolean;
+    /** Indicatif pour l'interface : les droits admin sont toujours vérifiés par l'API. */
+    isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,10 +37,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const response = await api.get('/users/me');
             setUser(response.data);
-            // Le tableau de bord lit les biens de l'utilisateur via cette clé
-            setCurrentUser(response.data.email);
-        } catch (error: any) {
-            console.error("Erreur récupération user:", error?.response?.status);
+        } catch {
+            // Token invalide ou expiré : on repart déconnecté (rien n'est journalisé)
             logout();
         } finally {
             setIsLoading(false);
@@ -70,10 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [user, isLoading, pathname, router]);
 
     const login = (token: string) => {
-        if (!token) {
-            console.error("AuthContext: Token vide !");
-            return;
-        }
+        if (!token) return;
         localStorage.setItem('token', token);
         // On recharge l'utilisateur immédiatement
         setIsLoading(true);
@@ -83,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = () => {
         localStorage.removeItem('token');
-        clearCurrentUser();
+        localStorage.removeItem('currentUser'); // ancienne clé, plus utilisée
         setUser(null);
         router.push('/login');
     };
@@ -94,7 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isLoading,
             login,
             logout,
-            isAuthenticated: !!user
+            isAuthenticated: !!user,
+            isAdmin: !!user?.is_admin,
         }}>
             {children}
         </AuthContext.Provider>

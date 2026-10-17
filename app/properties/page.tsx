@@ -1,66 +1,159 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Building, MapPin, Calendar, Home, ArrowRight, Shield, AlertTriangle, Trash2, X } from 'lucide-react';
+import { Building, MapPin, Home, ArrowRight, AlertTriangle, Trash2, X, Upload, Loader2, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getCurrentUser, getCurrentUserProperties, removePropertyFromCurrentUser } from '@/utils/propertyStorage';
 import ProfileDropdown from '@/components/ui/ProfileDropdown';
+import OwnershipBadge from '@/components/dashboard/OwnershipBadge';
+import { useAuth } from '@/app/context/AuthContext';
+import { apiErrorMessage, propertiesApi, type Property } from '@/app/lib/api';
+import {
+    clearLegacyProperties, getLegacyProperties, legacyToPropertyFields, type LegacyProperty,
+} from '@/utils/propertyStorage';
 
-interface Property {
-    id: string;
-    data: {
-        adresse_ban: string;
-        annee_construction: string;
-        dpe_lettre: string;
-        surface_sol: number;
-        nb_logements: number;
-        usage: string;
-        rnb_id?: string;
+type BuildingSummary = {
+    annee_construction?: string;
+    dpe_lettre?: string;
+    surface_sol?: number;
+    nb_logements?: number;
+    usage?: string;
+    rnb_id?: string;
+};
+
+const summary = (p: Property): BuildingSummary => (p.building_data ?? {}) as BuildingSummary;
+const show = (v: unknown, suffix = '') => (v === undefined || v === null || v === '' ? '—' : `${v}${suffix}`);
+
+/** Import des biens enregistrés dans ce navigateur avant le stockage serveur. */
+function LegacyImport({ email, isAdmin, onImported }: { email: string; isAdmin: boolean; onImported: (p: Property) => void }) {
+    const [items, setItems] = useState<LegacyProperty[]>([]);
+    const [proofs, setProofs] = useState<Record<string, File | null>>({});
+    const [busy, setBusy] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => { setItems(getLegacyProperties(email)); }, [email]);
+
+    if (items.length === 0) return null;
+
+    const importOne = async (item: LegacyProperty) => {
+        setBusy(item.id);
+        setError(null);
+        try {
+            const created = await propertiesApi.create(legacyToPropertyFields(item), proofs[item.id] ?? null);
+            clearLegacyProperties(email, item.id);
+            setItems((prev) => prev.filter((i) => i.id !== item.id));
+            onImported(created);
+        } catch (e) {
+            setError(apiErrorMessage(e, "L'import a échoué."));
+        } finally {
+            setBusy(null);
+        }
     };
-    claimedAt: string;
+
+    const dismiss = () => {
+        if (window.confirm("Effacer de ce navigateur les biens non importés ?")) {
+            clearLegacyProperties(email);
+            setItems([]);
+        }
+    };
+
+    return (
+        <div className="mb-10 p-6 bg-amber-50 border border-amber-200 rounded-sm">
+            <h2 className="font-serif text-xl font-bold text-bricq-slate mb-1">Biens enregistrés sur cet appareil</h2>
+            <p className="text-sm text-bricq-slate/70 mb-4">
+                Ces biens n&apos;étaient sauvegardés que dans ce navigateur. Importez-les dans votre compte
+                {isAdmin ? '.' : ' en joignant un justificatif de propriété pour chacun.'}
+            </p>
+            <ul className="space-y-3">
+                {items.map((item) => (
+                    <li key={item.id} className="flex flex-wrap items-center gap-3 bg-white p-3 border border-amber-100">
+                        <MapPin size={16} className="text-bricq-terracotta" />
+                        <span className="flex-1 min-w-[200px] text-sm font-medium text-bricq-slate">{item.data.adresse_ban}</span>
+                        {!isAdmin && (
+                            <label className="text-xs flex items-center gap-1 cursor-pointer text-bricq-slate/70 hover:text-bricq-slate">
+                                <Upload size={14} />
+                                <span className="truncate max-w-[160px]">{proofs[item.id]?.name || 'Justificatif'}</span>
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif"
+                                    onChange={(e) => {
+                                        const f = e.target.files?.[0] ?? null;
+                                        setProofs((prev) => ({ ...prev, [item.id]: f }));
+                                    }}
+                                />
+                            </label>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => importOne(item)}
+                            disabled={busy !== null || (!isAdmin && !proofs[item.id])}
+                            className="px-3 py-1.5 text-xs font-bold uppercase bg-bricq-slate text-white disabled:opacity-50 flex items-center gap-1"
+                        >
+                            {busy === item.id && <Loader2 size={12} className="animate-spin" />}
+                            Importer
+                        </button>
+                    </li>
+                ))}
+            </ul>
+            {error && <p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}
+            <button type="button" onClick={dismiss} className="mt-4 text-xs underline text-bricq-slate/60 hover:text-bricq-slate">
+                Ne pas importer et effacer de ce navigateur
+            </button>
+        </div>
+    );
 }
 
 export default function PropertiesPage() {
     const router = useRouter();
+    const { user, isAdmin } = useAuth();
     const [properties, setProperties] = useState<Property[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [currentUser, setCurrentUser] = useState<string | null>(null);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const load = useCallback(async () => {
+        setIsLoading(true);
+        setLoadError(null);
+        try {
+            setProperties(await propertiesApi.list());
+        } catch (e) {
+            setLoadError(apiErrorMessage(e, "Impossible de charger vos biens."));
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        // La redirection des visiteurs non connectés est gérée par AuthContext
+        if (user) load();
+    }, [user, load]);
 
     const handleDeleteClick = (e: React.MouseEvent, propertyId: string) => {
         e.stopPropagation();
+        setDeleteError(null);
         setPropertyToDelete(propertyId);
     };
 
-    const confirmDelete = () => {
-        if (propertyToDelete) {
-            removePropertyFromCurrentUser(propertyToDelete);
-            setProperties(properties.filter(p => p.id !== propertyToDelete));
+    const confirmDelete = async () => {
+        if (!propertyToDelete) return;
+        setIsDeleting(true);
+        try {
+            await propertiesApi.remove(propertyToDelete);
+            setProperties((prev) => prev.filter((p) => p.id !== propertyToDelete));
             setPropertyToDelete(null);
+        } catch (e) {
+            setDeleteError(apiErrorMessage(e, "La suppression a échoué."));
+        } finally {
+            setIsDeleting(false);
         }
     };
 
-    useEffect(() => {
-        // Get current user
-        const user = getCurrentUser();
-        setCurrentUser(user);
-
-        if (!user) {
-            // No user logged in, redirect to login
-            router.push('/login');
-            return;
-        }
-
-        // Load properties for current user
-        const userProps = getCurrentUserProperties();
-        setProperties(userProps);
-        setIsLoading(false);
-    }, [router]);
-
     const handlePropertyClick = (propertyId: string) => {
-        router.push(`/dashboard?propertyId=${propertyId}`);
+        router.push(`/dashboard?propertyId=${encodeURIComponent(propertyId)}`);
     };
 
     if (isLoading) {
@@ -88,84 +181,112 @@ export default function PropertiesPage() {
             </header>
 
             <main className="max-w-6xl mx-auto">
-                <div className="mb-12">
-                    <h1 className="font-serif text-4xl font-bold text-bricq-slate mb-4">Mes Biens</h1>
-                    <p className="text-bricq-slate/60 text-lg">Sélectionnez le bien que vous souhaitez gérer.</p>
+                <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
+                    <div>
+                        <h1 className="font-serif text-4xl font-bold text-bricq-slate mb-4">Mes Biens</h1>
+                        <p className="text-bricq-slate/60 text-lg">Sélectionnez le bien que vous souhaitez gérer.</p>
+                    </div>
+                    {isAdmin && (
+                        <Link href="/properties/admin" className="flex items-center gap-2 text-sm font-bold text-bricq-slate border border-bricq-slate/20 px-4 py-2 hover:bg-bricq-slate/5">
+                            <ShieldCheck size={16} /> Vérifier les justificatifs
+                        </Link>
+                    )}
                 </div>
 
-                {properties.length === 0 ? (
+                {user && (
+                    <LegacyImport
+                        email={user.email}
+                        isAdmin={isAdmin}
+                        onImported={(p) => setProperties((prev) => [...prev, p])}
+                    />
+                )}
+
+                {loadError ? (
+                    <div role="alert" className="text-center py-16">
+                        <p className="text-red-700 mb-4">{loadError}</p>
+                        <button onClick={load} className="px-6 py-3 bg-bricq-slate text-white font-bold uppercase tracking-wider">
+                            Réessayer
+                        </button>
+                    </div>
+                ) : properties.length === 0 ? (
                     <div className="text-center py-16">
                         <Building size={64} className="mx-auto mb-6 text-bricq-slate/20" />
-                        <h2 className="font-serif text-2xl font-bold text-bricq-slate mb-4">Aucun bien revendiqué</h2>
-                        <p className="text-bricq-slate/60 mb-8">Commencez par revendiquer votre premier bien immobilier.</p>
-                        <Link href="/login" className="inline-block px-8 py-4 bg-bricq-slate text-white font-bold uppercase tracking-wider hover:bg-bricq-slate/90 transition-colors">
-                            Revendiquer un bien
+                        <h2 className="font-serif text-2xl font-bold text-bricq-slate mb-4">Ajoutez votre premier bien</h2>
+                        <p className="text-bricq-slate/60 mb-8">Revendiquez votre bien immobilier pour suivre ses travaux, charges et documents.</p>
+                        <Link href="/properties/add" className="inline-block px-8 py-4 bg-bricq-slate text-white font-bold uppercase tracking-wider hover:bg-bricq-slate/90 transition-colors">
+                            Ajouter un bien
                         </Link>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {properties.map((property, index) => (
-                            <motion.div
-                                key={property.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                onClick={() => handlePropertyClick(property.id)}
-                                className="group bg-white rounded-sm border border-bricq-slate/10 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                            >
-                                {/* Header */}
-                                <div className="p-6 bg-bricq-slate/5 border-b border-bricq-slate/10">
-                                    <div className="flex items-center gap-2 mb-2 justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Building size={20} className="text-bricq-terracotta" />
-                                            <h3 className="font-serif text-xl font-bold text-bricq-slate">{property.data.usage || 'Bien immobilier'}</h3>
+                        {properties.map((property, index) => {
+                            const b = summary(property);
+                            return (
+                                <motion.div
+                                    key={property.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    onClick={() => handlePropertyClick(property.id)}
+                                    className="group bg-white rounded-sm border border-bricq-slate/10 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                                >
+                                    {/* Header */}
+                                    <div className="p-6 bg-bricq-slate/5 border-b border-bricq-slate/10">
+                                        <div className="flex items-center gap-2 mb-2 justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Building size={20} className="text-bricq-terracotta" />
+                                                <h3 className="font-serif text-xl font-bold text-bricq-slate">{b.usage || 'Bien immobilier'}</h3>
+                                            </div>
+                                            <button
+                                                onClick={(e) => handleDeleteClick(e, property.id)}
+                                                className="text-bricq-slate/40 hover:text-red-500 transition-colors p-1"
+                                                title="Supprimer ce bien"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
                                         </div>
-                                        <button
-                                            onClick={(e) => handleDeleteClick(e, property.id)}
-                                            className="text-bricq-slate/40 hover:text-red-500 transition-colors p-1"
-                                            title="Supprimer ce bien"
-                                        >
-                                            <Trash2 size={18} />
+                                        <div className="flex items-start gap-2 text-bricq-slate/60 text-sm">
+                                            <MapPin size={16} className="mt-0.5 flex-shrink-0" />
+                                            <span>{property.address_label}</span>
+                                        </div>
+                                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                                            <OwnershipBadge status={property.ownership_status} comment={property.ownership_comment} />
+                                            {b.rnb_id && (
+                                                <span className="text-xs text-bricq-slate/50 font-mono bg-white/50 inline-block px-1.5 py-0.5 rounded border border-bricq-slate/5">
+                                                    RNB: {b.rnb_id}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Stats */}
+                                    <div className="p-6 space-y-3">
+                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <p className="text-bricq-slate/50 text-xs mb-1">Construction</p>
+                                                <p className="font-bold text-bricq-slate">{show(b.annee_construction)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-bricq-slate/50 text-xs mb-1">DPE</p>
+                                                <p className="font-bold text-bricq-slate text-2xl">{show(b.dpe_lettre)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-bricq-slate/50 text-xs mb-1">Surface</p>
+                                                <p className="font-bold text-bricq-slate">{show(b.surface_sol, ' m²')}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-bricq-slate/50 text-xs mb-1">Logements</p>
+                                                <p className="font-bold text-bricq-slate">{show(b.nb_logements)}</p>
+                                            </div>
+                                        </div>
+
+                                        <button className="w-full mt-4 py-3 bg-bricq-slate text-white font-bold uppercase tracking-wider text-sm flex items-center justify-center gap-2 hover:bg-bricq-slate/90 transition-colors">
+                                            Accéder au Dashboard <ArrowRight size={16} />
                                         </button>
                                     </div>
-                                    <div className="flex items-start gap-2 text-bricq-slate/60 text-sm">
-                                        <MapPin size={16} className="mt-0.5 flex-shrink-0" />
-                                        <span>{property.data.adresse_ban}</span>
-                                    </div>
-                                    {property.data.rnb_id && (
-                                        <div className="mt-2 text-xs text-bricq-slate/50 font-mono bg-white/50 inline-block px-1.5 py-0.5 rounded border border-bricq-slate/5">
-                                            RNB: {property.data.rnb_id}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Stats */}
-                                <div className="p-6 space-y-3">
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
-                                        <div>
-                                            <p className="text-bricq-slate/50 text-xs mb-1">Construction</p>
-                                            <p className="font-bold text-bricq-slate">{property.data.annee_construction}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-bricq-slate/50 text-xs mb-1">DPE</p>
-                                            <p className="font-bold text-bricq-slate text-2xl">{property.data.dpe_lettre}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-bricq-slate/50 text-xs mb-1">Surface</p>
-                                            <p className="font-bold text-bricq-slate">{property.data.surface_sol} m²</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-bricq-slate/50 text-xs mb-1">Logements</p>
-                                            <p className="font-bold text-bricq-slate">{property.data.nb_logements}</p>
-                                        </div>
-                                    </div>
-
-                                    <button className="w-full mt-4 py-3 bg-bricq-slate text-white font-bold uppercase tracking-wider text-sm flex items-center justify-center gap-2 hover:bg-bricq-slate/90 transition-colors">
-                                        Accéder au Dashboard <ArrowRight size={16} />
-                                    </button>
-                                </div>
-                            </motion.div>
-                        ))}
+                                </motion.div>
+                            );
+                        })}
 
                         {/* Add New Property Card */}
                         <motion.div
@@ -180,7 +301,7 @@ export default function PropertiesPage() {
                             </div>
                             <h3 className="font-serif text-lg font-bold text-bricq-slate mb-2">Ajouter un bien</h3>
                             <p className="text-bricq-slate/60 text-sm max-w-[200px]">
-                                Revendiquez une nouvelle propriété pour l'ajouter à votre portefeuille.
+                                Revendiquez une nouvelle propriété pour l&apos;ajouter à votre portefeuille.
                             </p>
                         </motion.div>
                     </div>
@@ -214,9 +335,11 @@ export default function PropertiesPage() {
                                 <p className="text-bricq-slate/80 mb-6">
                                     Êtes-vous sûr de vouloir supprimer ce bien ? <br />
                                     <span className="text-sm text-bricq-slate/60 mt-2 block">
-                                        Note : Un réajout de cette propriété entraînera une nouvelle vérification complète.
+                                        Ses travaux, charges, tâches et documents seront définitivement supprimés.
+                                        Un réajout entraînera une nouvelle vérification.
                                     </span>
                                 </p>
+                                {deleteError && <p role="alert" className="mb-4 text-sm text-red-700">{deleteError}</p>}
 
                                 <div className="flex justify-end gap-3">
                                     <button
@@ -227,7 +350,8 @@ export default function PropertiesPage() {
                                     </button>
                                     <button
                                         onClick={confirmDelete}
-                                        className="px-4 py-2 bg-red-500 text-white font-medium rounded-md hover:bg-red-600 transition-colors shadow-sm"
+                                        disabled={isDeleting}
+                                        className="px-4 py-2 bg-red-500 text-white font-medium rounded-md hover:bg-red-600 transition-colors shadow-sm disabled:opacity-60"
                                     >
                                         Supprimer
                                     </button>

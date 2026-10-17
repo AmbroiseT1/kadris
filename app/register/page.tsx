@@ -53,19 +53,16 @@ export default function RegisterPage() {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
             });
-            console.log("RegisterPage: Login response:", loginResponse);
-            console.log("RegisterPage: Token received:", loginResponse.data?.access_token);
-
             if (!loginResponse.data?.access_token) {
-                console.error("RegisterPage: No access token in response!");
                 throw new Error("Erreur technique: Token manquant après inscription.");
             }
 
             login(loginResponse.data.access_token);
 
         } catch (err: any) {
-            console.error("Register error:", err);
-            if (err.response?.status === 400) {
+            if (err.response?.status === 429) {
+                setError("Trop de tentatives, réessayez plus tard.");
+            } else if (err.response?.status === 400) {
                 setError(err.response.data.detail || "Une erreur est survenue.");
             } else {
                 setError("Une erreur est survenue. Veuillez réessayer.");

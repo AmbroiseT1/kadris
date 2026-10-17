@@ -1,35 +1,95 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { PenLine, Save, Trash2 } from 'lucide-react';
+import { PenLine, Trash2 } from 'lucide-react';
+import { apiErrorMessage, notesApi } from '@/app/lib/api';
 
-export default function NotepadWidget() {
+type SaveState = 'loading' | 'idle' | 'saving' | 'saved' | 'error';
+
+const MAX_LENGTH = 20_000;
+
+/** Bloc-notes du bien, enregistré côté serveur (visible uniquement par son auteur). */
+export default function NotepadWidget({ propertyId }: { propertyId: string }) {
     const [note, setNote] = useState("");
     const [isExpanded, setIsExpanded] = useState(true);
+    const [state, setState] = useState<SaveState>('loading');
+    const [error, setError] = useState<string | null>(null);
+    // Si le chargement échoue, on bloque l'édition (sinon on créerait une seconde note)
+    const [loadFailed, setLoadFailed] = useState(false);
+    const noteId = useRef<string | null>(null);
+    const [lastSaved, setLastSaved] = useState("");
+    const pending = useRef<Promise<unknown> | null>(null);
 
-    // Load from local storage on mount
     useEffect(() => {
-        const savedNote = localStorage.getItem('bricq_user_notes');
-        if (savedNote) {
-            setNote(savedNote);
+        let cancelled = false;
+        setState('loading');
+        setLoadFailed(false);
+        noteId.current = null;
+        notesApi.list(propertyId)
+            .then((notes) => {
+                if (cancelled) return;
+                const first = notes[0];
+                noteId.current = first?.id ?? null;
+                setLastSaved(first?.content ?? "");
+                setNote(first?.content ?? "");
+                setState('idle');
+            })
+            .catch((e) => {
+                if (cancelled) return;
+                setError(apiErrorMessage(e, "Notes indisponibles."));
+                setLoadFailed(true);
+                setState('error');
+            });
+        return () => { cancelled = true; };
+    }, [propertyId]);
+
+    const save = async (content: string) => {
+        // Sérialise les enregistrements pour ne pas créer deux notes
+        if (pending.current) await pending.current.catch(() => undefined);
+        setState('saving');
+        const op = (async () => {
+            if (noteId.current) {
+                await notesApi.update(noteId.current, content);
+            } else {
+                const created = await notesApi.create(content, propertyId);
+                noteId.current = created.id;
+            }
+        })();
+        pending.current = op;
+        try {
+            await op;
+            setLastSaved(content);
+            setError(null);
+            setState('saved');
+        } catch (e) {
+            setError(apiErrorMessage(e, "Enregistrement impossible."));
+            setState('error');
+        } finally {
+            if (pending.current === op) pending.current = null;
         }
-    }, []);
+    };
 
-    // Save to local storage whenever note changes
+    // Sauvegarde automatique (anti-rebond)
     useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            localStorage.setItem('bricq_user_notes', note);
-        }, 500); // Debounce save
+        if (state === 'loading' || loadFailed || note === lastSaved) return;
+        const timeoutId = setTimeout(() => { save(note); }, 800);
         return () => clearTimeout(timeoutId);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [note]);
 
     const handleClear = () => {
         if (confirm("Voulez-vous vraiment effacer vos notes ?")) {
             setNote("");
-            localStorage.removeItem('bricq_user_notes');
         }
     };
+
+    const statusText =
+        state === 'loading' ? 'Chargement...' :
+            state === 'saving' ? 'Enregistrement...' :
+                state === 'error' ? (error ?? 'Erreur') :
+                    note !== lastSaved ? 'Modifications non enregistrées' :
+                        'Enregistré';
 
     return (
         <motion.div
@@ -61,7 +121,9 @@ export default function NotepadWidget() {
                     <textarea
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
-                        className="flex-1 w-full bg-transparent p-4 resize-none outline-none text-gray-700 font-medium text-sm leading-relaxed"
+                        disabled={state === 'loading' || loadFailed}
+                        maxLength={MAX_LENGTH}
+                        className="flex-1 w-full bg-transparent p-4 resize-none outline-none text-gray-700 font-medium text-sm leading-relaxed disabled:opacity-60"
                         placeholder="Écrivez vos idées ici..."
                         style={{
                             backgroundImage: 'linear-gradient(transparent, transparent 23px, #e5e7eb 24px)',
@@ -72,8 +134,11 @@ export default function NotepadWidget() {
 
                     {/* Footer Actions */}
                     <div className="px-3 py-2 flex justify-between items-center border-t border-yellow-200/50">
-                        <span className="text-[10px] text-yellow-600 italic">
-                            Sauvegarde auto
+                        <span
+                            className={`text-[10px] italic truncate ${state === 'error' ? 'text-red-700' : 'text-yellow-600'}`}
+                            role={state === 'error' ? 'alert' : undefined}
+                        >
+                            {statusText}
                         </span>
                         <button
                             onClick={(e) => { e.stopPropagation(); handleClear(); }}

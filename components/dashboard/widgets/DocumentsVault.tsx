@@ -1,37 +1,27 @@
 import React from 'react';
-import { FileText, Plus, Download } from 'lucide-react';
+import { FileText, Plus, Download, Trash2, Sparkles } from 'lucide-react';
+import type { PropertyDocument } from '@/app/lib/api';
+import { DOCUMENT_TYPES } from '../modals/AddDocumentModal';
+import { formatDate } from '../format';
+import { WidgetStatus, type ResourceState } from './WidgetState';
 
-interface Document {
-    id: string;
-    title: string;
-    date: string;
-    type: string;
-    description?: string;
-    url?: string;
-}
-
-interface DocumentsVaultProps {
-    documents: Document[];
+interface DocumentsVaultProps extends ResourceState {
+    documents: PropertyDocument[];
     onAddClick: () => void;
+    onDownload: (doc: PropertyDocument) => void;
+    onDelete: (doc: PropertyDocument) => void;
 }
 
-export default function DocumentsVault({ documents, onAddClick }: DocumentsVaultProps) {
+const TYPE_LABEL: Record<string, string> = Object.fromEntries(DOCUMENT_TYPES.map((t) => [t.id, t.label]));
+
+export default function DocumentsVault({ documents, onAddClick, onDownload, onDelete, ...state }: DocumentsVaultProps) {
     const [activeCategory, setActiveCategory] = React.useState<string>("TOUS");
 
-    const categories = [
-        { id: "TOUS", label: "Tous" },
-        { id: "FACTURE", label: "Factures" },
-        { id: "DEVIS", label: "Devis" },
-        { id: "OFFICIEL", label: "Document officiel" },
-        { id: "TAXE", label: "Taxes" },
-        { id: "IMPOT", label: "Impôts" },
-        { id: "ASSURANCE", label: "Assurances" },
-        { id: "AUTRE", label: "Autre" }
-    ];
+    const categories = [{ id: "TOUS", label: "Tous" }, ...DOCUMENT_TYPES];
 
     const filteredDocuments = activeCategory === "TOUS"
         ? documents
-        : documents.filter(doc => doc.type === activeCategory);
+        : documents.filter(doc => doc.doc_type === activeCategory);
 
     return (
         <div className="space-y-6">
@@ -67,47 +57,57 @@ export default function DocumentsVault({ documents, onAddClick }: DocumentsVault
 
             {/* Documents List */}
             <div className="space-y-3">
-                {filteredDocuments.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500 font-mono text-sm">
-                        Aucun document dans cette catégorie.
-                    </div>
+                {state.loading || state.error || filteredDocuments.length === 0 ? (
+                    <WidgetStatus
+                        {...state}
+                        isEmpty={filteredDocuments.length === 0}
+                        emptyText={documents.length === 0 ? "Aucun document pour l'instant." : "Aucun document dans cette catégorie."}
+                    />
                 ) : (
                     filteredDocuments.map((doc) => (
-                        <DocItem
-                            key={doc.id}
-                            title={doc.title}
-                            date={doc.date}
-                            type={doc.type}
-                            description={doc.description}
-                        />
+                        <div key={doc.id} className="flex items-center justify-between p-3 border border-gray-200 hover:border-black transition-colors group bg-white">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-200 transition-colors">
+                                    <FileText size={16} className="text-gray-500 group-hover:text-black" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="font-serif font-medium text-gray-900 truncate flex items-center gap-1">
+                                        {doc.title}
+                                        {doc.ai_analysis && <span title="Analysé par IA"><Sparkles size={12} className="text-yellow-500" /></span>}
+                                    </p>
+                                    <div className="flex flex-col">
+                                        <p className="font-mono text-[10px] text-gray-400">{formatDate(doc.date || doc.created_at)}</p>
+                                        {doc.description && (
+                                            <p className="text-[10px] text-gray-500 mt-0.5 italic truncate max-w-[200px]">{doc.description}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className="font-mono text-[10px] font-bold border border-black px-1.5 py-0.5 rounded uppercase bg-gray-50">
+                                    {TYPE_LABEL[doc.doc_type] ?? doc.doc_type}
+                                </span>
+                                <button
+                                    onClick={() => onDownload(doc)}
+                                    className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-full transition-colors"
+                                    title="Télécharger"
+                                    aria-label={`Télécharger ${doc.title}`}
+                                >
+                                    <Download size={14} />
+                                </button>
+                                <button
+                                    onClick={() => onDelete(doc)}
+                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-gray-100 rounded-full transition-colors"
+                                    title="Supprimer"
+                                    aria-label={`Supprimer ${doc.title}`}
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
+                        </div>
                     ))
                 )}
             </div>
         </div>
     );
 }
-
-const DocItem = ({ title, date, type, description }: { title: string, date: string, type: string, description?: string }) => (
-    <div className="flex items-center justify-between p-3 border border-gray-200 hover:border-black transition-colors cursor-pointer group bg-white">
-        <div className="flex items-center gap-3">
-            <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-200 transition-colors">
-                <FileText size={16} className="text-gray-500 group-hover:text-black" />
-            </div>
-            <div>
-                <p className="font-serif font-medium text-gray-900">{title}</p>
-                <div className="flex flex-col">
-                    <p className="font-mono text-[10px] text-gray-400">{date}</p>
-                    {description && (
-                        <p className="text-[10px] text-gray-500 mt-0.5 italic truncate max-w-[200px]">{description}</p>
-                    )}
-                </div>
-            </div>
-        </div>
-        <div className="flex items-center gap-3">
-            <span className="font-mono text-[10px] font-bold border border-black px-1.5 py-0.5 rounded uppercase bg-gray-50">{type}</span>
-            <button className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-full transition-colors">
-                <Download size={14} />
-            </button>
-        </div>
-    </div>
-);
