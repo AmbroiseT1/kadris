@@ -49,7 +49,6 @@ export default function Home() {
           {/* Liens Desktop */}
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-bricq-slate" suppressHydrationWarning>
             <Link href="/how-it-works" className="hover:text-bricq-terracotta hover:underline decoration-2 underline-offset-4 transition-all">Comment ça marche</Link>
-            <a href="#pricing" className="hover:text-bricq-terracotta hover:underline decoration-2 underline-offset-4 transition-all">Tarifs</a>
 
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
@@ -81,7 +80,6 @@ export default function Home() {
       {menuOpen && (
         <div className="fixed inset-0 z-40 bg-bricq-cream flex flex-col items-center justify-center gap-8 text-xl font-serif animate-fade-in">
           <Link href="/how-it-works" onClick={() => setMenuOpen(false)}>Comment ça marche</Link>
-          <a href="#pricing" onClick={() => setMenuOpen(false)}>Tarifs</a>
           {isAuthenticated ? (
             <>
               <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Mon Tableau de Bord</Link>
@@ -426,27 +424,23 @@ export default function Home() {
             <div>
               <h4 className="font-bold text-bricq-slate mb-4 text-xs uppercase tracking-widest border-b border-bricq-slate/10 pb-2 inline-block">Plateforme</h4>
               <ul className="space-y-2 text-sm text-bricq-slate/60">
-                <li><a href="#" className="hover:text-bricq-terracotta hover:underline">Comment ça marche</a></li>
-                <li><a href="#" className="hover:text-bricq-terracotta hover:underline">Tarifs</a></li>
-                <li><a href="#" className="hover:text-bricq-terracotta hover:underline">Espace Pro</a></li>
+                <li><Link href="/how-it-works" className="hover:text-bricq-terracotta hover:underline">Comment ça marche</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-bold text-bricq-slate mb-4 text-xs uppercase tracking-widest border-b border-bricq-slate/10 pb-2 inline-block">Légal</h4>
               <ul className="space-y-2 text-sm text-bricq-slate/60">
-                <li><a href="#" className="hover:text-bricq-terracotta hover:underline">Mentions Légales</a></li>
-                <li><a href="#" className="hover:text-bricq-terracotta hover:underline">Politique de confidentialité</a></li>
-                <li><a href="#" className="hover:text-bricq-terracotta hover:underline">CGU</a></li>
+                <li><Link href="/mentions-legales" className="hover:text-bricq-terracotta hover:underline">Mentions Légales</Link></li>
+                <li><Link href="/confidentialite" className="hover:text-bricq-terracotta hover:underline">Politique de confidentialité</Link></li>
+                <li><Link href="/cgu" className="hover:text-bricq-terracotta hover:underline">CGU</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-bold text-bricq-slate mb-4 text-xs uppercase tracking-widest border-b border-bricq-slate/10 pb-2 inline-block">Contact</h4>
               <ul className="space-y-2 text-sm text-bricq-slate/60">
-                <li><a href="#" className="hover:text-bricq-terracotta hover:underline">Support</a></li>
-                <li><a href="#" className="hover:text-bricq-terracotta hover:underline">Presse</a></li>
-                <li><a href="#" className="hover:text-bricq-terracotta hover:underline">Carrières</a></li>
+                <li><a href="mailto:contact@bricq.fr" className="hover:text-bricq-terracotta hover:underline">Support</a></li>
               </ul>
             </div>
           </div>
