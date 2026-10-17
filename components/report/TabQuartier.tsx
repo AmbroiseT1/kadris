@@ -3,6 +3,7 @@ import React from 'react';
 import { ShoppingBag, GraduationCap, Bus, Activity, Volume2, TreePine, Shield, Building2, MapPin, ExternalLink, Plane, Factory, Car, Train, Utensils } from 'lucide-react';
 import { BuildingData } from '@/app/lib/types';
 import { CategoryData, AmenityItem, NuisanceItem } from '@/app/lib/quartier';
+import { SourceBadge, UnavailableBlock } from './SourceBadge';
 import dynamic from 'next/dynamic';
 
 // Dynamically import the map to avoid SSR issues
@@ -96,7 +97,11 @@ const NuisanceRow = ({ label, data, icon: Icon }: { label: string, data: Nuisanc
 
 
 export const TabQuartier = ({ data }: { data: BuildingData | null }) => {
-    if (!data?.quartier) return <div className="p-8 text-center text-bricq-slate/50">Chargement de l'analyse quartier...</div>;
+    const source = data?.sources?.quartier;
+    if (!data?.quartier) {
+        if (source?.status === 'error') return <UnavailableBlock title="Analyse du quartier" source={source} />;
+        return <div className="p-8 text-center text-bricq-slate/50">Chargement de l'analyse quartier...</div>;
+    }
 
     const q = data.quartier;
     if (!q.categories) return <div className="p-8 text-center bg-red-50 text-red-600 rounded-xl">Données incomplètes.</div>;
@@ -182,6 +187,7 @@ export const TabQuartier = ({ data }: { data: BuildingData | null }) => {
                     <AmenityDetailList title="Administration" data={c.administration} icon={Building2} />
                 </div>
             </div>
+            <SourceBadge source={source} />
 
         </div>
     );

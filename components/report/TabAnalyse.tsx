@@ -45,16 +45,19 @@ export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
     batiScore = Math.min(100, Math.max(0, batiScore));
 
 
-    // 2. ENVIRONNEMENT SCORE
-    let envScore = 80; // Base optimistic
-    // Risks
-    const risks = (data.risques_detailles || {}) as any;
+    // 2. ENVIRONNEMENT SCORE — uniquement si Géorisques a répondu ; sinon « non évalué »
+    const risks = data.risques_detailles;
+    const risksEvaluated = !!risks && risks.status !== undefined && risks.status !== 'unavailable';
+    let envScore = 80;
     let riskCount = 0;
-    if (risks.argiles === 'Fort') { envScore -= 20; riskCount++; }
-    if (risks.radon === 'Élevé') { envScore -= 10; riskCount++; }
-    if (risks.inondation === 'Oui') { envScore -= 20; riskCount++; }
-    // Cap
+    if (risks?.argiles === 'Fort') { envScore -= 20; riskCount++; }
+    else if (risks?.argiles === 'Moyen') { envScore -= 10; riskCount++; }
+    if (risks?.radon?.classe === '3') { envScore -= 10; riskCount++; }
+    if (risks?.inondation === true) { envScore -= 20; riskCount++; }
+    if ((risks?.cavites?.count || 0) > 0) { envScore -= 15; riskCount++; }
+    if ((risks?.installations_count ?? risks?.installations?.length ?? 0) > 0) { envScore -= 5; riskCount++; }
     envScore = Math.min(100, Math.max(0, envScore));
+    const argilesLabel = !risks ? 'Non évalué' : risks.argiles === 'Nul' ? 'Non exposé' : risks.argiles ?? 'Données indisponibles';
 
 
     // 3. MARCHE SCORE
@@ -67,7 +70,8 @@ export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
 
 
     // GLOBAL SCORE
-    const globalScore = Math.round((batiScore + envScore + marketScore) / 3);
+    const parts = risksEvaluated ? [batiScore, envScore, marketScore] : [batiScore, marketScore];
+    const globalScore = Math.round(parts.reduce((a, b) => a + b, 0) / parts.length);
 
 
     return (
@@ -146,7 +150,7 @@ export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
                             <div className="bg-green-50 p-2 rounded-full">
                                 <Trees size={20} className="text-green-600" />
                             </div>
-                            <span className={`font-black text-2xl ${getScoreColor(envScore)}`}>{envScore}</span>
+                            <span className={`font-black text-2xl ${risksEvaluated ? getScoreColor(envScore) : 'text-slate-400'}`}>{risksEvaluated ? envScore : '—'}</span>
                         </div>
                         <h3 className="font-bold text-bricq-slate mb-1">Environnement</h3>
                         <p className="text-xs text-slate-500 mb-4">Analyse des risques naturels et de la situation géographique.</p>
@@ -154,17 +158,17 @@ export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
                         <div className="space-y-2">
                             <div className="flex justify-between text-xs">
                                 <span className="text-slate-500">Risques Majeurs</span>
-                                <span className="font-bold">{riskCount} détecté(s)</span>
+                                <span className="font-bold">{risksEvaluated ? `${riskCount} détecté(s)${risks?.status === 'partial' ? ' (partiel)' : ''}` : 'Non évalué'}</span>
                             </div>
                             <div className="flex justify-between text-xs">
                                 <span className="text-slate-500">Argiles</span>
-                                <span className="font-bold">{risks.argiles || 'Non évalué'}</span>
+                                <span className="font-bold">{argilesLabel}</span>
                             </div>
                         </div>
                     </div>
                     <div className="mt-4 pt-3 border-t border-stone-100">
-                        <div className={`text-xs px-2 py-1 rounded inline-block font-medium ${getScoreBg(envScore)}`}>
-                            {envScore >= 80 ? "Zone Sereine" : envScore >= 50 ? "Vigilance requise" : "Zone à risques"}
+                        <div className={`text-xs px-2 py-1 rounded inline-block font-medium ${risksEvaluated ? getScoreBg(envScore) : 'bg-slate-100 text-slate-600'}`}>
+                            {!risksEvaluated ? "Données indisponibles" : envScore >= 80 ? "Zone Sereine" : envScore >= 50 ? "Vigilance requise" : "Zone à risques"}
                         </div>
                     </div>
                 </motion.div>

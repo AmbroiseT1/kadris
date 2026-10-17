@@ -1,27 +1,42 @@
-// Fichier : lib/analysis.ts (FIX FINAL)
+// Fichier : lib/analysis.ts
 
 import { TransactionDVF } from './dvf';
 import { RiskData } from './georisques';
 import { UrbanismeData } from './urbanisme';
+import { QuartierData } from './quartier';
 
 export interface BuildingAnalysisInput {
   annee_construction?: string;
   dpe_lettre?: string;
   risques_detailles?: RiskData;
   urbanisme?: UrbanismeData;
+  quartier?: QuartierData;
 }
 
-// 🚨 FIX: Ajout de 'score' (singulier) pour la valeur finale
 export interface AnalysisResult {
-  score: number; // <--- CECI RÈGLE LE PROBLÈME TS2561
+  score: number;
+  /** Scores de profil sur 100, issus du module quartier. null = quartier non évalué. */
   scores: {
-    famille: number;
-    investisseur: number;
-    qualite_vie: number;
+    famille: number | null;
+    investisseur: number | null;
+    qualite_vie: number | null;
   };
+  /** false si une source de risques n'a pas répondu : le score n'intègre pas ces rubriques. */
+  risques_evalues: boolean;
   alerts: { level: 'high' | 'medium' | 'low'; title: string; message: string }[];
   negociation_points: string[];
   market_insight: string;
+}
+
+/** Les scores de quartier sont calculés sur 10 dans quartier.ts : on les ramène sur 100. */
+export function quartierScoresOn100(q?: QuartierData | null): AnalysisResult['scores'] {
+  if (!q?.scores) return { famille: null, investisseur: null, qualite_vie: null };
+  const to100 = (v: number) => Math.max(0, Math.min(100, Math.round(v * 10)));
+  return {
+    famille: to100(q.scores.famille),
+    investisseur: to100(q.scores.investisseur),
+    qualite_vie: to100(q.scores.qualite_vie),
+  };
 }
 
 // --- LE MOTEUR D'INTELLIGENCE ---
@@ -29,18 +44,12 @@ export function analyzeBuilding(bat: BuildingAnalysisInput, dvf: TransactionDVF[
   const alerts: AnalysisResult['alerts'] = [];
   const nego: string[] = [];
   let score = 100;
-
-  // Récupération des scores de Quartier (Mock ou réel si implémenté dans un autre module)
-  const quartierScores = {
-    famille: 85, // NOTE: Ces scores devraient venir du module quartier, mais sont ici simulés pour la démo.
-    investisseur: 75,
-    qualite_vie: 80
-  };
+  const risks = bat.risques_detailles;
 
   // 1. ANALYSE STRUCTURELLE
   const annee = parseInt(bat.annee_construction || "0");
   const isOld = annee > 1000 && annee < 1974;
-  const clayRisk = bat.risques_detailles?.argiles === 'Fort';
+  const clayRisk = risks?.argiles === 'Fort';
 
   if (isOld && clayRisk) {
     score -= 25;
@@ -59,21 +68,28 @@ export function analyzeBuilding(bat: BuildingAnalysisInput, dvf: TransactionDVF[
   const recentSales = dvf.filter(t => t.is_target).length;
   if (recentSales > 1) score -= 10;
 
-  // 4. ENVIRONNEMENT (Diminution du score global basé sur les risques)
-  if (bat.risques_detailles?.inondation) score -= 15;
-  if ((bat.risques_detailles?.cavites?.count || 0) > 0) score -= 15;
-  if ((bat.risques_detailles?.installations?.length || 0) > 0) score -= 10;
-  if ((bat.risques_detailles?.catnat?.count || 0) > 0) score -= Math.min((bat.risques_detailles?.catnat?.count || 0) * 2, 10);
+  // 4. ENVIRONNEMENT — null = non disponible : pas de déduction, mais signalé
+  const risquesEvalues = !!risks && risks.status === 'ok';
+  if (!risks || risks.status !== 'ok') {
+    alerts.push({
+      level: 'medium',
+      title: risks?.status === 'partial' ? 'Risques partiellement évalués' : 'Risques non évalués',
+      message: "Géorisques n'a pas répondu pour tout ou partie des rubriques. Consultez l'ERP officiel avant toute décision.",
+    });
+  }
+  if (risks?.inondation) score -= 15;
+  if ((risks?.cavites?.count || 0) > 0) score -= 15;
+  if ((risks?.installations_count ?? risks?.installations?.length ?? 0) > 0) score -= 10;
+  if ((risks?.catnat?.count || 0) > 0) score -= Math.min((risks?.catnat?.count || 0) * 2, 10);
 
   // 5. ANALYSE URBANISME
   if (bat.urbanisme?.zonage && !bat.urbanisme.zonage.is_constructible) score -= 15;
   if (bat.urbanisme?.servitudes?.find(s => s.code === 'AC1')) nego.push("Surcoût travaux (ABF)");
 
-
   let market = "Marché stable.";
-  if (dvf.length > 5) {
-    const prices = dvf.map(d => d.prix_m2);
-    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+  const priced = dvf.filter(d => d.prix_m2 > 0);
+  if (priced.length > 5) {
+    const avg = priced.reduce((a, b) => a + b.prix_m2, 0) / priced.length;
     market = `Prix moyen du quartier : ${Math.round(avg)} €/m².`;
   }
 
@@ -82,6 +98,7 @@ export function analyzeBuilding(bat: BuildingAnalysisInput, dvf: TransactionDVF[
     alerts,
     negociation_points: nego,
     market_insight: market,
-    scores: quartierScores
+    scores: quartierScoresOn100(bat.quartier),
+    risques_evalues: risquesEvalues,
   };
 }

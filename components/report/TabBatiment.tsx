@@ -5,6 +5,9 @@ import {
     Building, Hammer, Ruler, Zap, FileText, ChevronDown, ChevronUp,
     CheckCircle, XCircle, Info, Calendar, Move, Sun
 } from 'lucide-react';
+import { resolveAnneeConstruction } from '@/app/lib/bndb';
+import { SourceInfo } from '@/app/lib/sources';
+import { SourceBadge } from './SourceBadge';
 
 // --- 1. CONFIGURATION INTELLIGENTE ---
 
@@ -211,14 +214,15 @@ const BentoCard = ({ title, icon: Icon, description, data, keys }: any) => {
 
 // --- 3. COMPOSANT PRINCIPAL ---
 
-export const TabBatiment = ({ data }: { data: any }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const TabBatiment = ({ data, sources }: { data: any; sources?: { bdnb?: SourceInfo; dpe?: SourceInfo } }) => {
     const [showAll, setShowAll] = useState(false);
 
     if (!data) return <div className="p-8 text-center text-slate-400">Données Bâtiment indisponibles.</div>;
 
-    const dates = [data.annee_construction, data.annee_construction_reelle_t, data.annee_construction_dpe]
-        .map(d => parseInt(d)).filter(d => !isNaN(d) && d > 1000);
-    const smartYear = dates.length > 0 ? Math.min(...dates) : (data.annee_construction || "--");
+    const annee = resolveAnneeConstruction(data);
+    const smartYear = annee.source === 'inconnue' ? '--' : annee.label;
+    const dpeMatch: string | undefined = data.dpe_reel?.match_label;
 
     const usedKeys = new Set(Object.values(GROUPS).flatMap(g => g.keys));
     const remainingKeys = Object.keys(data).filter(key =>
@@ -260,13 +264,23 @@ export const TabBatiment = ({ data }: { data: any }) => {
                     <div className="text-5xl font-black text-bricq-slate group-hover:scale-105 transition-transform duration-300">
                         {smartYear}
                     </div>
-                    {data.annee_construction_dpe && (
+                    <div className="text-[10px] text-slate-400 mt-1">
+                        {annee.source === 'fiscale' ? 'Source : fichiers fonciers (BDNB)' : annee.source === 'dpe' ? 'Source : DPE (année déclarée)' : annee.source === 'periode' ? 'Période estimée' : ''}
+                    </div>
+                    {annee.source === 'fiscale' && annee.annee !== null && parseInt(data.annee_construction_dpe) === annee.annee && (
                         <div className="text-[10px] text-green-600 bg-green-50 px-2 py-1 rounded-sm mt-2 font-bold border border-green-100">
-                            Validée par DPE
+                            Confirmée par le DPE
                         </div>
                     )}
                 </div>
             </div>
+
+            {dpeMatch && (
+                <div className={`p-3 rounded-sm border text-sm ${data.dpe_reel?.match === 'proximite' ? 'bg-orange-50 border-orange-100 text-orange-800' : 'bg-stone-50 border-stone-200 text-slate-600'}`} role="note">
+                    <strong>Performance énergétique :</strong> {dpeMatch}
+                    {data.dpe_reel?.date_etablissement_dpe && <> — établi le {new Date(data.dpe_reel.date_etablissement_dpe).toLocaleDateString('fr-FR')}</>}
+                </div>
+            )}
 
             {/* GRILLE D'ANALYSE */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -276,6 +290,11 @@ export const TabBatiment = ({ data }: { data: any }) => {
                 <BentoCard {...GROUPS.cvc} data={data} />
                 <BentoCard {...GROUPS.perf} data={data} />
                 <BentoCard {...GROUPS.admin} data={data} />
+            </div>
+
+            <div className="space-y-1">
+                <SourceBadge source={sources?.bdnb} />
+                <SourceBadge source={sources?.dpe} />
             </div>
 
             {/* MODE EXPERT */}

@@ -10,6 +10,8 @@ export interface PrescriptionItem {
 }
 
 export interface UrbanismeData {
+  /** Couches GPU qui n'ont pas répondu (affichées « indisponibles », jamais « aucune contrainte »). */
+  indisponibles?: string[];
   zonage: {
     code: string;
     libelle: string;
@@ -96,6 +98,11 @@ export async function fetchUrbanisme(lat: number, lon: number): Promise<Urbanism
       fetch(`https://apicarto.ign.fr/api/gpu/prescription-surf?geom=${geomParam}`),
       fetch(`https://apicarto.ign.fr/api/gpu/assiette-sup-s?geom=${geomParam}`)
     ]);
+
+    const indisponibles = ([['zonage', resZone], ['document', resDoc], ['prescriptions', resPrescr], ['servitudes', resSup]] as const)
+      .filter(([, r]) => !r.ok)
+      .map(([name]) => name as string);
+    if (indisponibles.length === 4) return null; // Géoportail de l'Urbanisme injoignable
 
     // 1. ZONAGE (C'est ici qu'on récupère le lien URLFIC précieux)
     let zonage = null;
@@ -190,6 +197,7 @@ export async function fetchUrbanisme(lat: number, lon: number): Promise<Urbanism
     }
 
     return {
+      indisponibles,
       zonage,
       document,
       contraintes,

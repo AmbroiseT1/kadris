@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { AddressAutocompleteSimple } from '@/components/ui/AddressAutocompleteSimple';
 import { getCurrentUser, isAdminUser, addPropertyToCurrentUser } from '@/utils/propertyStorage';
 import { fetchRnbBuilding } from '@/app/lib/rnb';
+import { fetchBdnbRaw, isValidCleInterop, mapBdnbToBuilding } from '@/app/lib/bndb';
 
 interface AddressData {
     label: string;
@@ -77,33 +78,30 @@ export default function AddPropertyPage() {
             const [lon, lat] = feature.geometry.coordinates;
             const cleInterop = feature.properties.id;
 
-            const response = await fetch(`https://api.bdnb.io/v1/bdnb/donnees/batiment_groupe_complet/adresse?limit=1&cle_interop_adr=eq.${cleInterop}`);
+            // Validation + encodage de la clé BAN et règle d'année : centralisées dans lib/bndb.ts
+            const bat = isValidCleInterop(cleInterop) ? await fetchBdnbRaw(cleInterop) : null;
+            if (bat) {
+                const mapped = mapBdnbToBuilding(bat);
 
-            if (response.ok) {
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    const bat = data[0];
+                // Fetch RNB ID
+                const rnbBuilding = await fetchRnbBuilding(lat, lon);
 
-                    // Fetch RNB ID
-                    const rnbBuilding = await fetchRnbBuilding(lat, lon);
-
-                    const buildingInfo: BuildingData = {
-                        adresse_ban: bat.libelle_adr_principale_ban || addressData.label,
-                        annee_construction: bat.annee_construction || "Non daté",
-                        dpe_lettre: bat.classe_bilan_dpe || bat.classe_bilan_dpe_moyen || "Non noté",
-                        materiaux_murs: bat.mat_mur_txt || "Non renseigné",
-                        materiaux_toiture: bat.mat_toit_txt || "Non renseigné",
-                        hauteur: bat.hauteur_mean,
-                        nb_niveaux: bat.nb_niveau,
-                        surface_sol: bat.surface_emprise_sol,
-                        nb_logements: bat.nb_log,
-                        usage: bat.usage_niveau_1_txt || "Non déterminé",
-                        coords: { lat, lon },
-                        cle_interop: cleInterop,
-                        rnb_id: rnbBuilding?.rnb_id
-                    };
-                    setBuildingData(buildingInfo);
-                }
+                const buildingInfo: BuildingData = {
+                    adresse_ban: mapped.adresse_ban || addressData.label,
+                    annee_construction: mapped.annee_construction || "Non daté",
+                    dpe_lettre: mapped.dpe_lettre || "Non noté",
+                    materiaux_murs: mapped.materiaux_murs || "Non renseigné",
+                    materiaux_toiture: mapped.materiaux_toiture || "Non renseigné",
+                    hauteur: bat.hauteur_mean,
+                    nb_niveaux: bat.nb_niveau,
+                    surface_sol: bat.surface_emprise_sol,
+                    nb_logements: bat.nb_log,
+                    usage: mapped.usage || "Non déterminé",
+                    coords: { lat, lon },
+                    cle_interop: cleInterop,
+                    rnb_id: rnbBuilding?.rnb_id
+                };
+                setBuildingData(buildingInfo);
             }
         } catch (error) {
             console.error("Error fetching building data:", error);
