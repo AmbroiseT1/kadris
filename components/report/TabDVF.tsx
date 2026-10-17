@@ -1,7 +1,9 @@
 "use client";
 import React, { useMemo } from 'react';
 import { TrendingUp, Euro, Target, History, ArrowUpRight, ArrowDownRight, MapPin, ExternalLink, AlertTriangle, Activity, Layers, Info } from 'lucide-react';
-import { TransactionDVF, calculateMarketStats, BackendMarketStats } from '@/app/lib/dvf';
+import { TransactionDVF, calculateMarketStats, BackendMarketStats, PriceStats, DVF_RADIUS_M } from '@/app/lib/dvf';
+import { SourceInfo } from '@/app/lib/sources';
+import { SourceBadge, UnavailableBlock } from './SourceBadge';
 
 interface TabDVFProps {
    transactions: TransactionDVF[];
@@ -9,9 +11,29 @@ interface TabDVFProps {
    marketStats: BackendMarketStats | null;
    surface?: number; // Surface du bien actuel pour l'estimation
    surface_terrain?: number; // Surface terrain du bien actuel
+   source?: SourceInfo;
 }
 
-export const TabDVF = ({ transactions, loading, marketStats, surface, surface_terrain }: TabDVFProps) => {
+const fmtPrice = (s: PriceStats | null | undefined) =>
+   s ? `${s.prix_median_m2.toLocaleString('fr-FR')} €/m²` : '—';
+
+const MedianCard = ({ label, near, commune }: { label: string; near?: PriceStats | null; commune?: PriceStats | null }) => (
+   <div className="bg-white p-4 rounded-xl border border-bricq-slate/5 shadow-sm">
+      <div className="text-xs font-bold text-slate-500 uppercase mb-2">{label} — prix médian</div>
+      <div className="flex items-baseline justify-between gap-4">
+         <div>
+            <div className="text-lg font-bold text-slate-800">{fmtPrice(near)}</div>
+            <div className="text-[11px] text-slate-400">{near ? `${near.nombre_transactions} ventes, rayon ${DVF_RADIUS_M} m` : `Aucune vente comparable à ${DVF_RADIUS_M} m`}</div>
+         </div>
+         <div className="text-right">
+            <div className="text-sm font-bold text-slate-600">{fmtPrice(commune)}</div>
+            <div className="text-[11px] text-slate-400">{commune ? `commune (${commune.nombre_transactions} ventes)` : 'commune'}</div>
+         </div>
+      </div>
+   </div>
+);
+
+export const TabDVF = ({ transactions, loading, marketStats, surface, surface_terrain, source }: TabDVFProps) => {
 
    const stats = useMemo(() => {
       // Si on a des stats venant du backend, on les mixe avec le client side pour les parties manquantes (comme la segmentation surface)
@@ -73,13 +95,18 @@ export const TabDVF = ({ transactions, loading, marketStats, surface, surface_te
       </div>
    );
 
+   if (source?.status === 'error') return (
+      <UnavailableBlock title="Prix & transactions (DVF)" source={source} />
+   );
+
    if (transactions.length === 0) return (
       <div className="bg-white rounded-2xl p-12 border border-bricq-slate/5 shadow-sm text-center">
          <TrendingUp size={48} className="mx-auto text-bricq-sage mb-4 opacity-50" />
          <h3 className="text-xl font-bold text-bricq-slate">Données insuffisantes</h3>
          <p className="text-bricq-slate/50 mt-2 max-w-md mx-auto">
-            Nous n'avons pas trouvé assez de transactions comparables dans un rayon de 300m pour établir une estimation fiable.
+            Aucune vente publiée dans un rayon de {DVF_RADIUS_M} m sur les 5 dernières années. Les départements 57, 67, 68 (livre foncier) et Mayotte ne sont pas couverts par DVF.
          </p>
+         <SourceBadge source={source} className="justify-center mt-4" />
       </div>
    );
 
@@ -92,7 +119,7 @@ export const TabDVF = ({ transactions, loading, marketStats, surface, surface_te
             <div className="bg-white p-5 rounded-2xl border border-bricq-slate/5 shadow-sm flex flex-col justify-between group relative">
                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                   <div className="bg-slate-800 text-white text-[10px] p-2 rounded max-w-[150px] shadow-lg">
-                     Moyenne des prix au m² des ventes enregistrées dans le rayon de 300m.
+                     Moyenne des prix au m² des ventes enregistrées dans le rayon de {DVF_RADIUS_M} m.
                   </div>
                </div>
                <div className="flex justify-between items-start mb-4">
@@ -261,7 +288,7 @@ export const TabDVF = ({ transactions, loading, marketStats, surface, surface_te
             <div className="p-6 border-b border-bricq-slate/5 flex justify-between items-center">
                <h3 className="font-serif text-xl font-bold text-bricq-slate">Comparables ({stats.volume_ventes})</h3>
                <div className="flex items-center gap-4">
-                  <div className="text-xs font-bold text-bricq-slate/40 uppercase tracking-wider">Rayon 300m</div>
+                  <div className="text-xs font-bold text-bricq-slate/40 uppercase tracking-wider">Rayon {DVF_RADIUS_M} m</div>
                </div>
             </div>
 
@@ -307,7 +334,7 @@ export const TabDVF = ({ transactions, loading, marketStats, surface, surface_te
                               </div>
                            </td>
                            <td className="px-6 py-4">
-                              {t.surface_reelle_bati > 0 ? (
+                              {t.prix_m2 > 0 ? (
                                  <span className="px-2 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-700">
                                     {t.prix_m2.toLocaleString()} €
                                  </span>
@@ -321,6 +348,14 @@ export const TabDVF = ({ transactions, loading, marketStats, surface, surface_te
                </table>
             </div>
          </div>
+
+         {marketStats?.par_type && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <MedianCard label="Appartements" near={marketStats.par_type.Appartement} commune={marketStats.commune?.Appartement} />
+               <MedianCard label="Maisons" near={marketStats.par_type.Maison} commune={marketStats.commune?.Maison} />
+            </div>
+         )}
+         <SourceBadge source={source} />
       </div>
    );
 };

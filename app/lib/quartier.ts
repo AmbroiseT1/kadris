@@ -1,5 +1,7 @@
 // Fichier : lib/quartier.ts
 
+import { api } from './api';
+
 // --- 1. DÉFINITION DES TYPES ---
 
 export interface AmenityItem {
@@ -84,49 +86,9 @@ const WEIGHTS = {
 
 export async function fetchQuartier(lat: number, lon: number): Promise<QuartierData | null> {
   try {
-    // [MODIFIED] Appel direct à l'API Overpass (OpenStreetMap)
-    // On contourne le backend pour cette fonctionnalité spécifique comme demandé.
-    const overpassUrl = "https://overpass-api.de/api/interpreter";
-    const query = `
-      [out:json][timeout:25];
-      (
-        node["amenity"~"school|kindergarten|college|university"](around:1000, ${lat}, ${lon});
-        way["amenity"~"school|kindergarten|college|university"](around:1000, ${lat}, ${lon});
-        node["amenity"~"doctors|pharmacy|hospital|dentist"](around:1000, ${lat}, ${lon});
-        
-        node["shop"~"bakery|butcher|supermarket|convenience|greengrocer|seafood|cheese|pastry"](around:1000, ${lat}, ${lon});
-        way["shop"~"bakery|butcher|supermarket|convenience|greengrocer|seafood|cheese|pastry"](around:1000, ${lat}, ${lon});
-        
-        node["amenity"~"restaurant|cafe|fast_food|bar|pub"](around:1000, ${lat}, ${lon});
-        way["amenity"~"restaurant|cafe|fast_food|bar|pub"](around:1000, ${lat}, ${lon});
-
-        node["highway"="bus_stop"](around:1000, ${lat}, ${lon});
-        node["railway"~"station|tram_stop"](around:1000, ${lat}, ${lon});
-        node["leisure"~"park|garden|sports_centre"](around:1000, ${lat}, ${lon});
-        way["leisure"~"park|garden|sports_centre"](around:1000, ${lat}, ${lon});
-        node["amenity"~"library|cinema|theatre"](around:1000, ${lat}, ${lon});
-        node["amenity"~"police|fire_station"](around:1500, ${lat}, ${lon});
-        node["amenity"~"post_office|town_hall"](around:1000, ${lat}, ${lon});
-        
-        way["highway"~"motorway|trunk|primary|secondary|tertiary"](around:300, ${lat}, ${lon});
-        way["railway"="rail"](around:300, ${lat}, ${lon});
-        way["aeroway"~"aerodrome|runway"](around:3000, ${lat}, ${lon});
-        node["aeroway"~"aerodrome"](around:3000, ${lat}, ${lon});
-        way["landuse"="industrial"](around:500, ${lat}, ${lon});
-      );
-      out center;
-    `;
-
-    const res = await fetch(overpassUrl, {
-      method: 'POST',
-      body: `data=${encodeURIComponent(query)}`,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    });
-
-    if (!res.ok) return null;
-    const data = await res.json();
+    // Requête Overpass (OpenStreetMap) via le proxy backend /proxy/quartier :
+    // cache 7 jours côté serveur et pas d'appel direct du navigateur vers overpass-api.de.
+    const { data } = await api.get('/proxy/quartier', { params: { lat, lon }, timeout: 40000 });
     const elements = data.elements || [];
 
     const getDist = (e: any) => {
