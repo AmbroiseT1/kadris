@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { Building, Shield, Home, CheckCircle, Ruler, MapPin, ArrowLeft, Mountain, FileText, Loader2, AlertTriangle, TrendingUp } from 'lucide-react';
 import { BuildingData } from '@/app/lib/types';
 import { TransactionDVF } from '@/app/lib/dvf';
+import { SourceBadge } from './SourceBadge';
 
 const IgnMapViewer = dynamic(() => import('@/components/ui/IgnMapViewer'), {
     ssr: false,
@@ -49,8 +50,20 @@ export const TabSynthese = ({ data, dvf, loading }: { data: BuildingData | null,
     if (!data) return <div className="p-8 text-center bg-white rounded-sm border border-bricq-slate/10">Aucune donnée disponible.</div>;
 
     // Données dynamiques
-    const risqueArgiles = data.risques_detailles?.argiles || 'Non évalué';
+    const risks = data.risques_detailles;
+    const sources = data.sources || {};
+    // Jamais « aucun risque » par défaut : non chargé = « Non évalué », erreur = « Données indisponibles »
+    const risqueArgiles = !risks
+        ? 'Non évalué'
+        : risks.argiles === 'Nul' ? 'Non exposé'
+        : risks.argiles ?? (risks.sections?.argiles === 'empty' ? 'Non renseigné' : 'Données indisponibles');
+    const inondationLabel = !risks ? 'Non évalué'
+        : risks.inondation === true ? 'Commune exposée'
+        : risks.inondation === false ? 'Non recensé' : 'Données indisponibles';
+    const catnatLabel = !risks ? 'Non évalué'
+        : risks.catnat ? `${risks.catnat.count} arrêté(s)` : 'Données indisponibles';
     const nbVentes = dvf ? dvf.length : 0;
+    const dvfIndisponible = sources.dvf?.status === 'error';
     const dpeCritique = ['F', 'G'].includes(data.dpe_lettre || '');
 
     return (
@@ -106,7 +119,7 @@ export const TabSynthese = ({ data, dvf, loading }: { data: BuildingData | null,
                         </div>
                         <div>
                             <div className="text-[10px] uppercase font-bold text-bricq-slate/40 font-mono">Ventes (500m)</div>
-                            <div className="font-bold text-sm text-bricq-slate">{nbVentes > 0 ? `${nbVentes} Ventes` : 'Aucune'}</div>
+                            <div className="font-bold text-sm text-bricq-slate">{dvfIndisponible ? 'Indisponible' : nbVentes > 0 ? `${nbVentes} Ventes` : 'Aucune'}</div>
                         </div>
                     </div>
 
@@ -171,29 +184,43 @@ export const TabSynthese = ({ data, dvf, loading }: { data: BuildingData | null,
                         {data.dpe_lettre}
                     </div>
                     <p className="text-xs text-bricq-slate/50 mb-4 font-mono">
-                        {data.dpe_lettre === 'Non noté' ? "Non noté (Base ADEME)" : "Classement DPE estimé"}
+                        {data.dpe_lettre === 'Non noté' ? "Non noté (Base ADEME)" : "Classement DPE estimé (BDNB)"}
                     </p>
+                    {data.dpe_reel?.match_label && (
+                        <p className={`text-[11px] mb-3 ${data.dpe_reel.match === 'proximite' ? 'text-orange-700' : 'text-bricq-slate/60'}`}>
+                            DPE ADEME {data.dpe_reel.classe_bilan_dpe} — {data.dpe_reel.match_label}
+                        </p>
+                    )}
                     <div className={`p-3 rounded-sm text-sm font-medium border ${dpeCritique || risqueArgiles === 'Fort' ? 'bg-red-50 text-red-800 border-red-100' : 'bg-green-50 text-green-800 border-green-100'}`}>
-                        {dpeCritique ? '⚠️ Rénovation à prévoir' : 'Indicateurs sains'}
+                        {dpeCritique ? '⚠️ Rénovation à prévoir' : risks?.status === 'ok' ? 'Indicateurs sains' : 'Indicateurs partiels (risques non évalués)'}
                     </div>
                 </div>
 
-                {data.risques_detailles && (
-                    <div className="bg-white border border-stone-200 rounded-sm p-5">
-                        <h3 className="font-serif text-lg text-bricq-slate border-b border-stone-100 pb-2 mb-4 flex items-center gap-2">
-                            <AlertTriangle size={18} className="text-orange-500" /> Synthèse Vigilance
-                        </h3>
-                        <ul className="space-y-3">
-                            <li className="flex justify-between items-center text-sm">
-                                <span className="text-bricq-slate/70">Retrait Argiles</span>
-                                <span className={`px-2 py-1 rounded-sm text-xs font-bold border ${risqueArgiles === 'Fort' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-orange-100 text-orange-700 border-orange-200'
-                                    }`}>
-                                    {risqueArgiles.toUpperCase()}
-                                </span>
-                            </li>
-                        </ul>
-                    </div>
-                )}
+                <div className="bg-white border border-stone-200 rounded-sm p-5">
+                    <h3 className="font-serif text-lg text-bricq-slate border-b border-stone-100 pb-2 mb-4 flex items-center gap-2">
+                        <AlertTriangle size={18} className="text-orange-500" /> Synthèse Vigilance
+                    </h3>
+                    <ul className="space-y-3">
+                        {[
+                            { label: 'Retrait Argiles', value: risqueArgiles, alert: risqueArgiles === 'Fort' || risqueArgiles === 'Moyen' },
+                            { label: 'Inondation (commune)', value: inondationLabel, alert: risks?.inondation === true },
+                            { label: 'Arrêtés CatNat', value: catnatLabel, alert: (risks?.catnat?.count || 0) > 0 },
+                        ].map(row => {
+                            const unknown = row.value === 'Données indisponibles' || row.value === 'Non évalué' || row.value === 'Non renseigné';
+                            return (
+                                <li key={row.label} className="flex justify-between items-center text-sm gap-2">
+                                    <span className="text-bricq-slate/70">{row.label}</span>
+                                    <span className={`px-2 py-1 rounded-sm text-xs font-bold border ${unknown ? 'bg-slate-50 text-slate-500 border-slate-200' : row.alert ? 'bg-red-100 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                                        {row.value.toUpperCase()}
+                                    </span>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                    <SourceBadge source={sources.risques} className="mt-4" />
+                </div>
+                <SourceBadge source={sources.bdnb} />
+                <SourceBadge source={sources.dpe} />
             </div>
         </div>
     );

@@ -12,9 +12,13 @@ export const TabAnalysis = ({ data, dvf }: { data: BuildingData | null, dvf: Tra
     // Le type AnalysisResult est maintenant garanti et permet l'accès à .scores
     const analysis = analyzeBuilding(data, dvf);
 
-    // 🧠 CALCUL DU SCORE GLOBAL UNIQUE (Moyenne des 3 scores de profil)
-    const scores = analysis.scores; 
-    const globalScore = Math.round((scores.famille + scores.investisseur + scores.qualite_vie) / 3);
+    // Score global : score structurel/risques, moyenné avec les profils quartier quand ils sont disponibles
+    const scores = analysis.scores;
+    const profils = [scores.famille, scores.investisseur, scores.qualite_vie].filter((v): v is number => v !== null);
+    const globalScore = profils.length === 3
+        ? Math.round((analysis.score + profils.reduce((a, b) => a + b, 0) / 3) / 2)
+        : analysis.score;
+    const fmt = (v: number | null) => v === null ? 'Non évalué' : `${v}/100`;
     
     // Couleur score
     const scoreColor = globalScore > 75 ? 'text-green-600 border-green-200 bg-green-50' : 
@@ -73,9 +77,9 @@ export const TabAnalysis = ({ data, dvf }: { data: BuildingData | null, dvf: Tra
                     
                     <div className="pt-4 border-t border-bricq-slate/10">
                         <h4 className="font-bold text-bricq-slate mb-3">Détail des Profils</h4>
-                        <p className="text-sm text-blue-600 font-medium flex justify-between">Score Famille: <span>{scores.famille}/100</span></p>
-                        <p className="text-sm text-purple-600 font-medium flex justify-between">Score Investisseur: <span>{scores.investisseur}/100</span></p>
-                        <p className="text-sm text-green-600 font-medium flex justify-between">Score Qualité de Vie: <span>{scores.qualite_vie}/100</span></p>
+                        <p className="text-sm text-blue-600 font-medium flex justify-between">Score Famille: <span>{fmt(scores.famille)}</span></p>
+                        <p className="text-sm text-purple-600 font-medium flex justify-between">Score Investisseur: <span>{fmt(scores.investisseur)}</span></p>
+                        <p className="text-sm text-green-600 font-medium flex justify-between">Score Qualité de Vie: <span>{fmt(scores.qualite_vie)}</span></p>
                     </div>
                 </div>
             </div>
