@@ -1,9 +1,10 @@
 from typing import Generator
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
+import jwt
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
+from app.core import security
 from app.core.config import settings
 from app.db.session import SessionLocal
 from app.db.models.user import User
@@ -32,11 +33,9 @@ def get_current_user(
     token: str = Depends(reusable_oauth2)
 ) -> User:
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
+        payload = security.decode_access_token(token)
         token_data = TokenPayload(**payload)
-    except (JWTError, ValidationError):
+    except (jwt.InvalidTokenError, ValidationError):
         raise _credentials_exception()
 
     if not token_data.sub or token_data.type != "access":

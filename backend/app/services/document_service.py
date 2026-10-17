@@ -2,15 +2,31 @@ import base64
 import json
 import re
 import logging
-import google.generativeai as genai
+from fastapi import HTTPException, status
+from google import genai
+from google.genai import types
 from pydantic import TypeAdapter
 from app.core.config import settings
 from app.schemas.document import AnalyzedDocument, UnknownData
 
-# Configuration de Google Gemini
-genai.configure(api_key=settings.GEMINI_API_KEY)
-
 logger = logging.getLogger(__name__)
+
+_client = None
+
+
+def _get_client() -> "genai.Client":
+    """Client Gemini créé à la demande ; 503 propre si aucune clé API n'est configurée."""
+    global _client
+    api_key = settings.GEMINI_API_KEY or settings.GOOGLE_API_KEY
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Analyse de documents indisponible pour le moment.",
+        )
+    if _client is None:
+        _client = genai.Client(api_key=api_key)
+    return _client
+
 
 async def analyze_document_with_ai(content: bytes, mime_type: str) -> AnalyzedDocument:
     # 1. Le fichier est déjà lu et validé (type, taille) par l'endpoint
@@ -18,7 +34,7 @@ async def analyze_document_with_ai(content: bytes, mime_type: str) -> AnalyzedDo
     # 2. Choix du Modèle "Chirurgical"
     # On utilise gemini-2.0-flash comme demandé
     model_name = 'gemini-2.0-flash'
-    model = genai.GenerativeModel(model_name)
+    client = _get_client()
 
     # 3. LE MEGA-PROMPT (Structure Forensique)
     prompt = """
@@ -77,30 +93,35 @@ async def analyze_document_with_ai(content: bytes, mime_type: str) -> AnalyzedDo
 
     # 4. Configuration de Sécurité et Température
     safety_settings = [
-        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+        types.SafetySetting(category=category, threshold="BLOCK_NONE")
+        for category in (
+            "HARM_CATEGORY_HARASSMENT",
+            "HARM_CATEGORY_HATE_SPEECH",
+            "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "HARM_CATEGORY_DANGEROUS_CONTENT",
+        )
     ]
 
     try:
         # 5. Appel API Google
-        response = model.generate_content(
-            [
-                {'mime_type': mime_type, 'data': content},
-                prompt
+        # Appel asynchrone : ne bloque pas la boucle d'événements de l'API
+        response = await client.aio.models.generate_content(
+            model=model_name,
+            contents=[
+                types.Part.from_bytes(data=content, mime_type=mime_type),
+                prompt,
             ],
-            generation_config={
-                "response_mime_type": "application/json",
-                "temperature": 0.0,
-                "top_p": 0.95,
-                "top_k": 40
-            },
-            safety_settings=safety_settings
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.0,
+                top_p=0.95,
+                top_k=40,
+                safety_settings=safety_settings,
+            ),
         )
 
         # 6. Nettoyage et Parsing Robuste
-        raw_text = response.text.strip()
+        raw_text = (response.text or "").strip()
         
         if raw_text.startswith("```json"):
             raw_text = raw_text[7:]

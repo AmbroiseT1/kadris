@@ -1,7 +1,10 @@
 import logging
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 import httpx
 from diskcache import Cache
+
+from app.core import security
+from app.core.rate_limit import client_ip, too_many_requests
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -11,12 +14,17 @@ cache = Cache(".cache")
 
 @router.get("/quartier")
 async def proxy_quartier(
+    request: Request,
     lat: float = Query(..., ge=-90, le=90),
     lon: float = Query(..., ge=-180, le=180),
 ):
     """
     Proxy pour l'API Overpass avec mise en cache (7 jours).
     """
+    # Limite par IP (en mémoire, voir app/core/rate_limit.py) : protège Overpass et le quota du serveur
+    if not security.proxy_rate_limiter.hit(client_ip(request)):
+        raise too_many_requests()
+
     # Arrondi (~10 m) : limite le nombre de clés de cache qu'un client peut créer
     lat, lon = round(lat, 4), round(lon, 4)
     cache_key = f"quartier_{lat}_{lon}"

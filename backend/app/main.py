@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -6,11 +7,26 @@ from app.api.v1.router import api_router
 from app.db.session import engine, SessionLocal
 from app.db.base_class import Base
 from app.db.models import user  # Import pour que Base connaisse le modèle User
-from app.db.init_db import ensure_user_columns, upsert_admin
+from app.db.init_db import ensure_admin, ensure_user_columns
 
 logger = logging.getLogger(__name__)
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Compte admin depuis l'environnement (ADMIN_EMAIL + ADMIN_PASSWORD), créé seulement s'il
+    # n'existe pas : un mot de passe existant n'est jamais écrasé (voir create_admin.py).
+    if settings.ADMIN_EMAIL and settings.ADMIN_PASSWORD:
+        db = SessionLocal()
+        try:
+            if ensure_admin(db, settings.ADMIN_EMAIL, settings.ADMIN_PASSWORD):
+                logger.info("Compte admin créé : %s", settings.ADMIN_EMAIL)
+        finally:
+            db.close()
+    yield
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
@@ -38,15 +54,11 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 Base.metadata.create_all(bind=engine)
 ensure_user_columns(engine)
 
-# Compte admin depuis l'environnement (ADMIN_EMAIL + ADMIN_PASSWORD), jamais en dur dans le code
-if settings.ADMIN_EMAIL and settings.ADMIN_PASSWORD:
-    _db = SessionLocal()
-    try:
-        upsert_admin(_db, settings.ADMIN_EMAIL, settings.ADMIN_PASSWORD)
-        logger.info("Compte admin synchronisé : %s", settings.ADMIN_EMAIL)
-    finally:
-        _db.close()
-
 @app.get("/")
 def root():
     return {"message": "Bricq API is running", "version": "1.0.0"}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
