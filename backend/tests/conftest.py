@@ -7,6 +7,7 @@ import uuid
 _TMP_DIR = tempfile.mkdtemp(prefix="bricq-tests-")
 
 os.environ["DATABASE_URL"] = f"sqlite:///{_TMP_DIR}/test.db"
+os.environ["UPLOAD_DIR"] = f"{_TMP_DIR}/uploads"
 os.environ["SECRET_KEY"] = "test-secret-key-" + "x" * 32
 os.environ["CORS_ORIGINS"] = "http://localhost:3000"
 os.environ["GEMINI_API_KEY"] = "test-gemini-key"

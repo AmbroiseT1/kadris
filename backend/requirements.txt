@@ -11,3 +11,4 @@ argon2-cffi==25.1.0
 diskcache==5.6.3
 httpx==0.28.1
 PyJWT==2.15.1
+alembic==1.20.0

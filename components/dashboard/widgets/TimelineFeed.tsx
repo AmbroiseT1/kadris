@@ -1,11 +1,24 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
+import type { Work } from '@/app/lib/api';
+import { formatDate, formatEuro } from '../format';
+import { WidgetStatus, type ResourceState } from './WidgetState';
 
-interface TimelineFeedProps {
+interface TimelineFeedProps extends ResourceState {
+    works: Work[];
     onAddClick: () => void;
+    onDelete: (work: Work) => void;
 }
 
-export default function TimelineFeed({ onAddClick }: TimelineFeedProps) {
+const STATUS_LABEL: Record<string, string> = {
+    planned: 'PRÉVU',
+    in_progress: 'EN COURS',
+    done: 'TERMINÉ',
+};
+
+export default function TimelineFeed({ works, onAddClick, onDelete, ...state }: TimelineFeedProps) {
+    const status = <WidgetStatus {...state} isEmpty={works.length === 0} emptyText="Aucun travaux enregistré pour l'instant." />;
+
     return (
         <div className="relative">
             {/* Header Action */}
@@ -19,34 +32,38 @@ export default function TimelineFeed({ onAddClick }: TimelineFeedProps) {
                 </button>
             </div>
 
-            <div className="relative border-l-2 border-black/20 ml-4 space-y-12">
-                {/* Timeline Item 1 */}
-                <div className="relative pl-8">
-                    <div className="absolute -left-[9px] top-0 w-4 h-4 bg-white border-2 border-black rounded-full" />
-                    <div className="font-mono text-sm text-gray-500 mb-1">2024 - EN COURS</div>
-                    <h3 className="text-xl font-bold font-serif mb-2">Ravalement Façade Nord</h3>
-                    <p className="font-handwriting text-gray-700 italic mb-4">
-                        "Traitement des fissures et reprise des enduits à la chaux."
-                    </p>
-                    <div className="w-full h-4 border border-black p-0.5 relative">
-                        <div
-                            className="h-full bg-black/80"
-                            style={{ width: "65%", maskImage: "linear-gradient(45deg, #000 25%, transparent 25%, transparent 50%, #000 50%, #000 75%, transparent 75%, transparent)" }}
-                        />
-                    </div>
-                    <div className="text-right font-mono text-xs mt-1">65%</div>
+            {state.loading || state.error || works.length === 0 ? status : (
+                <div className="relative border-l-2 border-black/20 ml-4 space-y-12">
+                    {works.map((work) => (
+                        <div key={work.id} className="relative pl-8 group">
+                            <div className={`absolute -left-[9px] top-0 w-4 h-4 border-2 border-black rounded-full ${work.status === 'done' ? 'bg-black' : 'bg-white'}`} />
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="font-mono text-sm text-gray-500 mb-1">
+                                    {work.date ? formatDate(work.date) : 'Sans date'} - {STATUS_LABEL[work.status] ?? work.status}
+                                    {work.category && <span className="ml-2 text-[10px] bg-gray-100 px-1.5 py-0.5 rounded">{work.category}</span>}
+                                </div>
+                                <button
+                                    onClick={() => onDelete(work)}
+                                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-gray-400 hover:text-red-600 transition"
+                                    title="Supprimer"
+                                    aria-label={`Supprimer ${work.title}`}
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
+                            <h3 className="text-xl font-bold font-serif mb-2">{work.title}</h3>
+                            {work.description && (
+                                <p className="font-handwriting text-gray-700 italic mb-2 whitespace-pre-line">{work.description}</p>
+                            )}
+                            {(work.provider || work.cost !== null && work.cost !== undefined) && (
+                                <p className="font-mono text-xs text-gray-500">
+                                    {[work.provider, formatEuro(work.cost)].filter(Boolean).join(' · ')}
+                                </p>
+                            )}
+                        </div>
+                    ))}
                 </div>
-
-                {/* Timeline Item 2 */}
-                <div className="relative pl-8">
-                    <div className="absolute -left-[9px] top-0 w-4 h-4 bg-black border-2 border-black rounded-full" />
-                    <div className="font-mono text-sm text-gray-500 mb-1">2020 - TERMINÉ</div>
-                    <h3 className="text-xl font-bold font-serif mb-2">Isolation Combles</h3>
-                    <p className="font-handwriting text-gray-700 italic">
-                        "Pose de laine de verre 300mm. R = 7.5."
-                    </p>
-                </div>
-            </div>
+            )}
         </div>
     );
 }

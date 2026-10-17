@@ -1,6 +1,7 @@
 import uuid
 from sqlalchemy import Boolean, Column, String, DateTime
 from sqlalchemy.sql import func
+from sqlalchemy.sql.expression import false as sa_false
 from app.db.base_class import Base
 
 class User(Base):
@@ -8,5 +9,5 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean(), default=True)
-    is_admin = Column(Boolean(), default=False, nullable=False, server_default="false")
+    is_admin = Column(Boolean(), default=False, nullable=False, server_default=sa_false())
     created_at = Column(DateTime(timezone=True), server_default=func.now())

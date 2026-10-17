@@ -1,69 +1,137 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, FileText, Loader2, ArrowLeft } from 'lucide-react';
+import {
+    analyzeDocument, apiErrorMessage, documentsApi, worksApi,
+    type AnalyzedDocument, type PropertyDocument, type Work, type WorkStatus,
+} from '@/app/lib/api';
+import AiConsent from './AiConsent';
+import { emptyToNull, toNumberOrNull } from '../format';
 
 interface AddWorkModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: any) => void;
+    propertyId: string;
+    onWorkSaved: (work: Work) => void;
+    onDocumentSaved: (document: PropertyDocument) => void;
 }
 
 type Mode = 'SELECT' | 'MANUAL' | 'UPLOAD';
 
-export default function AddWorkModal({ isOpen, onClose, onSave }: AddWorkModalProps) {
+const emptyForm = {
+    title: '',
+    type: 'TRAVAUX',
+    status: 'done' as WorkStatus,
+    endDate: '',
+    amount: '',
+    contractor: '',
+    description: '',
+};
+
+const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c05621] focus:border-transparent bg-white";
+
+export default function AddWorkModal({ isOpen, onClose, propertyId, onWorkSaved, onDocumentSaved }: AddWorkModalProps) {
     const [mode, setMode] = useState<Mode>('SELECT');
     const [isProcessing, setIsProcessing] = useState(false);
-    const [formData, setFormData] = useState({
-        title: '',
-        type: 'TRAVAUX',
-        endDate: '',
-        amount: '',
-        contractor: '',
-        description: ''
-    });
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [consent, setConsent] = useState(false);
+    const [file, setFile] = useState<File | null>(null);
+    const [analysis, setAnalysis] = useState<AnalyzedDocument | null>(null);
+    // Document déjà envoyé : un nouvel essai après une erreur ne le renvoie pas
+    const [uploadedDoc, setUploadedDoc] = useState<PropertyDocument | null>(null);
+    const [formData, setFormData] = useState(emptyForm);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onSave(formData);
-        resetModal();
-    };
-
     const resetModal = () => {
         onClose();
         setTimeout(() => {
             setMode('SELECT');
-            setFormData({
-                title: '',
-                type: 'TRAVAUX',
-                endDate: '',
-                amount: '',
-                contractor: '',
-                description: ''
-            });
+            setFormData(emptyForm);
             setIsProcessing(false);
+            setError(null);
+            setConsent(false);
+            setFile(null);
+            setAnalysis(null);
+            setUploadedDoc(null);
         }, 300);
     };
 
-    const handleFileUpload = () => {
-        setIsProcessing(true);
-        // Mock OCR Process
-        setTimeout(() => {
-            setFormData({
-                title: 'Rénovation Toiture (Détecté)',
-                type: 'TRAVAUX',
-                endDate: '2023-11-15',
-                amount: '12500',
-                contractor: 'Toiture Express SAS',
-                description: 'Réfection complète de la toiture selon devis #12345. (Données extraites du document)'
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSaving(true);
+        setError(null);
+        try {
+            const date = formData.endDate || null;
+            const title = formData.title.trim();
+            if (file && !uploadedDoc) {
+                const isQuote = analysis?.detected_type === 'QUOTE';
+                const doc = await documentsApi.upload(propertyId, {
+                    file,
+                    title: `${isQuote ? 'Devis' : 'Facture'} - ${title}`.slice(0, 200),
+                    doc_type: isQuote ? 'DEVIS' : 'FACTURE',
+                    date,
+                    ai_analysis: consent && analysis ? analysis : null,
+                });
+                setUploadedDoc(doc);
+                onDocumentSaved(doc);
+            }
+            const work = await worksApi.create(propertyId, {
+                title,
+                category: formData.type,
+                status: formData.status,
+                date,
+                cost: toNumberOrNull(formData.amount),
+                provider: emptyToNull(formData.contractor),
+                description: emptyToNull(formData.description),
             });
+            onWorkSaved(work);
+            resetModal();
+        } catch (err) {
+            setError(apiErrorMessage(err, "L'enregistrement a échoué."));
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const prefillFromAnalysis = (data: AnalyzedDocument) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- champs variables selon detected_type
+        const d = data as Record<string, any>;
+        setFormData(prev => ({
+            ...prev,
+            title: d.description_travaux ? String(d.description_travaux).slice(0, 200) : prev.title,
+            status: data.detected_type === 'QUOTE' ? 'planned' : prev.status,
+            endDate: d.date_facture || prev.endDate,
+            amount: d.montant_ttc != null ? String(d.montant_ttc) : d.montant_total != null ? String(d.montant_total) : prev.amount,
+            contractor: d.artisan_nom || prev.contractor,
+        }));
+    };
+
+    const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selected = e.target.files?.[0];
+        if (!selected) return;
+        setFile(selected);
+        setUploadedDoc(null);
+        setError(null);
+        if (!consent) {
+            setMode('MANUAL');
+            return;
+        }
+        setIsProcessing(true);
+        try {
+            const data = await analyzeDocument(selected);
+            setAnalysis(data);
+            prefillFromAnalysis(data);
+        } catch (err) {
+            setError(apiErrorMessage(err, "Analyse automatique indisponible, complétez le formulaire."));
+        } finally {
             setIsProcessing(false);
-            setMode('MANUAL'); // Go to manual mode for validation
-        }, 2000);
+            setMode('MANUAL'); // validation par l'utilisateur
+        }
     };
 
     if (!isOpen) return null;
@@ -110,7 +178,7 @@ export default function AddWorkModal({ isOpen, onClose, onSave }: AddWorkModalPr
                                     </div>
                                     <h3 className="font-serif font-bold text-lg text-gray-900">Importer un document</h3>
                                     <p className="text-sm text-gray-500 mt-1">Devis ou Facture (PDF, JPG)</p>
-                                    <span className="text-xs font-mono text-[#c05621] mt-3 bg-[#c05621]/10 px-2 py-1 rounded">IA : Remplissage automatique</span>
+                                    <span className="text-xs font-mono text-[#c05621] mt-3 bg-[#c05621]/10 px-2 py-1 rounded">IA : Remplissage automatique (optionnel)</span>
                                 </button>
 
                                 <div className="relative flex items-center justify-center">
@@ -136,21 +204,34 @@ export default function AddWorkModal({ isOpen, onClose, onSave }: AddWorkModalPr
                         )}
 
                         {mode === 'UPLOAD' && (
-                            <div className="text-center py-8">
+                            <div className="text-center py-4 space-y-4">
                                 {!isProcessing ? (
-                                    <div
-                                        className="border-2 border-dashed border-gray-300 rounded-xl p-8 hover:border-[#c05621] hover:bg-[#c05621]/5 transition-all cursor-pointer"
-                                        onClick={handleFileUpload}
-                                    >
-                                        <Upload size={48} className="mx-auto text-gray-400 mb-4" />
-                                        <p className="font-serif font-bold text-lg text-gray-900">Cliquez pour déposer un fichier</p>
-                                        <p className="text-sm text-gray-500 mt-2">PDF, JPG, PNG (Max 10Mo)</p>
-                                    </div>
+                                    <>
+                                        <label className="block border-2 border-dashed border-gray-300 rounded-xl p-8 hover:border-[#c05621] hover:bg-[#c05621]/5 transition-all cursor-pointer">
+                                            <Upload size={48} className="mx-auto text-gray-400 mb-4" />
+                                            <p className="font-serif font-bold text-lg text-gray-900">Cliquez pour déposer un fichier</p>
+                                            <p className="text-sm text-gray-500 mt-2">PDF, JPG, PNG (Max 10Mo)</p>
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif"
+                                                onChange={handleFileSelected}
+                                            />
+                                        </label>
+                                        <div className="text-left">
+                                            <AiConsent checked={consent} onChange={setConsent} />
+                                            {!consent && (
+                                                <p className="mt-1 text-xs text-gray-500">
+                                                    Sans accord, le document est seulement joint aux travaux, sans analyse.
+                                                </p>
+                                            )}
+                                        </div>
+                                    </>
                                 ) : (
                                     <div className="py-8">
                                         <Loader2 size={48} className="mx-auto text-[#c05621] animate-spin mb-4" />
                                         <p className="font-serif font-bold text-lg text-gray-900">Analyse du document...</p>
-                                        <p className="text-sm text-gray-500 mt-2 font-mono">Extraction des données via OCR</p>
+                                        <p className="text-sm text-gray-500 mt-2 font-mono">Extraction des données</p>
                                     </div>
                                 )}
                             </div>
@@ -158,6 +239,11 @@ export default function AddWorkModal({ isOpen, onClose, onSave }: AddWorkModalPr
 
                         {mode === 'MANUAL' && (
                             <form onSubmit={handleSubmit} className="space-y-4">
+                                {file && (
+                                    <p className="text-xs text-gray-600 flex items-center gap-1">
+                                        <FileText size={14} /> Document joint : <span className="font-medium truncate max-w-[220px]">{file.name}</span>
+                                    </p>
+                                )}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
                                     <input
@@ -165,8 +251,9 @@ export default function AddWorkModal({ isOpen, onClose, onSave }: AddWorkModalPr
                                         name="title"
                                         value={formData.title}
                                         onChange={handleChange}
+                                        maxLength={200}
                                         placeholder="Ex: Rénovation Toiture"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c05621] focus:border-transparent bg-white"
+                                        className={inputClass}
                                         required
                                     />
                                 </div>
@@ -174,12 +261,7 @@ export default function AddWorkModal({ isOpen, onClose, onSave }: AddWorkModalPr
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                                        <select
-                                            name="type"
-                                            value={formData.type}
-                                            onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c05621] focus:border-transparent bg-white"
-                                        >
+                                        <select name="type" value={formData.type} onChange={handleChange} className={inputClass}>
                                             <option value="TRAVAUX">Travaux</option>
                                             <option value="ENTRETIEN">Entretien</option>
                                             <option value="ADMIN">Admin</option>
@@ -187,43 +269,49 @@ export default function AddWorkModal({ isOpen, onClose, onSave }: AddWorkModalPr
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
-                                        <input
-                                            type="date"
-                                            name="endDate"
-                                            value={formData.endDate}
-                                            onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c05621] focus:border-transparent bg-white"
-                                        />
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                                        <select name="status" value={formData.status} onChange={handleChange} className={inputClass}>
+                                            <option value="planned">Prévu</option>
+                                            <option value="in_progress">En cours</option>
+                                            <option value="done">Terminé</option>
+                                        </select>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                                        <input type="date" name="endDate" value={formData.endDate} onChange={handleChange} className={inputClass} />
+                                    </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Montant TTC</label>
                                         <div className="relative">
                                             <input
                                                 type="number"
                                                 name="amount"
+                                                min="0"
+                                                step="0.01"
                                                 value={formData.amount}
                                                 onChange={handleChange}
                                                 placeholder="0.00"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c05621] focus:border-transparent bg-white pr-8"
+                                                className={`${inputClass} pr-8`}
                                             />
                                             <span className="absolute right-3 top-2 text-gray-500">€</span>
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Artisan / Entreprise</label>
-                                        <input
-                                            type="text"
-                                            name="contractor"
-                                            value={formData.contractor}
-                                            onChange={handleChange}
-                                            placeholder="Nom de l'entreprise"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c05621] focus:border-transparent bg-white"
-                                        />
-                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Artisan / Entreprise</label>
+                                    <input
+                                        type="text"
+                                        name="contractor"
+                                        value={formData.contractor}
+                                        onChange={handleChange}
+                                        maxLength={200}
+                                        placeholder="Nom de l'entreprise"
+                                        className={inputClass}
+                                    />
                                 </div>
 
                                 <div>
@@ -233,10 +321,13 @@ export default function AddWorkModal({ isOpen, onClose, onSave }: AddWorkModalPr
                                         value={formData.description}
                                         onChange={handleChange}
                                         rows={3}
+                                        maxLength={5000}
                                         placeholder="Détails supplémentaires..."
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c05621] focus:border-transparent bg-white resize-none"
+                                        className={`${inputClass} resize-none`}
                                     />
                                 </div>
+
+                                {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
 
                                 <div className="flex justify-end pt-4 space-x-3">
                                     <button
@@ -248,9 +339,11 @@ export default function AddWorkModal({ isOpen, onClose, onSave }: AddWorkModalPr
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-4 py-2 text-sm font-medium text-white bg-[#c05621] rounded-lg hover:bg-[#9c4219] transition-colors shadow-md hover:shadow-lg"
+                                        disabled={isSaving}
+                                        className="px-4 py-2 text-sm font-medium text-white bg-[#c05621] rounded-lg hover:bg-[#9c4219] transition-colors shadow-md hover:shadow-lg disabled:opacity-70 flex items-center gap-2"
                                     >
-                                        Ajouter l'événement
+                                        {isSaving && <Loader2 size={14} className="animate-spin" />}
+                                        Ajouter l&apos;événement
                                     </button>
                                 </div>
                             </form>

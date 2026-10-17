@@ -31,6 +31,13 @@ class Settings(BaseSettings):
 
     # Upload de documents
     MAX_UPLOAD_SIZE_MB: int = 10
+    # Dossier de stockage des documents des propriétaires. Hors de tout dossier servi
+    # statiquement ; fichiers téléchargeables uniquement via l'API authentifiée.
+    # En production (Docker), monter un volume persistant sur ce chemin.
+    UPLOAD_DIR: str = "./uploads"
+
+    # Applique les migrations Alembic (alembic upgrade head) au démarrage de l'API
+    RUN_MIGRATIONS_ON_STARTUP: bool = True
 
     # Anti brute-force sur /auth/login
     LOGIN_MAX_ATTEMPTS: int = 5            # échecs par IP + email

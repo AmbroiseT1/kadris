@@ -4,15 +4,20 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.router import api_router
-from app.db.session import engine, SessionLocal
-from app.db.base_class import Base
-from app.db.models import user  # Import pour que Base connaisse le modèle User
-from app.db.init_db import ensure_admin, ensure_user_columns
+from app.db.session import SessionLocal
+from app.db.init_db import ensure_admin
+from app.db.migrate import upgrade_to_head
 
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    # Schéma de la base : `alembic upgrade head` (idempotent). Une seule instance de l'API
+    # doit tourner pendant une migration (voir --workers 1 dans le Dockerfile). Pour migrer
+    # séparément (CI, déploiement), mettre RUN_MIGRATIONS_ON_STARTUP=false et lancer
+    # `alembic upgrade head` depuis le dossier backend.
+    if settings.RUN_MIGRATIONS_ON_STARTUP:
+        upgrade_to_head()
     # Compte admin depuis l'environnement (ADMIN_EMAIL + ADMIN_PASSWORD), créé seulement s'il
     # n'existe pas : un mot de passe existant n'est jamais écrasé (voir create_admin.py).
     if settings.ADMIN_EMAIL and settings.ADMIN_PASSWORD:
@@ -49,10 +54,6 @@ async def security_headers(request, call_next):
 
 # Inclusion des routes
 app.include_router(api_router, prefix=settings.API_V1_STR)
-
-# Création des tables au démarrage (Simple pour le MVP)
-Base.metadata.create_all(bind=engine)
-ensure_user_columns(engine)
 
 @app.get("/")
 def root():

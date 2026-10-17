@@ -2,37 +2,32 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { User, LogOut, Home, FileText, Shield, Trash2 } from 'lucide-react';
-import { getCurrentUserProfile } from '@/utils/userStorage';
-import { getCurrentUserProperties, clearCurrentUser } from '@/utils/propertyStorage';
+import { User, LogOut, Home, Shield, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/app/context/AuthContext';
+import { apiErrorMessage, propertiesApi, type Property } from '@/app/lib/api';
+import OwnershipBadge from '@/components/dashboard/OwnershipBadge';
 
 export default function ProfilePage() {
-    const router = useRouter();
-    const [userProfile, setUserProfile] = useState<any>(null);
-    const [properties, setProperties] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    // La redirection des visiteurs non connectés est gérée par AuthContext
+    const { user: userProfile, isLoading: authLoading, logout } = useAuth();
+    const [properties, setProperties] = useState<Property[]>([]);
+    const [propertiesError, setPropertiesError] = useState<string | null>(null);
+    const [loadingProperties, setLoadingProperties] = useState(true);
 
     useEffect(() => {
-        const profile = getCurrentUserProfile();
-        const userProps = getCurrentUserProperties();
-
-        if (!profile) {
-            // No user logged in, redirect to login
-            router.push('/login');
-            return;
-        }
-
-        setUserProfile(profile);
-        setProperties(userProps);
-        setIsLoading(false);
-    }, [router]);
+        if (!userProfile) return;
+        propertiesApi.list()
+            .then(setProperties)
+            .catch((e) => setPropertiesError(apiErrorMessage(e, "Impossible de charger vos biens.")))
+            .finally(() => setLoadingProperties(false));
+    }, [userProfile]);
 
     const handleLogout = () => {
-        clearCurrentUser();
-        router.push('/');
+        logout();
     };
+
+    const isLoading = authLoading || (!!userProfile && loadingProperties);
 
     if (isLoading) {
         return (
@@ -89,17 +84,6 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="grid gap-6">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-bricq-slate/60 mb-2">Prénom</label>
-                                    <p className="text-lg font-medium text-bricq-slate">{userProfile.firstName}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-bricq-slate/60 mb-2">Nom</label>
-                                    <p className="text-lg font-medium text-bricq-slate">{userProfile.lastName}</p>
-                                </div>
-                            </div>
-
                             <div>
                                 <label className="block text-sm font-medium text-bricq-slate/60 mb-2">Email</label>
                                 <p className="text-lg font-medium text-bricq-slate">{userProfile.email}</p>
@@ -108,7 +92,7 @@ export default function ProfilePage() {
                             <div>
                                 <label className="block text-sm font-medium text-bricq-slate/60 mb-2">Membre depuis</label>
                                 <p className="text-lg font-medium text-bricq-slate">
-                                    {new Date(userProfile.createdAt).toLocaleDateString('fr-FR', {
+                                    {new Date(userProfile.created_at).toLocaleDateString('fr-FR', {
                                         day: 'numeric',
                                         month: 'long',
                                         year: 'numeric'
@@ -135,23 +119,31 @@ export default function ProfilePage() {
                             </div>
                         </div>
 
-                        {properties.length === 0 ? (
-                            <p className="text-bricq-slate/60 text-center py-8">Vous n'avez pas encore revendiqué de propriété.</p>
+                        {propertiesError ? (
+                            <p role="alert" className="text-red-700 text-center py-8">{propertiesError}</p>
+                        ) : properties.length === 0 ? (
+                            <div className="text-center py-8">
+                                <p className="text-bricq-slate/60 mb-4">Vous n&apos;avez pas encore ajouté de bien.</p>
+                                <Link href="/properties/add" className="text-bricq-terracotta font-bold hover:underline">
+                                    Ajoutez votre premier bien
+                                </Link>
+                            </div>
                         ) : (
                             <div className="space-y-4">
                                 {properties.map((prop) => (
                                     <Link
                                         key={prop.id}
-                                        href={`/dashboard?propertyId=${prop.id}`}
+                                        href={`/dashboard?propertyId=${encodeURIComponent(prop.id)}`}
                                         className="block p-4 border border-bricq-slate/20 rounded-lg hover:border-bricq-terracotta hover:bg-bricq-terracotta/5 transition-all group"
                                     >
                                         <div className="flex items-start justify-between">
                                             <div>
                                                 <h3 className="font-serif font-bold text-bricq-slate group-hover:text-bricq-terracotta transition-colors">
-                                                    {prop.data.adresse_ban}
+                                                    {prop.address_label}
                                                 </h3>
-                                                <p className="text-sm text-bricq-slate/60 mt-1">
-                                                    Revendiqué le {new Date(prop.claimedAt).toLocaleDateString('fr-FR')}
+                                                <p className="text-sm text-bricq-slate/60 mt-1 flex items-center gap-2">
+                                                    Ajouté le {new Date(prop.created_at).toLocaleDateString('fr-FR')}
+                                                    <OwnershipBadge status={prop.ownership_status} comment={prop.ownership_comment} />
                                                 </p>
                                             </div>
                                             <span className="text-xs text-bricq-slate/40 group-hover:text-bricq-terracotta transition-colors">

@@ -1,23 +1,111 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, FileText, X, Loader2, Sparkles } from 'lucide-react';
-import { api } from '@/app/lib/api';
+import {
+    analyzeDocument, apiErrorMessage, documentsApi, DOC_TYPE_OWNERSHIP_PROOF,
+    type AnalyzedDocument, type PropertyDocument,
+} from '@/app/lib/api';
+import AiConsent from './AiConsent';
+import { todayIso } from '../format';
 
 interface AddDocumentModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: any) => void;
+    propertyId: string;
+    onSaved: (doc: PropertyDocument) => void;
+    /** Type présélectionné (ex. justificatif de propriété après un refus). */
+    defaultType?: string;
 }
 
-export default function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumentModalProps) {
+export const DOCUMENT_TYPES = [
+    { id: 'FACTURE', label: 'Factures' },
+    { id: 'DEVIS', label: 'Devis' },
+    { id: 'OFFICIEL', label: 'Document officiel' },
+    { id: 'TAXE', label: 'Taxes' },
+    { id: 'IMPOT', label: 'Impôts' },
+    { id: 'ASSURANCE', label: 'Assurances' },
+    { id: DOC_TYPE_OWNERSHIP_PROOF, label: 'Justificatif de propriété' },
+    { id: 'AUTRE', label: 'Autre' },
+];
+
+const emptyForm = (type = 'AUTRE') => ({
+    title: '',
+    type,
+    date: todayIso(),
+    description: '',
+    file: null as File | null,
+});
+
+/** Pré-remplit le formulaire à partir du résultat de l'analyse IA. */
+function mapAnalysis(data: AnalyzedDocument, current: ReturnType<typeof emptyForm>) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- champs variables selon detected_type
+    const d = data as Record<string, any>;
+    let { title, type, date, description } = current;
+    switch (data.detected_type) {
+        case 'INVOICE':
+            type = 'FACTURE';
+            title = d.artisan_nom ? `Facture ${d.artisan_nom}` : 'Nouvelle Facture';
+            if (d.date_facture) date = d.date_facture;
+            description = `Montant: ${d.montant_ttc || '?'}€\n${d.description_travaux || ''}`;
+            break;
+        case 'QUOTE':
+            type = 'DEVIS';
+            title = d.artisan_nom ? `Devis ${d.artisan_nom}` : 'Nouveau Devis';
+            if (d.validite_date) date = d.validite_date;
+            description = `Montant: ${d.montant_total || '?'}€`;
+            break;
+        case 'TAX_NOTICE':
+            type = 'TAXE';
+            title = `Avis ${d.type_taxe || 'Impôt'} ${d.annee || ''}`;
+            description = `Montant à payer: ${d.montant_total || '?'}€`;
+            break;
+        case 'INSURANCE':
+            type = 'ASSURANCE';
+            title = d.assureur ? `Assurance ${d.assureur}` : 'Assurance Habitation';
+            if (d.date_echeance) date = d.date_echeance;
+            description = `Contrat N° ${d.numero_contrat || 'Non détecté'}`;
+            break;
+        case 'PROPERTY_DEED':
+            type = 'OFFICIEL';
+            title = d.notaire_nom ? `Acte de vente - Me ${d.notaire_nom}` : 'Acte de Propriété';
+            if (d.date_acte) date = d.date_acte;
+            description = d.prix_acquisition ? `Prix d'acquisition: ${d.prix_acquisition}€` : '';
+            break;
+        case 'DPE':
+            type = 'AUTRE';
+            title = `DPE (Classe ${d.classe_energetique || '?'})`;
+            description = `Étiquette Énergie: ${d.classe_energetique}\nÉtiquette GES: ${d.classe_ges}`;
+            break;
+    }
+    return { ...current, title, type, date, description: description.trim() };
+}
+
+export default function AddDocumentModal({ isOpen, onClose, propertyId, onSaved, defaultType }: AddDocumentModalProps) {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [formData, setFormData] = useState({
-        title: '',
-        type: 'AUTRE',
-        date: new Date().toISOString().split('T')[0],
-        description: '',
-        file: null as File | null
-    });
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [aiNotice, setAiNotice] = useState<string | null>(null);
+    const [consent, setConsent] = useState(false);
+    const [analysis, setAnalysis] = useState<AnalyzedDocument | null>(null);
+    const [formData, setFormData] = useState(() => emptyForm(defaultType));
+
+    // À chaque ouverture : formulaire vierge avec le type demandé
+    useEffect(() => {
+        if (isOpen) setFormData(emptyForm(defaultType));
+    }, [isOpen, defaultType]);
+
+    const reset = () => {
+        setFormData(emptyForm(defaultType));
+        setAnalysis(null);
+        setConsent(false);
+        setError(null);
+        setAiNotice(null);
+    };
+
+    const close = () => {
+        reset();
+        onClose();
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -26,93 +114,56 @@ export default function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumen
 
     const analyzeFileWithAI = async (file: File) => {
         setIsAnalyzing(true);
+        setAiNotice(null);
         try {
-            const upload = new FormData();
-            upload.append('file', file);
-
-            // Appel authentifié à l'API (URL via NEXT_PUBLIC_API_URL, token ajouté par l'intercepteur)
-            const response = await api.post('/documents/analyze', upload);
-            const data = response.data;
-
-            // Mapping intelligent des données
-            let newTitle = formData.title;
-            let newType = formData.type;
-            let newDate = formData.date;
-            let newDesc = formData.description;
-
-            switch (data.detected_type) {
-                case 'INVOICE':
-                    newType = 'FACTURE';
-                    newTitle = data.artisan_nom ? `Facture ${data.artisan_nom}` : 'Nouvelle Facture';
-                    if (data.date_facture) newDate = data.date_facture;
-                    newDesc = `Montant: ${data.montant_ttc || '?'}€\n${data.description_travaux || ''}`;
-                    break;
-                case 'QUOTE':
-                    newType = 'DEVIS';
-                    newTitle = data.artisan_nom ? `Devis ${data.artisan_nom}` : 'Nouveau Devis';
-                    if (data.validite_date) newDate = data.validite_date;
-                    newDesc = `Montant: ${data.montant_total || '?'}€`;
-                    break;
-                case 'TAX_NOTICE':
-                    newType = 'TAXE'; // ou IMPOT
-                    newTitle = `Avis ${data.type_taxe || 'Impôt'} ${data.annee || ''}`;
-                    newDesc = `Montant à payer: ${data.montant_total || '?'}€`;
-                    break;
-                case 'INSURANCE':
-                    newType = 'ASSURANCE';
-                    newTitle = data.assureur ? `Assurance ${data.assureur}` : 'Assurance Habitation';
-                    if (data.date_echeance) newDate = data.date_echeance;
-                    newDesc = `Contrat N° ${data.numero_contrat || 'Non détecté'}`;
-                    break;
-                case 'PROPERTY_DEED':
-                    newType = 'OFFICIEL';
-                    newTitle = data.notaire_nom ? `Acte de vente - Me ${data.notaire_nom}` : 'Acte de Propriété';
-                    if (data.date_acte) newDate = data.date_acte;
-                    newDesc = data.prix_acquisition ? `Prix d'acquisition: ${data.prix_acquisition}€` : '';
-                    break;
-                case 'DPE':
-                    newType = 'AUTRE'; // Pas de catégorie DPE par défaut dans le select actuel
-                    newTitle = `DPE (Classe ${data.classe_energetique || '?'})`;
-                    newDesc = `Étiquette Énergie: ${data.classe_energetique}\nÉtiquette GES: ${data.classe_ges}`;
-                    break;
-            }
-
-            setFormData(prev => ({
-                ...prev,
-                title: newTitle,
-                type: newType,
-                date: newDate,
-                description: newDesc.trim()
-            }));
-
-        } catch (error) {
-            console.error("Erreur IA:", error);
-            // On ne bloque pas l'utilisateur, on le laisse remplir à la main
+            const data = await analyzeDocument(file);
+            setAnalysis(data);
+            setFormData(prev => mapAnalysis(data, prev));
+        } catch (e) {
+            // On ne bloque pas l'utilisateur : il remplit le formulaire à la main
+            setAiNotice(apiErrorMessage(e, "Analyse automatique indisponible, complétez le formulaire."));
         } finally {
             setIsAnalyzing(false);
         }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setFormData(prev => ({ ...prev, file }));
-            // Déclenche l'analyse IA
-            analyzeFileWithAI(file);
-        }
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setFormData(prev => ({ ...prev, file }));
+        setAnalysis(null);
+        if (consent) analyzeFileWithAI(file);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleConsentChange = (checked: boolean) => {
+        setConsent(checked);
+        if (checked && formData.file && !analysis) analyzeFileWithAI(formData.file);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(formData);
-        onClose();
-        setFormData({
-            title: '',
-            type: 'AUTRE',
-            date: new Date().toISOString().split('T')[0],
-            description: '',
-            file: null
-        });
+        if (!formData.file) {
+            setError('Ajoutez un fichier.');
+            return;
+        }
+        setIsSaving(true);
+        setError(null);
+        try {
+            const doc = await documentsApi.upload(propertyId, {
+                file: formData.file,
+                title: formData.title,
+                doc_type: formData.type,
+                date: formData.date || null,
+                description: formData.description || null,
+                ai_analysis: consent && analysis ? analysis : null,
+            });
+            onSaved(doc);
+            close();
+        } catch (err) {
+            setError(apiErrorMessage(err, "L'envoi du document a échoué."));
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -131,12 +182,41 @@ export default function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumen
                             Ajouter un document
                             {isAnalyzing && <Sparkles size={18} className="text-yellow-500 animate-pulse" />}
                         </h2>
-                        <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors">
+                        <button onClick={close} className="text-gray-500 hover:text-gray-700 transition-colors">
                             <X size={24} />
                         </button>
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Fichier</label>
+                            <div className={`border-2 border-dashed rounded-lg p-4 transition-colors text-center cursor-pointer relative ${isAnalyzing ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300 hover:border-black'}`}>
+                                <input
+                                    type="file"
+                                    onChange={handleFileChange}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif"
+                                    disabled={isAnalyzing || isSaving}
+                                />
+                                {formData.file ? (
+                                    <div className="flex items-center justify-center gap-2 text-black font-medium">
+                                        <FileText size={20} />
+                                        <span className="truncate max-w-[200px]">{formData.file.name}</span>
+                                        {isAnalyzing && <span className="text-xs text-yellow-600 animate-pulse">(Analyse en cours...)</span>}
+                                    </div>
+                                ) : (
+                                    <div className="text-gray-500">
+                                        <Upload size={24} className="mx-auto mb-2" />
+                                        <span className="text-sm">Cliquez pour déposer un fichier (PDF ou image, 10 Mo max)</span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="mt-2">
+                                <AiConsent checked={consent} onChange={handleConsentChange} disabled={isAnalyzing || isSaving} />
+                            </div>
+                            {aiNotice && <p className="mt-1 text-xs text-amber-700">{aiNotice}</p>}
+                        </div>
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Titre du document</label>
                             <div className="relative">
@@ -145,6 +225,7 @@ export default function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumen
                                     name="title"
                                     value={formData.title}
                                     onChange={handleChange}
+                                    maxLength={200}
                                     placeholder="Ex: Facture Entretien Chaudière"
                                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white ${isAnalyzing ? 'animate-pulse bg-gray-50' : 'border-gray-300'}`}
                                     required
@@ -166,13 +247,7 @@ export default function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumen
                                     onChange={handleChange}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
                                 >
-                                    <option value="FACTURE">Factures</option>
-                                    <option value="DEVIS">Devis</option>
-                                    <option value="OFFICIEL">Document officiel</option>
-                                    <option value="TAXE">Taxes</option>
-                                    <option value="IMPOT">Impôts</option>
-                                    <option value="ASSURANCE">Assurances</option>
-                                    <option value="AUTRE">Autre</option>
+                                    {DOCUMENT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
                                 </select>
                             </div>
                             <div>
@@ -193,50 +268,29 @@ export default function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumen
                                 name="description"
                                 value={formData.description}
                                 onChange={handleChange}
+                                maxLength={5000}
                                 placeholder="Ajoutez une description optionnelle..."
                                 rows={3}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white resize-none"
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Fichier</label>
-                            <div className={`border-2 border-dashed rounded-lg p-4 transition-colors text-center cursor-pointer relative ${isAnalyzing ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300 hover:border-black'}`}>
-                                <input
-                                    type="file"
-                                    onChange={handleFileChange}
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                    accept=".pdf,.jpg,.png"
-                                    disabled={isAnalyzing}
-                                />
-                                {formData.file ? (
-                                    <div className="flex items-center justify-center gap-2 text-black font-medium">
-                                        <FileText size={20} />
-                                        <span className="truncate max-w-[200px]">{formData.file.name}</span>
-                                        {isAnalyzing && <span className="text-xs text-yellow-600 animate-pulse">(Analyse en cours...)</span>}
-                                    </div>
-                                ) : (
-                                    <div className="text-gray-500">
-                                        <Upload size={24} className="mx-auto mb-2" />
-                                        <span className="text-sm">Cliquez pour déposer un fichier</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                        {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
 
                         <div className="flex justify-end pt-4 space-x-3">
                             <button
                                 type="button"
-                                onClick={onClose}
+                                onClick={close}
                                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                             >
                                 Annuler
                             </button>
                             <button
                                 type="submit"
-                                disabled={isAnalyzing}
-                                className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                                disabled={isAnalyzing || isSaving || !formData.file}
+                                className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
                             >
+                                {isSaving && <Loader2 size={14} className="animate-spin" />}
                                 {isAnalyzing ? 'Analyse...' : 'Ajouter au coffre'}
                             </button>
                         </div>

@@ -10,10 +10,9 @@ import getpass
 import os
 import sys
 
-from app.db.base_class import Base
-from app.db.init_db import ensure_user_columns, upsert_admin
-from app.db.models import user  # noqa: F401  (enregistre le modèle User)
-from app.db.session import SessionLocal, engine
+from app.db.init_db import upsert_admin
+from app.db.migrate import upgrade_to_head
+from app.db.session import SessionLocal
 
 
 def main() -> None:
@@ -24,8 +23,7 @@ def main() -> None:
         if password != getpass.getpass("Confirmer : "):
             sys.exit("Les mots de passe ne correspondent pas.")
 
-    Base.metadata.create_all(bind=engine)
-    ensure_user_columns(engine)
+    upgrade_to_head()  # crée / met à jour le schéma si besoin
     db = SessionLocal()
     try:
         admin = upsert_admin(db, email, password)
