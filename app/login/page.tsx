@@ -121,9 +121,9 @@ export default function LoginPage() {
                                     <label htmlFor="password" className="block text-sm font-medium text-bricq-slate">
                                         Mot de passe
                                     </label>
-                                    <a href="#" className="text-xs font-medium text-bricq-terracotta hover:text-bricq-terracotta/80">
+                                    <Link href="/mot-de-passe-oublie" className="text-xs font-medium text-bricq-terracotta hover:text-bricq-terracotta/80">
                                         Mot de passe oublié ?
-                                    </a>
+                                    </Link>
                                 </div>
                                 <input
                                     id="password"
