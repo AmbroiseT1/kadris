@@ -76,7 +76,7 @@ export default function DetailDrawer({
                             transactions={dvfData}
                             loading={loadingDVF}
                             marketStats={marketStats}
-                            surface={data.surface_sol}
+                            surface={data.dpe_reel?.surface_habitable_logement}
                             surface_terrain={(data as BuildingData & { surface_terrain?: number }).surface_terrain}
                         />
                         <FinanceBento

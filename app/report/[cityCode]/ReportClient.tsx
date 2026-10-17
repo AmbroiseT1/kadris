@@ -284,7 +284,7 @@ export default function ReportClient({ cleInterop }: { cleInterop: string }) {
           {activeTab === 'quartier' && <TabQuartier data={buildingData} />}
           {activeTab === 'risks' && <TabRisks data={buildingData} />}
           {activeTab === 'urba' && <TabUrbanisme data={buildingData} />}
-          {activeTab === 'dvf' && <TabDVF transactions={dvfData} loading={loadingDVF && sources?.dvf?.status === 'loading'} marketStats={marketStats} surface={buildingData?.surface_sol} surface_terrain={buildingData?.raw_bdnb?.surface_terrain} source={sources?.dvf} />}
+          {activeTab === 'dvf' && <TabDVF transactions={dvfData} loading={loadingDVF && sources?.dvf?.status === 'loading'} marketStats={marketStats} surface={buildingData?.dpe_reel?.surface_habitable_logement} surface_terrain={buildingData?.raw_bdnb?.surface_terrain} source={sources?.dvf} />}
           {activeTab === 'analyse' && <TabAnalyse data={buildingData} dvf={dvfData} />}
           {activeTab === 'owner' && <TabOwner />}
         </div>

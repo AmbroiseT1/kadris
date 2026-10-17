@@ -9,7 +9,7 @@ interface TabDVFProps {
    transactions: TransactionDVF[];
    loading: boolean;
    marketStats: BackendMarketStats | null;
-   surface?: number; // Surface du bien actuel pour l'estimation
+   surface?: number; // Surface HABITABLE du bien (DPE), pas l'emprise au sol ; sans elle, pas d'estimation
    surface_terrain?: number; // Surface terrain du bien actuel
    source?: SourceInfo;
 }
@@ -158,7 +158,7 @@ export const TabDVF = ({ transactions, loading, marketStats, surface, surface_te
                         {estimation ? `${estimation.toLocaleString()} €` : "N/A"}
                      </div>
                      <div className="text-sm text-bricq-slate/50 font-medium mt-1">
-                        Basé sur la surface ({surface || "?"} m²) + terrain ({surface_terrain || 0} m²)
+                        {surface ? `Basé sur la surface habitable (${surface} m²) + terrain (${surface_terrain || 0} m²)` : "Surface habitable inconnue : estimation impossible"}
                      </div>
                   </div>
                </div>
