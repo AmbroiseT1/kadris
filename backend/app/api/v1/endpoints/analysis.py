@@ -35,7 +35,7 @@ async def analyze_file(
     content = await file.read(max_bytes + 1)
     if len(content) > max_bytes:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=413,
             detail=f"Fichier trop volumineux (max {settings.MAX_UPLOAD_SIZE_MB} Mo).",
         )
 

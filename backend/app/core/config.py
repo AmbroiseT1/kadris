@@ -10,7 +10,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str
 
     # IA
-    GEMINI_API_KEY: str
+    # Optionnelles : sans clé, /documents/analyze répond 503 (le reste de l'API fonctionne)
+    GEMINI_API_KEY: Optional[str] = None
+    GOOGLE_API_KEY: Optional[str] = None
 
     # Security
     # Clé de signature des JWT. Obligatoire : générer avec
@@ -22,7 +24,8 @@ class Settings(BaseSettings):
     # Origines autorisées pour le CORS, séparées par des virgules
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
 
-    # Compte administrateur créé/mis à jour au démarrage si les deux sont définis
+    # Compte administrateur créé au démarrage s'il n'existe pas (un compte existant n'est jamais
+    # modifié ; pour réinitialiser un mot de passe, utiliser create_admin.py)
     ADMIN_EMAIL: Optional[str] = None
     ADMIN_PASSWORD: Optional[str] = None
 
@@ -30,9 +33,18 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_MB: int = 10
 
     # Anti brute-force sur /auth/login
-    LOGIN_MAX_ATTEMPTS: int = 5
+    LOGIN_MAX_ATTEMPTS: int = 5            # échecs par IP + email
     LOGIN_WINDOW_SECONDS: int = 300
-    LOGIN_MAX_ATTEMPTS_PER_IP: int = 30
+    LOGIN_MAX_ATTEMPTS_PER_IP: int = 30    # échecs par IP, tous comptes confondus
+    LOGIN_IP_WINDOW_SECONDS: int = 900
+
+    # Inscriptions par IP
+    REGISTER_MAX_PER_IP: int = 5
+    REGISTER_WINDOW_SECONDS: int = 3600
+
+    # Proxy Overpass : requêtes par IP
+    PROXY_MAX_PER_IP: int = 60
+    PROXY_WINDOW_SECONDS: int = 60
 
     @field_validator("SECRET_KEY")
     @classmethod
