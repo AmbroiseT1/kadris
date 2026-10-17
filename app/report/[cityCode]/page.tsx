@@ -1,208 +1,48 @@
-"use client";
+import type { Metadata } from 'next';
+import { isValidCleInterop } from '@/app/lib/bndb';
+import ReportClient from './ReportClient';
 
-import React, { use, useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Shield, TrendingUp, AlertTriangle, Lock, Sparkles, Scroll, ShoppingBag, Database, FileText, Download } from 'lucide-react';
-import Link from 'next/link';
-import proj4 from 'proj4';
+// Le segment s'appelle historiquement `cityCode` mais contient la clé d'interopérabilité BAN
+// de l'adresse (ex. 75107_8909_00012).
+type Params = Promise<{ cityCode: string }>;
 
-// --- IMPORTS DES COMPOSANTS ---
-import { TabSynthese } from '@/components/report/TabSynthese';
-import { TabAnalyse } from '@/components/report/TabAnalyse';
-import { TabDVF } from '@/components/report/TabDVF';
-import { TabRisks } from '@/components/report/TabRisks';
-import { TabUrbanisme } from '@/components/report/TabUrbanisme';
-import { TabQuartier } from '@/components/report/TabQuartier';
-import { TabOwner } from '@/components/report/TabOwner';
-import { TabBatiment } from '@/components/report/TabBatiment';
+const GENERIC_TITLE = 'Rapport immobilier';
+const DESCRIPTION_SUFFIX = 'risques naturels, DPE, urbanisme, prix DVF et quartier à partir des données publiques.';
 
-// --- IMPORTS DES LIBRAIRIES ---
-import { fetchDVF, TransactionDVF } from '../../lib/dvf';
-import { fetchWaterQuality } from '../../lib/eau';
-import { fetchRisks } from '../../lib/georisques';
-import { fetchUrbanisme } from '../../lib/urbanisme';
-import { fetchQuartier } from '../../lib/quartier';
-import { fetchDPE } from '../../lib/dpe';
-import { fetchConnectivity } from '../../lib/arcep';
-import { BuildingData } from '@/app/lib/types';
-
-// --- CONSTANTES ---
-const LAMBERT_93 = "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs";
-const WGS_84 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
-
-// --- LOGIQUE DE CHARGEMENT ---
-async function fetchBuildingData(cleInterop: string): Promise<BuildingData | null> {
-  if (!cleInterop) return null;
+/** Libellé d'adresse depuis la BAN (plateforme adresse.data.gouv.fr), ou null. */
+async function lookupBanLabel(cleInterop: string): Promise<string | null> {
   try {
-    const url = `https://api.bdnb.io/v1/bdnb/donnees/batiment_groupe_complet/adresse?limit=1&cle_interop_adr=eq.${cleInterop}`;
-    const res = await fetch(url);
+    const res = await fetch(`https://plateforme.adresse.data.gouv.fr/lookup/${encodeURIComponent(cleInterop)}`, {
+      next: { revalidate: 86400 },
+      signal: AbortSignal.timeout(3000),
+    });
     if (!res.ok) return null;
-    const data = await res.json();
-
-    if (data && data.length > 0) {
-      const bat = data[0];
-      let coords = null;
-      if (bat.geom_groupe?.coordinates?.[0]?.[0]?.[0]) {
-        const point = bat.geom_groupe.coordinates[0][0][0];
-        if (point[0] > 180) {
-          const p = proj4(LAMBERT_93, WGS_84, point);
-          coords = { lon: p[0], lat: p[1] };
-        } else {
-          coords = { lon: point[0], lat: point[1] };
-        }
-      }
-
-      const anneeFiscale = bat.annee_construction ? parseInt(bat.annee_construction) : null;
-      const anneeReelle = bat.annee_construction_reelle_t ? parseInt(bat.annee_construction_reelle_t) : null;
-      const anneeDPE = bat.annee_construction_dpe ? parseInt(bat.annee_construction_dpe) : null;
-      let anneeFinale = "Non daté";
-      const datesValides = [anneeFiscale, anneeReelle, anneeDPE].filter(d => d !== null && !isNaN(d) && d > 1000) as number[];
-
-      if (datesValides.length > 0) anneeFinale = Math.min(...datesValides).toString();
-      else if (bat.periode_construction_max) anneeFinale = `Période ${bat.periode_construction_max}`;
-
-      return {
-        adresse_ban: bat.libelle_adr_principale_ban,
-        annee_construction: anneeFinale,
-        dpe_lettre: bat.classe_bilan_dpe || bat.classe_bilan_dpe_moyen || "Non noté",
-        materiaux_murs: bat.mat_mur_txt || "Non renseigné",
-        materiaux_toiture: bat.mat_toit_txt || "Non renseigné",
-        hauteur: bat.hauteur_mean,
-        nb_niveaux: bat.nb_niveau,
-        surface_sol: bat.surface_emprise_sol,
-        altitude: bat.altitude_sol_mean,
-        nb_logements: bat.nb_log,
-        usage: bat.usage_niveau_1_txt || "Non déterminé",
-        fiabilite: bat.fiabilite_cr_adr_niv_1?.includes("fiables") ? "Haute" : "Moyenne",
-        coords: coords || undefined,
-        raw_bdnb: bat
-      };
-    }
-    return null;
-  } catch (error) {
-    console.error("Crash BDNB:", error);
+    const a = await res.json();
+    const numero = [a.numero, a.suffixe].filter(Boolean).join(' ');
+    const voie = a.voie?.nomVoie ?? a.nomVoie;
+    const commune = a.commune?.nom;
+    const cp = a.codePostal ?? a.parcelles?.codePostal;
+    if (!voie && !commune) return null;
+    return [[numero, voie].filter(Boolean).join(' '), [cp, commune].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  } catch {
     return null;
   }
 }
 
-// --- PAGE PRINCIPALE ---
-export default function ReportPage({ params }: { params: Promise<{ cityCode: string }> }) {
-  const { cityCode } = use(params);
-  const [activeTab, setActiveTab] = useState<'synthese' | 'analyse' | 'urba' | 'quartier' | 'dvf' | 'risks' | 'owner' | 'batiment'>('synthese');
-  const [buildingData, setBuildingData] = useState<BuildingData | null>(null);
-  const [dvfData, setDvfData] = useState<TransactionDVF[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingDVF, setLoadingDVF] = useState(false);
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { cityCode } = await params;
+  const cle = decodeURIComponent(cityCode);
+  const adresse = isValidCleInterop(cle) ? await lookupBanLabel(cle) : null;
+  if (!adresse) {
+    return { title: GENERIC_TITLE, description: `Rapport immobilier Bricq : ${DESCRIPTION_SUFFIX}` };
+  }
+  return {
+    title: `${GENERIC_TITLE} – ${adresse}`,
+    description: `Rapport immobilier du ${adresse} : ${DESCRIPTION_SUFFIX}`,
+  };
+}
 
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      const batiment = await fetchBuildingData(cityCode);
-      setBuildingData(batiment);
-      setLoading(false);
-
-      if (batiment && batiment.coords) {
-        setLoadingDVF(true);
-
-        // Extraction du code INSEE (5 premiers caractères de la clé d'interop)
-        const codeInsee = cityCode.substring(0, 5);
-
-        const [ventes, risques, urba, quartier, dpe, eau, connectivite] = await Promise.all([
-          fetchDVF(batiment.coords.lat, batiment.coords.lon),
-          fetchRisks(batiment.coords.lat, batiment.coords.lon),
-          fetchUrbanisme(batiment.coords.lat, batiment.coords.lon),
-          fetchQuartier(batiment.coords.lat, batiment.coords.lon),
-          fetchDPE(batiment.coords.lat, batiment.coords.lon),
-          fetchWaterQuality(codeInsee),
-          fetchConnectivity(batiment.coords.lat, batiment.coords.lon, cityCode)
-        ]);
-
-        setDvfData(ventes);
-        if (risques) batiment.risques_detailles = risques;
-        if (urba) batiment.urbanisme = urba;
-        if (quartier) batiment.quartier = quartier;
-        if (dpe) {
-          batiment.dpe_reel = dpe;
-          // Merge DPE data into main building data for display in TabBatiment
-          if (dpe.raw) {
-            batiment.raw_bdnb = { ...batiment.raw_bdnb, ...dpe.raw };
-          }
-        }
-        if (eau) batiment.eau_potable = eau;
-        if (connectivite) batiment.connectivite = connectivite;
-
-        setLoadingDVF(false);
-      }
-    }
-    if (cityCode) loadData();
-  }, [cityCode]);
-
-  return (
-    <div className="min-h-screen bg-bricq-cream font-sans text-bricq-slate pb-20">
-
-      {/* HEADER STYLE NOTAIRE */}
-      <header className="bg-white border-b border-bricq-slate/10 sticky top-0 z-40 shadow-sm">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
-              <img src="/bricq-logo.png" alt="Bricq Logo" className="w-6 h-6 object-contain mix-blend-multiply" />
-              <span className="font-serif font-bold text-lg text-bricq-slate tracking-tighter">Bricq</span>
-            </Link>
-            <div className="h-6 w-px bg-bricq-slate/10 hidden md:block"></div>
-            <div className="hidden md:flex items-center gap-2 text-sm text-bricq-slate/60">
-              <FileText size={14} />
-              <span className="font-mono">Dossier : {cityCode}</span>
-            </div>
-          </div>
-          <button className="bg-bricq-slate text-white px-5 py-2 rounded-sm text-sm font-bold uppercase tracking-wide hover:bg-bricq-slate/90 shadow-sm flex items-center gap-2">
-            <Download size={16} /> Export PDF
-          </button>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-6 py-8">
-        <div className="mb-10">
-          <h1 className="font-serif text-3xl md:text-4xl font-bold text-bricq-slate mb-2">
-            {buildingData?.adresse_ban || "Chargement de l'adresse..."}
-          </h1>
-          <p className="text-bricq-slate/60 text-lg font-light">Passeport Immobilier & Audit Technique</p>
-        </div>
-
-        {/* NAVIGATION ONGLETS STYLE DOSSIER */}
-        <div className="mb-8 border-b border-bricq-slate/10">
-          <div className="flex flex-wrap gap-8">
-            {[
-              { id: 'synthese', label: 'Synthèse', icon: MapPin },
-              { id: 'batiment', label: 'Bâtiment', icon: Database },
-              { id: 'quartier', label: 'Quartier', icon: ShoppingBag },
-              { id: 'risks', label: 'Risques', icon: AlertTriangle },
-              { id: 'urba', label: 'Urbanisme', icon: Scroll },
-              { id: 'dvf', label: 'Prix & DVF', icon: TrendingUp },
-              { id: 'analyse', label: 'Analyse', icon: Sparkles },
-              { id: 'owner', label: 'Propriétaire', icon: Lock },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 pb-3 text-sm font-bold uppercase tracking-wide border-b-2 transition-all ${activeTab === tab.id ? 'border-bricq-terracotta text-bricq-terracotta' : 'border-transparent text-bricq-slate/40 hover:text-bricq-slate hover:border-bricq-slate/20'}`}
-              >
-                <tab.icon size={16} /> {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="min-h-[400px] animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {activeTab === 'synthese' && <TabSynthese data={buildingData} dvf={dvfData} loading={loading} />}
-          {activeTab === 'batiment' && <TabBatiment data={{ ...buildingData?.raw_bdnb, dpe_reel: buildingData?.dpe_reel }} />}
-          {activeTab === 'quartier' && <TabQuartier data={buildingData} />}
-          {activeTab === 'risks' && <TabRisks data={buildingData} />}
-          {activeTab === 'urba' && <TabUrbanisme data={buildingData} />}
-          {activeTab === 'dvf' && <TabDVF transactions={dvfData} loading={loadingDVF} marketStats={null} surface={buildingData?.surface_sol} surface_terrain={buildingData?.raw_bdnb?.surface_terrain} />}
-          {activeTab === 'analyse' && <TabAnalyse data={buildingData} dvf={dvfData} />}
-          {activeTab === 'owner' && <TabOwner />}
-        </div>
-
-      </main>
-    </div>
-  );
+export default async function ReportPage({ params }: { params: Params }) {
+  const { cityCode } = await params;
+  return <ReportClient cleInterop={decodeURIComponent(cityCode)} />;
 }
