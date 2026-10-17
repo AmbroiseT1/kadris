@@ -40,7 +40,7 @@ export interface UrbanismeData {
     url_doc?: string | null;
   }>;
 
-  _raw?: any;
+  _raw?: unknown;
 }
 
 // --- DICTIONNAIRES (Inchus) ---
@@ -80,8 +80,13 @@ function interpreterSUP(code: string) {
   return dict[code] || { label: "Servitude d'Utilité Publique", impact: "Contrainte administrative." };
 }
 
-function removeDuplicates(array: any[], key: string) {
+function removeDuplicates<T extends object>(array: T[], key: keyof T): T[] {
   return array.filter((obj, index, self) => index === self.findIndex((t) => (t[key] === obj[key])));
+}
+
+// Feature GeoJSON renvoyée par l'API Carto GPU
+interface GpuFeature {
+  properties: Record<string, string | undefined>;
 }
 
 // --- FETCH PRINCIPAL ---
@@ -159,9 +164,9 @@ export async function fetchUrbanisme(lat: number, lon: number): Promise<Urbanism
       const data = await resPrescr.json();
       rawPrescr = data;
       if (data.features) {
-        const rawList = data.features.map((f: any) => {
+        const rawList = data.features.map((f: GpuFeature) => {
           const type = f.properties.typepsc;
-          const info = CNIG_CODES[type] || { titre: "Prescription Diverse", cat: "autre", desc: "Règle spécifique locale." };
+          const info = CNIG_CODES[type ?? ""] || { titre: "Prescription Diverse", cat: "autre", desc: "Règle spécifique locale." };
           return {
             type: type,
             titre: info.titre,
@@ -176,13 +181,13 @@ export async function fetchUrbanisme(lat: number, lon: number): Promise<Urbanism
     }
 
     // 4. SERVITUDES
-    let servitudes: any[] = [];
+    let servitudes: UrbanismeData["servitudes"] = [];
     let rawSup = null;
     if (resSup.ok) {
       const data = await resSup.json();
       rawSup = data;
       if (data.features) {
-        const rawList = data.features.map((f: any) => {
+        const rawList = data.features.map((f: GpuFeature) => {
           const code = f.properties.catsup || "SUP";
           const info = interpreterSUP(code);
           return {

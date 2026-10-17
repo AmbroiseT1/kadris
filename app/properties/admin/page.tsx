@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Check, Download, Loader2, MapPin, X } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
@@ -20,38 +20,47 @@ const FILTERS: { id: OwnershipStatus | 'all'; label: string }[] = [
 export default function AdminVerificationPage() {
     const { user, isAdmin, isLoading: authLoading } = useAuth();
     const [filter, setFilter] = useState<OwnershipStatus | 'all'>('pending');
-    const [items, setItems] = useState<AdminProperty[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    // Dernier chargement terminé, associé au filtre demandé : « loading » en est dérivé
+    const [result, setResult] = useState<{ filter: OwnershipStatus | 'all' | null; items: AdminProperty[]; error: string | null }>({
+        filter: null,
+        items: [],
+        error: null,
+    });
+    const [actionError, setActionError] = useState<string | null>(null);
     const [busy, setBusy] = useState<string | null>(null);
     const [comments, setComments] = useState<Record<string, string>>({});
 
-    const load = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            setItems(await adminApi.listProperties(filter));
-        } catch (e) {
-            setError(apiErrorMessage(e, 'Impossible de charger les biens.'));
-        } finally {
-            setLoading(false);
-        }
-    }, [filter]);
+    const canLoad = !!user && isAdmin;
 
     useEffect(() => {
-        if (user && isAdmin) load();
-    }, [user, isAdmin, load]);
+        if (!canLoad) return;
+        let cancelled = false;
+        adminApi.listProperties(filter)
+            .then((data) => { if (!cancelled) setResult({ filter, items: data, error: null }); })
+            .catch((e) => {
+                if (!cancelled) {
+                    setResult({ filter, items: [], error: apiErrorMessage(e, 'Impossible de charger les biens.') });
+                }
+            });
+        return () => { cancelled = true; };
+    }, [canLoad, filter]);
+
+    const items = result.items;
+    const loading = result.filter !== filter;
+    const error = actionError ?? (loading ? null : result.error);
+    const setItems = (update: (prev: AdminProperty[]) => AdminProperty[]) =>
+        setResult((r) => ({ ...r, items: update(r.items) }));
 
     const decide = async (id: string, status: 'verified' | 'rejected') => {
         setBusy(id);
-        setError(null);
+        setActionError(null);
         try {
             const updated = await adminApi.setOwnership(id, status, comments[id]);
             setItems((prev) =>
                 filter === 'all' ? prev.map((p) => (p.id === id ? updated : p)) : prev.filter((p) => p.id !== id),
             );
         } catch (e) {
-            setError(apiErrorMessage(e));
+            setActionError(apiErrorMessage(e));
         } finally {
             setBusy(null);
         }
@@ -61,7 +70,7 @@ export default function AdminVerificationPage() {
         try {
             await documentsApi.download(propertyId, doc);
         } catch (e) {
-            setError(apiErrorMessage(e, 'Téléchargement impossible.'));
+            setActionError(apiErrorMessage(e, 'Téléchargement impossible.'));
         }
     };
 
@@ -86,7 +95,7 @@ export default function AdminVerificationPage() {
                     {FILTERS.map((f) => (
                         <button
                             key={f.id}
-                            onClick={() => setFilter(f.id)}
+                            onClick={() => { setFilter(f.id); setActionError(null); }}
                             className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${filter === f.id ? 'bg-bricq-slate text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                         >
                             {f.label}

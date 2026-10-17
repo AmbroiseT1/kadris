@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { ShoppingBag, GraduationCap, Bus, Activity, Volume2, TreePine, Shield, Building2, MapPin, ExternalLink, Plane, Factory, Car, Train, Utensils } from 'lucide-react';
+import { ShoppingBag, GraduationCap, Bus, Activity, Volume2, TreePine, Shield, Building2, MapPin, ExternalLink, Plane, Factory, Car, Train, Utensils, type LucideIcon } from 'lucide-react';
 import { BuildingData } from '@/app/lib/types';
 import { CategoryData, AmenityItem, NuisanceItem } from '@/app/lib/quartier';
 import { SourceBadge, UnavailableBlock } from './SourceBadge';
@@ -13,7 +13,7 @@ const NeighborhoodMap = dynamic(() => import('@/components/ui/NeighborhoodMap'),
 });
 
 // Section de Liste Détaillée (Dépliée)
-const AmenityDetailList = ({ title, data, icon: Icon }: { title: string, data: CategoryData | undefined, icon: any }) => {
+const AmenityDetailList = ({ title, data, icon: Icon }: { title: string, data: CategoryData | undefined, icon: LucideIcon }) => {
     if (!data || data.count === 0) return null; // N'affiche rien si la catégorie est vide
 
     return (
@@ -61,7 +61,7 @@ const AmenityDetailList = ({ title, data, icon: Icon }: { title: string, data: C
 };
 
 // Ligne Nuisance
-const NuisanceRow = ({ label, data, icon: Icon }: { label: string, data: NuisanceItem, icon: any }) => {
+const NuisanceRow = ({ label, data, icon: Icon }: { label: string, data: NuisanceItem, icon: LucideIcon }) => {
     const content = (
         <div className={`flex justify-between items-center p-3 rounded-lg border w-full ${data.present ? 'bg-orange-50 border-orange-100 hover:bg-orange-100 cursor-pointer' : 'bg-green-50 border-green-100'}`}>
             <div className="flex items-center gap-3">
@@ -100,7 +100,7 @@ export const TabQuartier = ({ data }: { data: BuildingData | null }) => {
     const source = data?.sources?.quartier;
     if (!data?.quartier) {
         if (source?.status === 'error') return <UnavailableBlock title="Analyse du quartier" source={source} />;
-        return <div className="p-8 text-center text-bricq-slate/50">Chargement de l'analyse quartier...</div>;
+        return <div className="p-8 text-center text-bricq-slate/50">Chargement de l’analyse quartier...</div>;
     }
 
     const q = data.quartier;

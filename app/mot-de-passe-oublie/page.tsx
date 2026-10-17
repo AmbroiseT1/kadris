@@ -15,7 +15,7 @@ export default function MotDePasseOubliePage() {
         >
             <LegalSection title="Comment récupérer mon accès ?">
                 <p>
-                    Envoyez un email à l'adresse suivante en indiquant l'adresse email associée à votre compte bricq :
+                    Envoyez un email à l’adresse suivante en indiquant l’adresse email associée à votre compte bricq :
                 </p>
                 <p className="font-mono text-bricq-slate">[email de support]</p>
                 <p>
@@ -25,7 +25,7 @@ export default function MotDePasseOubliePage() {
 
             <LegalSection title="Conseils">
                 <ul className="list-disc pl-6 space-y-1">
-                    <li>Vérifiez l'orthographe de votre adresse email ainsi que la saisie de votre mot de passe (majuscules et verrouillage du pavé numérique).</li>
+                    <li>Vérifiez l’orthographe de votre adresse email ainsi que la saisie de votre mot de passe (majuscules et verrouillage du pavé numérique).</li>
                     <li>Ne communiquez jamais votre mot de passe par email ou par téléphone, y compris à nos équipes.</li>
                 </ul>
             </LegalSection>

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { Layers, Map as MapIcon, Home, Mountain, FileText } from 'lucide-react';
+import { Layers, Map as MapIcon, Mountain, FileText } from 'lucide-react';
 
 // Fix for default Leaflet marker icons in Next.js
 const iconUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png';

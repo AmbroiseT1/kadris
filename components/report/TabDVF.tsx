@@ -1,6 +1,6 @@
 "use client";
 import React, { useMemo } from 'react';
-import { TrendingUp, Euro, Target, History, ArrowUpRight, ArrowDownRight, MapPin, ExternalLink, AlertTriangle, Activity, Layers, Info } from 'lucide-react';
+import { TrendingUp, Euro, Target, History, ArrowUpRight, ArrowDownRight, ExternalLink, AlertTriangle, Activity, Layers, Info } from 'lucide-react';
 import { TransactionDVF, calculateMarketStats, BackendMarketStats, PriceStats, DVF_RADIUS_M } from '@/app/lib/dvf';
 import { SourceInfo } from '@/app/lib/sources';
 import { SourceBadge, UnavailableBlock } from './SourceBadge';
@@ -259,7 +259,7 @@ export const TabDVF = ({ transactions, loading, marketStats, surface, surface_te
 
                   <div className="flex items-center gap-8 bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
                      <div>
-                        <div className="text-xs text-white/50 uppercase tracking-wider font-bold mb-1">Prix d'achat</div>
+                        <div className="text-xs text-white/50 uppercase tracking-wider font-bold mb-1">Prix d’achat</div>
                         <div className="text-2xl font-bold text-white">{targetSale.valeur_fonciere.toLocaleString()} €</div>
                         <div className="text-[10px] text-white/40 mt-1">
                            ~ {(targetSale.valeur_fonciere_corrigee || targetSale.valeur_fonciere).toLocaleString()} € (Actualisé inflation)

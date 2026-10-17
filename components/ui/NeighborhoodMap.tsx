@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useSyncExternalStore } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { AmenityItem } from '@/app/lib/quartier';
@@ -51,7 +51,8 @@ const createCustomIcon = (icon: React.ReactNode, color: string) => {
 };
 
 export default function NeighborhoodMap({ center, pois }: NeighborhoodMapProps) {
-    const [isMounted, setIsMounted] = useState(false);
+    // false pendant le rendu serveur/hydratation, true côté client ensuite
+    const isMounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
     useEffect(() => {
         // Fix for default Leaflet icons in Next.js
@@ -64,7 +65,6 @@ export default function NeighborhoodMap({ center, pois }: NeighborhoodMapProps) 
         });
         L.Marker.prototype.options.icon = DefaultIcon;
 
-        setIsMounted(true);
     }, []);
 
     if (!isMounted) return <div className="h-full w-full bg-gray-100 animate-pulse rounded-xl" />;
@@ -82,14 +82,15 @@ export default function NeighborhoodMap({ center, pois }: NeighborhoodMapProps) 
     const homeIcon = createCustomIcon(<Building size={18} color="white" />, '#e76e50'); // bricq Terracotta
 
     // Filter POIs to avoid overcrowding - prioritize supermarkets and key amenities
-    const displayPois = pois.filter(p =>
+    const displayPois = pois.filter((p): p is AmenityItem & { lat: number; lon: number } =>
+        p.lat != null && p.lon != null && (
         p.type.includes('supermarket') ||
         p.type.includes('convenience') ||
         p.type.includes('restaurant') ||
         p.type.includes('cafe') ||
         p.type.includes('school') ||
         p.type.includes('park') ||
-        p.type.includes('station')
+        p.type.includes('station'))
     ).slice(0, 50); // Limit total markers
 
     const getPoiIcon = (type: string) => {

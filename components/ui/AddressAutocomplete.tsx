@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, MapPin, Loader2, ArrowRight } from 'lucide-react';
 
 // Type pour les résultats de l'API Adresse
-interface AddressFeature {
+export interface AddressFeature {
   properties: {
     id: string;
     label: string;
@@ -18,7 +18,7 @@ interface AddressFeature {
 }
 
 interface Props {
-  onSelect: (address: any) => void; // Callback quand l'utilisateur choisit
+  onSelect: (address: AddressFeature) => void; // Callback quand l'utilisateur choisit
 }
 
 export const AddressAutocomplete: React.FC<Props> = ({ onSelect }) => {

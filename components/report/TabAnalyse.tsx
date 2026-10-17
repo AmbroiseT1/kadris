@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Home, Trees, TrendingUp, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { Sparkles, Home, Trees, TrendingUp } from 'lucide-react';
 import { BuildingData } from '@/app/lib/types';
 import { TransactionDVF } from '@/app/lib/dvf';
 
@@ -25,7 +25,7 @@ const getScoreBg = (score: number) => {
 };
 
 export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
-    if (!data) return <div>Données insuffisantes pour l'analyse.</div>;
+    if (!data) return <div>Données insuffisantes pour l’analyse.</div>;
 
     // --- SCORING LOGIC ---
 
@@ -90,7 +90,7 @@ export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
                             <h2 className="font-serif text-2xl font-bold">Analyse bricq 360°</h2>
                         </div>
                         <p className="text-slate-300 max-w-md text-sm">
-                            Synthèse intelligente basée sur les caractéristiques techniques, l'environnement et la dynamique de marché de votre bien.
+                            Synthèse intelligente basée sur les caractéristiques techniques, l’environnement et la dynamique de marché de votre bien.
                         </p>
                     </div>
 
@@ -120,7 +120,7 @@ export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
                             <span className={`font-black text-2xl ${getScoreColor(batiScore)}`}>{batiScore}</span>
                         </div>
                         <h3 className="font-bold text-bricq-slate mb-1">Qualité du Bâti</h3>
-                        <p className="text-xs text-slate-500 mb-4">Basé sur le DPE, l'année de construction et les matériaux.</p>
+                        <p className="text-xs text-slate-500 mb-4">Basé sur le DPE, l’année de construction et les matériaux.</p>
 
                         <div className="space-y-2">
                             <div className="flex justify-between text-xs">
@@ -214,7 +214,7 @@ export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
                     <Sparkles size={18} className="text-bricq-terracotta" />
                 </div>
                 <div>
-                    <h4 className="font-bold text-bricq-slate text-sm mb-1">L'avis de l'Expert</h4>
+                    <h4 className="font-bold text-bricq-slate text-sm mb-1">L’avis de l’Expert</h4>
                     <p className="text-sm text-slate-600 leading-relaxed">
                         {globalScore >= 70
                             ? "Ce bien présente d'excellents fondamentaux. La qualité du bâti combinée à un environnement favorable en fait un actif patrimonial solide. Le marché local est dynamique, suggérant une bonne liquidité à la revente."

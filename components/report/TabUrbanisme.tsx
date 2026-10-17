@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Scroll, Landmark, Building2, FileDown, Download, Info, CheckCircle, AlertTriangle, Map, Ban, Car, Ruler, Trees, Droplets, ExternalLink } from 'lucide-react';
+import { Scroll, Landmark, Building2, FileDown, Download, Info, CheckCircle, Ban, Car, Ruler, Trees, Droplets, ExternalLink } from 'lucide-react';
 import { BuildingData } from '@/app/lib/types';
 import { UrbanismeData, PrescriptionItem } from '@/app/lib/urbanisme';
 import { ConnectivityData } from '@/app/lib/arcep';
@@ -102,7 +102,7 @@ const PrescriptionCard = ({ item }: { item: PrescriptionItem }) => {
 // --- COMPOSANT PRINCIPAL ---
 
 export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
-   if (!data) return <div className="p-8 text-center text-bricq-slate/50">Chargement des règles d'urbanisme...</div>;
+   if (!data) return <div className="p-8 text-center text-bricq-slate/50">Chargement des règles d’urbanisme...</div>;
 
    const sources = data.sources || {};
    const u: UrbanismeData | undefined = data.urbanisme;
@@ -115,7 +115,7 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
          {!u ? (
             sources.urbanisme?.status === 'error'
                ? <UnavailableBlock title="Urbanisme (PLU, servitudes)" source={sources.urbanisme} />
-               : <div className="p-8 text-center text-bricq-slate/50">Chargement des règles d'urbanisme...</div>
+               : <div className="p-8 text-center text-bricq-slate/50">Chargement des règles d’urbanisme...</div>
          ) : (<>
 
          {/* 1. HEADER : ZONAGE ET DOCUMENT */}
@@ -147,7 +147,7 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
                      </div>
 
                      <div className="p-3 bg-blue-50 rounded-sm border border-blue-100 text-sm text-blue-900 leading-relaxed">
-                        <strong className="block mb-1 text-blue-700 flex items-center gap-1 font-serif"><Info size={14} /> L'avis de l'expert :</strong>
+                        <strong className="block mb-1 text-blue-700 flex items-center gap-1 font-serif"><Info size={14} /> L’avis de l’expert :</strong>
                         {zone.conseil}
                      </div>
                   </div>
@@ -238,7 +238,7 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
          {/* 3. SERVITUDES (SUP) */}
          <div className="bg-white border border-stone-200 rounded-sm p-5">
             <h3 className="font-serif text-lg font-bold text-bricq-slate mb-6 border-b border-stone-100 pb-2 flex items-center gap-2">
-               <Landmark size={20} className="text-gray-600" /> Servitudes d'Utilité Publique (SUP)
+               <Landmark size={20} className="text-gray-600" /> Servitudes d’Utilité Publique (SUP)
             </h3>
             {u.servitudes.length > 0 ? (
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -268,7 +268,7 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
          {data.eau_potable ? (
             <div className="bg-white border border-stone-200 rounded-sm p-5">
                <h3 className="font-serif text-lg font-bold text-bricq-slate mb-4 border-b border-stone-100 pb-2 flex items-center gap-2">
-                  <Droplets size={20} className="text-blue-500" /> Qualité de l'Eau Potable
+                  <Droplets size={20} className="text-blue-500" /> Qualité de l’Eau Potable
                </h3>
 
                <div className={`p-4 rounded-sm border flex flex-col md:flex-row gap-4 items-start mb-6 ${data.eau_potable.conformite ? 'bg-blue-50 border-blue-100' : 'bg-red-50 border-red-100'}`}>

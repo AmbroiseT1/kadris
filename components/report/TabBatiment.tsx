@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import {
-    Building, Hammer, Ruler, Zap, FileText, ChevronDown, ChevronUp,
-    CheckCircle, XCircle, Info, Calendar, Move, Sun
+    Building, Hammer, Zap, FileText, ChevronDown, ChevronUp,
+    CheckCircle, XCircle, Info, Calendar, Move, Sun, type LucideIcon
 } from 'lucide-react';
 import { resolveAnneeConstruction } from '@/app/lib/bndb';
 import { SourceInfo } from '@/app/lib/sources';
@@ -124,8 +124,8 @@ const BLACKLIST = [
 
 // --- 2. SOUS-COMPOSANTS UI ---
 
-const DataRow = ({ label, value, tooltip }: { label: string, value: any, tooltip?: string }) => {
-    let displayValue = value;
+const DataRow = ({ label, value, tooltip }: { label: string, value: unknown, tooltip?: string }) => {
+    let displayValue = value as React.ReactNode;
     let unit = '';
 
     if (label.includes("Conso. Énergie Primaire") || label.includes("Conso. 5 usages")) {
@@ -183,7 +183,13 @@ const DataRow = ({ label, value, tooltip }: { label: string, value: any, tooltip
     );
 };
 
-const BentoCard = ({ title, icon: Icon, description, data, keys }: any) => {
+const BentoCard = ({ title, icon: Icon, description, data, keys }: {
+    title: string;
+    icon: LucideIcon;
+    description?: string;
+    data: Record<string, unknown>;
+    keys: string[];
+}) => {
     const validKeys = keys.filter((k: string) => data[k] !== null && data[k] !== undefined && data[k] !== "");
     if (!validKeys.length) return null;
 
@@ -260,7 +266,7 @@ export const TabBatiment = ({ data, sources }: { data: any; sources?: { bdnb?: S
                     <div className="absolute top-3 right-3 text-stone-200 group-hover:text-bricq-terracotta transition-colors">
                         <Calendar size={18} />
                     </div>
-                    <div className="text-xs uppercase text-slate-400 font-bold tracking-wider mb-2 font-mono">Année d'Origine</div>
+                    <div className="text-xs uppercase text-slate-400 font-bold tracking-wider mb-2 font-mono">Année d’Origine</div>
                     <div className="text-5xl font-black text-bricq-slate group-hover:scale-105 transition-transform duration-300">
                         {smartYear}
                     </div>

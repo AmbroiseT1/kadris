@@ -46,12 +46,13 @@ export default function LoginPage() {
             });
 
             login(response.data.access_token);
-        } catch (err: any) {
-            if (err.response?.status === 429) {
+        } catch (err) {
+            const apiErr = err as { response?: { status?: number; data?: { detail?: string } } };
+            if (apiErr.response?.status === 429) {
                 setError("Trop de tentatives. Réessayez dans quelques minutes.");
-            } else if (err.response?.status === 400 || err.response?.status === 401 || err.response?.status === 422) {
+            } else if (apiErr.response?.status === 400 || apiErr.response?.status === 401 || apiErr.response?.status === 422) {
                 // Si le backend renvoie un detail précis, on l'affiche (utile pour debug)
-                const detail = err.response?.data?.detail;
+                const detail = apiErr.response?.data?.detail;
                 if (detail) {
                     setError(typeof detail === 'string' ? detail : "Identifiants invalides");
                 } else {
@@ -76,10 +77,10 @@ export default function LoginPage() {
                         <span className="text-3xl font-bold font-serif tracking-tighter">bricq</span>
                     </Link>
                     <h1 className="font-serif text-4xl font-bold mb-6 leading-tight">
-                        Retrouvez l'histoire de votre logement.
+                        Retrouvez l’histoire de votre logement.
                     </h1>
                     <p className="text-white/70 text-lg font-light leading-relaxed">
-                        Connectez-vous pour accéder à votre carnet numérique, vos documents sécurisés et l'analyse de risques de votre propriété.
+                        Connectez-vous pour accéder à votre carnet numérique, vos documents sécurisés et l’analyse de risques de votre propriété.
                     </p>
                 </div>
             </div>

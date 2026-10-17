@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import Link from 'next/link';
-import { motion, useScroll, useTransform, useInView } from 'framer-motion';
-import { ArrowRight, Search, FileSearch, Shield, TrendingUp, Users, Clock, CheckCircle, Sparkles, Eye, Home, Lock } from 'lucide-react';
+import { motion, useInView } from 'framer-motion';
+import { ArrowRight, Search, FileSearch, Shield, TrendingUp, Users, Clock, CheckCircle, Sparkles, Eye, Lock } from 'lucide-react';
 
 export default function HowItWorksPage() {
     return (
@@ -17,7 +17,7 @@ export default function HowItWorksPage() {
                         <span className="text-2xl font-bold font-serif tracking-tighter text-bricq-slate">bricq</span>
                     </Link>
                     <Link href="/" className="text-sm text-bricq-slate/60 hover:text-bricq-slate transition-colors">
-                        ← Retour à l'accueil
+                        ← Retour à l’accueil
                     </Link>
                 </div>
             </nav>
@@ -43,7 +43,7 @@ export default function HowItWorksPage() {
                         </div>
 
                         <h1 className="font-serif text-5xl md:text-7xl font-bold mb-8 leading-tight">
-                            L'immobilier mérite la{' '}
+                            L’immobilier mérite la{' '}
                             <span className="relative inline-block">
                                 <span className="relative z-10 bg-gradient-to-r from-bricq-terracotta to-bricq-sage bg-clip-text text-transparent">
                                     transparence
@@ -58,8 +58,8 @@ export default function HowItWorksPage() {
                         </h1>
 
                         <p className="text-xl md:text-2xl text-bricq-slate/70 mb-12 leading-relaxed font-light max-w-3xl mx-auto">
-                            Chaque année, des millions de Français achètent ou vendent un bien immobilier <span className="font-bold text-bricq-slate">à l'aveugle</span>.
-                            bricq change les règles du jeu en rendant l'invisible visible.
+                            Chaque année, des millions de Français achètent ou vendent un bien immobilier <span className="font-bold text-bricq-slate">à l’aveugle</span>.
+                            bricq change les règles du jeu en rendant l’invisible visible.
                         </p>
 
                         {/* Stats Pills */}
@@ -97,7 +97,7 @@ export default function HowItWorksPage() {
                             transition={{ duration: 0.8 }}
                         >
                             <h2 className="font-serif text-4xl md:text-5xl font-bold text-center mb-16">
-                                Le problème qu'on résout
+                                Le problème qu’on résout
                             </h2>
 
                             <div className="grid md:grid-cols-3 gap-8">
@@ -249,10 +249,10 @@ export default function HowItWorksPage() {
                         className="max-w-4xl mx-auto text-center"
                     >
                         <h2 className="font-serif text-4xl md:text-6xl font-bold mb-8">
-                            Prêt à voir l'invisible ?
+                            Prêt à voir l’invisible ?
                         </h2>
                         <p className="text-xl text-bricq-slate/70 mb-12 max-w-2xl mx-auto font-light">
-                            Rejoignez les milliers d'utilisateurs qui prennent des décisions immobilières éclairées.
+                            Rejoignez les milliers d’utilisateurs qui prennent des décisions immobilières éclairées.
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">

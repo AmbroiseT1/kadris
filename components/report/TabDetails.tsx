@@ -1,11 +1,11 @@
 "use client";
 import React, { useState } from 'react';
-import { Database, ChevronDown, ChevronRight, FileJson, Layers, Activity } from 'lucide-react';
+import { Database, ChevronDown, ChevronRight, FileJson, Layers, Activity, type LucideIcon } from 'lucide-react';
 import { BuildingData } from '@/app/lib/types';
 import { TabBatiment } from './TabBatiment';
 
 // Petit composant pour afficher du JSON proprement
-const JsonViewer = ({ data, title, icon: Icon }: { data: any, title: string, icon: any }) => {
+const JsonViewer = ({ data, title, icon: Icon }: { data: unknown, title: string, icon: LucideIcon }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     if (!data) return null;

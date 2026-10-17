@@ -23,7 +23,7 @@ export function LegalLayout({
                         <span className="text-2xl font-bold font-serif tracking-tighter text-bricq-slate">bricq</span>
                     </Link>
                     <Link href="/" className="text-sm text-bricq-slate/60 hover:text-bricq-slate transition-colors">
-                        ← Retour à l'accueil
+                        ← Retour à l’accueil
                     </Link>
                 </div>
             </nav>

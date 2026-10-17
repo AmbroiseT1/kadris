@@ -2,7 +2,7 @@
 import React from 'react';
 import { MapLayersViz } from '@/components/ui/Diagrams';
 import dynamic from 'next/dynamic';
-import { Building, Shield, Home, CheckCircle, Ruler, MapPin, ArrowLeft, Mountain, FileText, Loader2, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Building, Shield, Home, CheckCircle, Ruler, Mountain, FileText, Loader2, AlertTriangle, TrendingUp, type LucideIcon } from 'lucide-react';
 import { BuildingData } from '@/app/lib/types';
 import { TransactionDVF } from '@/app/lib/dvf';
 import { SourceBadge } from './SourceBadge';
@@ -14,7 +14,17 @@ const IgnMapViewer = dynamic(() => import('@/components/ui/IgnMapViewer'), {
 
 // --- SOUS-COMPOSANTS UI ---
 
-const InfoCard = ({ label, value, icon: Icon, color, sub, className, tooltip }: any) => (
+interface InfoCardProps {
+    label: string;
+    value?: React.ReactNode;
+    icon: LucideIcon;
+    color?: string;
+    sub?: React.ReactNode;
+    className?: string;
+    tooltip?: string;
+}
+
+const InfoCard = ({ label, value, icon: Icon, color, sub, className, tooltip }: InfoCardProps) => (
     <div className={`bg-white p-4 rounded-sm border border-bricq-slate/10 flex flex-col justify-between ${className} group relative`} title={tooltip}>
         <div>
             <div className="flex items-center gap-2 mb-2">

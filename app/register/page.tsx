@@ -59,11 +59,12 @@ export default function RegisterPage() {
 
             login(loginResponse.data.access_token);
 
-        } catch (err: any) {
-            if (err.response?.status === 429) {
+        } catch (err) {
+            const apiErr = err as { response?: { status?: number; data?: { detail?: string } } };
+            if (apiErr.response?.status === 429) {
                 setError("Trop de tentatives, réessayez plus tard.");
-            } else if (err.response?.status === 400) {
-                setError(err.response.data.detail || "Une erreur est survenue.");
+            } else if (apiErr.response?.status === 400) {
+                setError(apiErr.response?.data?.detail || "Une erreur est survenue.");
             } else {
                 setError("Une erreur est survenue. Veuillez réessayer.");
             }
@@ -96,7 +97,7 @@ export default function RegisterPage() {
                         </li>
                         <li className="flex items-center gap-3">
                             <div className="bg-white/20 p-1 rounded-full"><Check size={16} /></div>
-                            Carnet d'entretien intelligent
+                            Carnet d’entretien intelligent
                         </li>
                     </ul>
                 </div>
@@ -187,7 +188,7 @@ export default function RegisterPage() {
                                 <Loader2 className="animate-spin h-5 w-5" />
                             ) : (
                                 <span className="flex items-center gap-2">
-                                    S'inscrire gratuitement <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                                    S’inscrire gratuitement <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                                 </span>
                             )}
                         </button>

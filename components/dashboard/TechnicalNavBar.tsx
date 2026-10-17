@@ -8,7 +8,8 @@ import {
     HardHat,
     TriangleAlert,
     FileText,
-    Sparkles
+    Sparkles,
+    type LucideIcon
 } from "lucide-react";
 import { cn } from "../../app/lib/utils";
 
@@ -16,7 +17,7 @@ type NavItem = {
     id: string;
     label: string;
     description: string;
-    icon: React.ComponentType<any>;
+    icon: LucideIcon;
 };
 
 const NAV_ITEMS: NavItem[] = [

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { api } from '@/app/lib/api';
 
@@ -24,16 +24,23 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Routes publiques qui ne nécessitent pas d'être connecté
+const PUBLIC_ROUTES = ['/login', '/register', '/', '/how-it-works'];
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
     const pathname = usePathname();
 
-    // Routes publiques qui ne nécessitent pas d'être connecté
-    const publicRoutes = ['/login', '/register', '/', '/how-it-works'];
+    const logout = useCallback(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('currentUser'); // ancienne clé, plus utilisée
+        setUser(null);
+        router.push('/login');
+    }, [router]);
 
-    const fetchUser = async () => {
+    const fetchUser = useCallback(async () => {
         try {
             const response = await api.get('/users/me');
             setUser(response.data);
@@ -43,21 +50,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [logout]);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            fetchUser();
-        } else {
-            setIsLoading(false);
-        }
-    }, []);
+        // Chargement initial : le state n'est modifié que dans le callback asynchrone
+        const init = async () => {
+            if (localStorage.getItem('token')) {
+                await fetchUser();
+            } else {
+                setIsLoading(false);
+            }
+        };
+        void init();
+    }, [fetchUser]);
 
     // Protection des routes (Client-Side)
     useEffect(() => {
         if (!isLoading) {
-            const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/report/');
+            const isPublicRoute = PUBLIC_ROUTES.includes(pathname) || pathname.startsWith('/report/');
             if (!user && !isPublicRoute) {
                 router.push('/login');
             } else if (user && pathname === '/login') {
@@ -74,13 +84,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(true);
         fetchUser();
         router.push('/dashboard');
-    };
-
-    const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('currentUser'); // ancienne clé, plus utilisée
-        setUser(null);
-        router.push('/login');
     };
 
     return (

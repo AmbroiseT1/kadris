@@ -9,15 +9,15 @@ import ProfileDropdown from '@/components/ui/ProfileDropdown';
 // --- IMPORTS DES COMPOSANTS ---
 import { MapLayersViz, DataSynthesisCard } from '@/components/ui/Diagrams';
 import { BackgroundGrid } from '@/components/ui/BackgroundGrid';
-import { AddressAutocomplete } from '@/components/ui/AddressAutocomplete';
+import { AddressAutocomplete, type AddressFeature } from '@/components/ui/AddressAutocomplete';
 import ArchitecturalViewer from '@/components/dashboard/ArchitecturalViewer';
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleAddressSelect = (addressData: any) => {
+  const handleAddressSelect = (addressData: AddressFeature) => {
     const buildingId = addressData.properties.id;
     console.log("🚀 Redirection vers le rapport pour l'ID :", buildingId);
     router.push(`/report/${buildingId}`);
@@ -100,7 +100,7 @@ export default function Home() {
 
         <div className="container mx-auto px-6 relative z-10 text-center">
           <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl font-bold text-bricq-slate mb-8 leading-tight max-w-5xl mx-auto tracking-tight">
-            L'histoire invisible de <br className="hidden md:block" />votre futur logement.
+            L’histoire invisible de <br className="hidden md:block" />votre futur logement.
           </h1>
 
           <p className="text-lg md:text-xl text-bricq-slate/70 mb-12 max-w-2xl mx-auto leading-relaxed font-light">
@@ -125,7 +125,7 @@ export default function Home() {
         <div className="container mx-auto px-6">
           <div className="text-center mb-20">
             <h2 className="font-serif text-3xl md:text-4xl font-bold text-bricq-slate mb-4">
-              Qu'est-ce que bricq révèle ?
+              Qu’est-ce que bricq révèle ?
             </h2>
             <div className="w-24 h-1 bg-bricq-terracotta mx-auto"></div>
           </div>
@@ -138,9 +138,9 @@ export default function Home() {
                 <MapLayersViz />
               </div>
               <div className="text-center md:text-left max-w-md">
-                <h3 className="font-serif text-2xl text-bricq-slate mb-3 border-b border-bricq-slate/10 pb-2 inline-block">L'invisible devient visible</h3>
+                <h3 className="font-serif text-2xl text-bricq-slate mb-3 border-b border-bricq-slate/10 pb-2 inline-block">L’invisible devient visible</h3>
                 <p className="text-bricq-slate/70 leading-relaxed font-light">
-                  Nous croisons le cadastre parcellaire avec les zones à risque (inondation, argiles) et les données de marché. Visualisez l'environnement réel du bien.
+                  Nous croisons le cadastre parcellaire avec les zones à risque (inondation, argiles) et les données de marché. Visualisez l’environnement réel du bien.
                 </p>
               </div>
             </div>
@@ -153,7 +153,7 @@ export default function Home() {
               <div className="text-center md:text-left max-w-md lg:order-1 mb-8">
                 <h3 className="font-serif text-2xl text-bricq-slate mb-3 border-b border-bricq-slate/10 pb-2 inline-block">La vérité des chiffres</h3>
                 <p className="text-bricq-slate/70 leading-relaxed font-light">
-                  Prix au m² réel basé sur les actes notariés, historique des ventes précédentes, et diagnostics techniques pré-calculés. Ne négociez plus à l'aveugle.
+                  Prix au m² réel basé sur les actes notariés, historique des ventes précédentes, et diagnostics techniques pré-calculés. Ne négociez plus à l’aveugle.
                 </p>
               </div>
             </div>
@@ -167,11 +167,11 @@ export default function Home() {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="font-serif text-3xl md:text-4xl font-bold text-bricq-slate mb-4">
-              Qu'est-ce que bricq vous apporte ?
+              Qu’est-ce que bricq vous apporte ?
             </h2>
             <div className="w-24 h-1 bg-bricq-terracotta mx-auto mb-6"></div>
             <p className="text-lg text-bricq-slate/70 max-w-2xl mx-auto font-light">
-              Un "double numérique" de votre maison : un carnet de santé qui vous redonne le contrôle.
+              Un &quot;double numérique&quot; de votre maison : un carnet de santé qui vous redonne le contrôle.
             </p>
           </div>
 
@@ -211,7 +211,7 @@ export default function Home() {
                 <div>
                   <h3 className="font-serif text-xl font-bold text-bricq-slate mb-2">La confiance lors de la revente</h3>
                   <p className="text-bricq-slate/70 leading-relaxed font-light">
-                    Le jour de la vente, présentez un historique limpide et vérifié. C'est l'argument ultime pour justifier votre prix et rassurer votre futur acheteur.
+                    Le jour de la vente, présentez un historique limpide et vérifié. C’est l’argument ultime pour justifier votre prix et rassurer votre futur acheteur.
                   </p>
                 </div>
               </div>
@@ -251,7 +251,7 @@ export default function Home() {
                           <div className="absolute -left-[3px] top-1 w-1.5 h-1.5 rounded-full bg-white border border-black"></div>
                           <div className="text-[8px] font-mono text-gray-500 mb-0.5">2024 - EN COURS</div>
                           <div className="text-[10px] font-bold font-serif leading-tight">Ravalement Façade</div>
-                          <div className="text-[8px] text-gray-600 italic mt-0.5 font-handwriting">"Reprise des fissures et enduit."</div>
+                          <div className="text-[8px] text-gray-600 italic mt-0.5 font-handwriting">&quot;Reprise des fissures et enduit.&quot;</div>
                           <div className="w-full h-1 bg-gray-100 mt-1 rounded-full overflow-hidden">
                             <div className="w-2/3 h-full bg-black"></div>
                           </div>
@@ -262,7 +262,7 @@ export default function Home() {
                           <div className="absolute -left-[3px] top-1 w-1.5 h-1.5 rounded-full bg-black"></div>
                           <div className="text-[8px] font-mono text-gray-500 mb-0.5">2023 - TERMINÉ</div>
                           <div className="text-[10px] font-bold font-serif leading-tight">Pompe à Chaleur</div>
-                          <div className="text-[8px] text-gray-600 italic mt-0.5 font-handwriting">"Installation PAC Air/Eau 12kW."</div>
+                          <div className="text-[8px] text-gray-600 italic mt-0.5 font-handwriting">&quot;Installation PAC Air/Eau 12kW.&quot;</div>
                         </div>
 
                         {/* Item 3 */}
@@ -270,7 +270,7 @@ export default function Home() {
                           <div className="absolute -left-[3px] top-1 w-1.5 h-1.5 rounded-full bg-black"></div>
                           <div className="text-[8px] font-mono text-gray-500 mb-0.5">2020 - TERMINÉ</div>
                           <div className="text-[10px] font-bold font-serif leading-tight">Isolation Combles</div>
-                          <div className="text-[8px] text-gray-600 italic mt-0.5 font-handwriting">"Laine de verre soufflée R=7."</div>
+                          <div className="text-[8px] text-gray-600 italic mt-0.5 font-handwriting">&quot;Laine de verre soufflée R=7.&quot;</div>
                         </div>
 
                         {/* Item 4 */}
@@ -278,7 +278,7 @@ export default function Home() {
                           <div className="absolute -left-[3px] top-1 w-1.5 h-1.5 rounded-full bg-black"></div>
                           <div className="text-[8px] font-mono text-gray-500 mb-0.5">2018 - TERMINÉ</div>
                           <div className="text-[10px] font-bold font-serif leading-tight">Réfection Toiture</div>
-                          <div className="text-[8px] text-gray-600 italic mt-0.5 font-handwriting">"Tuiles mécaniques neuves."</div>
+                          <div className="text-[8px] text-gray-600 italic mt-0.5 font-handwriting">&quot;Tuiles mécaniques neuves.&quot;</div>
                         </div>
 
                         {/* Item 5 */}
@@ -346,10 +346,10 @@ export default function Home() {
                 <Shield size={12} /> Offre Propriétaire
               </div>
               <h2 className="font-serif text-3xl md:text-4xl font-bold text-bricq-slate mb-6">
-                Vous êtes déjà propriétaire ? <span className="text-bricq-terracotta border-b-2 border-bricq-terracotta/20">C'est Gratuit.</span>
+                Vous êtes déjà propriétaire ? <span className="text-bricq-terracotta border-b-2 border-bricq-terracotta/20">C’est Gratuit.</span>
               </h2>
               <p className="text-lg text-bricq-slate/70 mb-8 leading-relaxed font-light">
-                Centralisez vos documents, suivez l'évolution de la valeur de votre bien en temps réel et gérez votre maintenance préventive grâce à notre carnet numérique.
+                Centralisez vos documents, suivez l’évolution de la valeur de votre bien en temps réel et gérez votre maintenance préventive grâce à notre carnet numérique.
               </p>
 
               <ul className="space-y-4 mb-8">
@@ -417,7 +417,7 @@ export default function Home() {
                 </span>
               </div>
               <p className="text-sm text-bricq-slate/60 leading-relaxed font-light">
-                La première plateforme d'intelligence immobilière qui rend visible l'invisible pour les acheteurs et les propriétaires.
+                La première plateforme d’intelligence immobilière qui rend visible l’invisible pour les acheteurs et les propriétaires.
               </p>
             </div>
 

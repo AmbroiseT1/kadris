@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { BrainCircuit, AlertOctagon, CheckCircle, BadgeEuro, ArrowLeft, Activity, MapPin, TrendingUp, Heart, Lightbulb } from 'lucide-react';
+import { BrainCircuit, AlertOctagon, CheckCircle, BadgeEuro, ArrowLeft, Lightbulb } from 'lucide-react';
 import { BuildingData } from '@/app/lib/types';
 import { TransactionDVF } from '../../app/lib/dvf';
 import { analyzeBuilding } from '../../app/lib/analysis';
@@ -34,7 +34,7 @@ export const TabAnalysis = ({ data, dvf }: { data: BuildingData | null, dvf: Tra
                         <BrainCircuit size={32} className="text-bricq-terracotta"/> Verdict bricq
                     </h2>
                     <p className="text-white/70 max-w-lg">
-                        L'indice est une moyenne pondérée du risque structurel, de la dynamique de marché et de la qualité de vie du quartier.
+                        L’indice est une moyenne pondérée du risque structurel, de la dynamique de marché et de la qualité de vie du quartier.
                     </p>
                 </div>
                 {/* L'affichage du score final est mis en avant */}

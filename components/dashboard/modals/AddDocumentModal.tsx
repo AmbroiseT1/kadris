@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, FileText, X, Loader2, Sparkles } from 'lucide-react';
 import {
@@ -90,9 +90,13 @@ export default function AddDocumentModal({ isOpen, onClose, propertyId, onSaved,
     const [formData, setFormData] = useState(() => emptyForm(defaultType));
 
     // À chaque ouverture : formulaire vierge avec le type demandé
-    useEffect(() => {
+    // (état ajusté pendant le rendu plutôt que dans un effet)
+    const openKey = isOpen ? `open:${defaultType}` : 'closed';
+    const [prevOpenKey, setPrevOpenKey] = useState(openKey);
+    if (openKey !== prevOpenKey) {
+        setPrevOpenKey(openKey);
         if (isOpen) setFormData(emptyForm(defaultType));
-    }, [isOpen, defaultType]);
+    }
 
     const reset = () => {
         setFormData(emptyForm(defaultType));

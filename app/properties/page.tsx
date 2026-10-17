@@ -27,12 +27,11 @@ const show = (v: unknown, suffix = '') => (v === undefined || v === null || v ==
 
 /** Import des biens enregistrés dans ce navigateur avant le stockage serveur. */
 function LegacyImport({ email, isAdmin, onImported }: { email: string; isAdmin: boolean; onImported: (p: Property) => void }) {
-    const [items, setItems] = useState<LegacyProperty[]>([]);
+    // LegacyImport n'est rendu que côté client, après le chargement de l'utilisateur
+    const [items, setItems] = useState<LegacyProperty[]>(() => getLegacyProperties(email));
     const [proofs, setProofs] = useState<Record<string, File | null>>({});
     const [busy, setBusy] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => { setItems(getLegacyProperties(email)); }, [email]);
 
     if (items.length === 0) return null;
 
@@ -115,22 +114,31 @@ export default function PropertiesPage() {
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const load = useCallback(async () => {
+    const [reloadKey, setReloadKey] = useState(0);
+
+    // Rechargement manuel (bouton « Réessayer »)
+    const load = useCallback(() => {
         setIsLoading(true);
         setLoadError(null);
-        try {
-            setProperties(await propertiesApi.list());
-        } catch (e) {
-            setLoadError(apiErrorMessage(e, "Impossible de charger vos biens."));
-        } finally {
-            setIsLoading(false);
-        }
+        setReloadKey((k) => k + 1);
     }, []);
 
     useEffect(() => {
         // La redirection des visiteurs non connectés est gérée par AuthContext
-        if (user) load();
-    }, [user, load]);
+        if (!user) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const list = await propertiesApi.list();
+                if (!cancelled) setProperties(list);
+            } catch (e) {
+                if (!cancelled) setLoadError(apiErrorMessage(e, "Impossible de charger vos biens."));
+            } finally {
+                if (!cancelled) setIsLoading(false);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [user, reloadKey]);
 
     const handleDeleteClick = (e: React.MouseEvent, propertyId: string) => {
         e.stopPropagation();

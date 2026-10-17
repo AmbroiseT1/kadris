@@ -172,7 +172,7 @@ export default function ProfilePage() {
                             <div>
                                 <h3 className="font-bold text-bricq-slate mb-2">Protection de vos données</h3>
                                 <p className="text-sm leading-relaxed">
-                                    bricq s'engage à protéger vos données personnelles. Toutes vos informations sont stockées de manière sécurisée
+                                    bricq s’engage à protéger vos données personnelles. Toutes vos informations sont stockées de manière sécurisée
                                     et ne sont jamais partagées avec des tiers sans votre consentement explicite.
                                 </p>
                             </div>
@@ -180,9 +180,9 @@ export default function ProfilePage() {
                             <div>
                                 <h3 className="font-bold text-bricq-slate mb-2">Vos droits</h3>
                                 <ul className="text-sm space-y-2 list-disc list-inside">
-                                    <li>Droit d'accès à vos données personnelles</li>
+                                    <li>Droit d’accès à vos données personnelles</li>
                                     <li>Droit de rectification de vos informations</li>
-                                    <li>Droit à l'effacement de vos données</li>
+                                    <li>Droit à l’effacement de vos données</li>
                                     <li>Droit à la portabilité de vos données</li>
                                 </ul>
                             </div>

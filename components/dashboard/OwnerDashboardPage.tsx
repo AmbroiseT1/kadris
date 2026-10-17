@@ -48,7 +48,7 @@ export default function OwnerDashboardPage() {
     const [actionError, setActionError] = useState<string | null>(null);
     const [dvfData, setDvfData] = useState<TransactionDVF[]>([]);
     const [marketStats, setMarketStats] = useState<BackendMarketStats | null>(null);
-    const [loadingDVF, setLoadingDVF] = useState(false);
+    const [dvfLoadedKey, setDvfLoadedKey] = useState<string | null>(null);
     const [reloadKey, setReloadKey] = useState(0);
 
     // Modal States
@@ -95,11 +95,18 @@ export default function OwnerDashboardPage() {
     }, [searchParams, user, reloadKey]);
 
     // Données publiques complémentaires (DVF, risques, quartier)
+    const geoId = property?.id;
+    const geoLat = property?.lat;
+    const geoLon = property?.lon;
+    const geoKey = geoLat != null && geoLon != null ? `${geoId}:${geoLat}:${geoLon}` : null;
+    // Chargement en cours tant que la clé du bien courant n'a pas été chargée
+    const loadingDVF = geoKey !== null && dvfLoadedKey !== geoKey;
+
     useEffect(() => {
-        if (property?.lat == null || property?.lon == null) return;
-        const { lat, lon } = property;
+        if (geoLat == null || geoLon == null || geoKey === null) return;
+        const lat = geoLat;
+        const lon = geoLon;
         let cancelled = false;
-        setLoadingDVF(true);
         Promise.all([fetchDVF(lat, lon), fetchRisks(lat, lon), fetchQuartier(lat, lon), fetchMarketStats(lat, lon)])
             .then(([dvf, risks, quartier, stats]) => {
                 if (cancelled) return;
@@ -111,9 +118,9 @@ export default function OwnerDashboardPage() {
                 });
             })
             .catch(() => { /* données facultatives : les onglets gèrent leur absence */ })
-            .finally(() => { if (!cancelled) setLoadingDVF(false); });
+            .finally(() => { if (!cancelled) setDvfLoadedKey(geoKey); });
         return () => { cancelled = true; };
-    }, [property?.id, property?.lat, property?.lon]);
+    }, [geoKey, geoLat, geoLon]);
 
     const propertyData = useMemo<BuildingData | null>(
         () => (property ? { ...toBuildingData(property), ...extraData } : null),

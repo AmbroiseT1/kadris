@@ -8,8 +8,8 @@ export interface AmenityItem {
   name: string;
   type: string;
   distance: number;
-  lat: number;
-  lon: number;
+  lat?: number;
+  lon?: number;
 }
 
 export interface CategoryData {
@@ -82,6 +82,14 @@ const WEIGHTS = {
   qualite_vie: { education: 2, sante: 4, alimentation: 5, restauration: 5, transport: 3, loisirs: 5, securite: 3, administration: 2 }
 };
 
+// Élément brut renvoyé par Overpass (node/way/relation)
+interface OsmElement {
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
+  tags: Record<string, string>;
+}
+
 // --- 3. CONNECTEUR API ---
 
 export async function fetchQuartier(lat: number, lon: number): Promise<QuartierData | null> {
@@ -89,18 +97,18 @@ export async function fetchQuartier(lat: number, lon: number): Promise<QuartierD
     // Requête Overpass (OpenStreetMap) via le proxy backend /proxy/quartier :
     // cache 7 jours côté serveur et pas d'appel direct du navigateur vers overpass-api.de.
     const { data } = await api.get('/proxy/quartier', { params: { lat, lon }, timeout: 40000 });
-    const elements = data.elements || [];
+    const elements: OsmElement[] = data.elements || [];
 
-    const getDist = (e: any) => {
+    const getDist = (e: OsmElement) => {
       const elLat = e.lat || e.center?.lat;
       const elLon = e.lon || e.center?.lon;
       if (!elLat || !elLon) return 9999;
       return getDistanceFromLatLonInM(lat, lon, elLat, elLon);
     };
 
-    const processCat = (filterFn: (e: any) => boolean, seuilMax: number): CategoryData => {
+    const processCat = (filterFn: (e: OsmElement) => unknown, seuilMax: number): CategoryData => {
       const filtered = elements.filter(filterFn);
-      const items = filtered.map((e: any) => ({
+      const items = filtered.map((e: OsmElement) => ({
         name: e.tags.name || "Non nommé",
         type: e.tags.amenity || e.tags.shop || e.tags.leisure || e.tags.highway || "Divers",
         distance: getDist(e),
@@ -122,18 +130,18 @@ export async function fetchQuartier(lat: number, lon: number): Promise<QuartierD
       tags: Record<string, string>;
       dist: number;
       risk_score: number;
-      lat: number;
-      lon: number;
+      lat?: number;
+      lon?: number;
       type: string;
     }
 
-    const processNuisance = (filterFn: (e: any) => boolean, type: 'road' | 'rail' | 'air' | 'industry'): NuisanceItem => {
+    const processNuisance = (filterFn: (e: OsmElement) => unknown, type: 'road' | 'rail' | 'air' | 'industry'): NuisanceItem => {
       const filtered = elements.filter(filterFn);
       if (filtered.length === 0) return { present: false, distance: 0, name: "" };
 
       // Pour la route, on prend la plus risquée ET la plus proche
       if (type === 'road') {
-        const roads: RoadElement[] = filtered.map((e: any) => ({
+        const roads: RoadElement[] = filtered.map((e: OsmElement) => ({
           tags: e.tags,
           dist: getDist(e),
           risk_score: ROAD_RISK_MAP[e.tags.highway] || 0,
@@ -160,7 +168,7 @@ export async function fetchQuartier(lat: number, lon: number): Promise<QuartierD
       }
 
       // Pour les autres, le plus proche suffit
-      const nearest = filtered.reduce((prev: any, curr: any) => {
+      const nearest = filtered.reduce((prev: OsmElement, curr: OsmElement) => {
         return getDist(curr) < getDist(prev) ? curr : prev;
       });
 
@@ -175,23 +183,23 @@ export async function fetchQuartier(lat: number, lon: number): Promise<QuartierD
     };
 
     // --- CATÉGORIES ---
-    const education = processCat((e: any) => e.tags.amenity && /school|kindergarten|college|university/.test(e.tags.amenity), 5);
-    const sante = processCat((e: any) => e.tags.amenity && /doctors|pharmacy|hospital|dentist/.test(e.tags.amenity), 3);
-    const alimentation = processCat((e: any) => e.tags.shop && /bakery|butcher|supermarket|convenience|greengrocer|seafood|cheese|pastry/.test(e.tags.shop), 5);
-    const restauration = processCat((e: any) => e.tags.amenity && /restaurant|cafe|fast_food|bar|pub/.test(e.tags.amenity), 10);
-    const transport = processCat((e: any) => (e.tags.highway === 'bus_stop') || (e.tags.railway && /station|tram_stop/.test(e.tags.railway)), 5);
-    const loisirs = processCat((e: any) => (e.tags.leisure && /park|garden|sports_centre/.test(e.tags.leisure)) || (e.tags.amenity && /library|cinema|theatre/.test(e.tags.amenity)), 4);
-    const securite = processCat((e: any) => e.tags.amenity && /police|fire_station/.test(e.tags.amenity), 1);
-    const administration = processCat((e: any) => e.tags.amenity && /post_office|town_hall/.test(e.tags.amenity), 2);
+    const education = processCat((e: OsmElement) => e.tags.amenity && /school|kindergarten|college|university/.test(e.tags.amenity), 5);
+    const sante = processCat((e: OsmElement) => e.tags.amenity && /doctors|pharmacy|hospital|dentist/.test(e.tags.amenity), 3);
+    const alimentation = processCat((e: OsmElement) => e.tags.shop && /bakery|butcher|supermarket|convenience|greengrocer|seafood|cheese|pastry/.test(e.tags.shop), 5);
+    const restauration = processCat((e: OsmElement) => e.tags.amenity && /restaurant|cafe|fast_food|bar|pub/.test(e.tags.amenity), 10);
+    const transport = processCat((e: OsmElement) => (e.tags.highway === 'bus_stop') || (e.tags.railway && /station|tram_stop/.test(e.tags.railway)), 5);
+    const loisirs = processCat((e: OsmElement) => (e.tags.leisure && /park|garden|sports_centre/.test(e.tags.leisure)) || (e.tags.amenity && /library|cinema|theatre/.test(e.tags.amenity)), 4);
+    const securite = processCat((e: OsmElement) => e.tags.amenity && /police|fire_station/.test(e.tags.amenity), 1);
+    const administration = processCat((e: OsmElement) => e.tags.amenity && /post_office|town_hall/.test(e.tags.amenity), 2);
 
     // --- NUISANCES ---
-    const autoroute = processNuisance((e: any) => e.tags.highway && /motorway|trunk|primary|secondary|tertiary/.test(e.tags.highway), 'road');
-    const ferre = processNuisance((e: any) => e.tags.railway === 'rail', 'rail');
-    const aerien = processNuisance((e: any) => e.tags.aeroway && /aerodrome|runway/.test(e.tags.aeroway), 'air');
-    const industriel = processNuisance((e: any) => e.tags.landuse === 'industrial', 'industry');
+    const autoroute = processNuisance((e: OsmElement) => e.tags.highway && /motorway|trunk|primary|secondary|tertiary/.test(e.tags.highway), 'road');
+    const ferre = processNuisance((e: OsmElement) => e.tags.railway === 'rail', 'rail');
+    const aerien = processNuisance((e: OsmElement) => e.tags.aeroway && /aerodrome|runway/.test(e.tags.aeroway), 'air');
+    const industriel = processNuisance((e: OsmElement) => e.tags.landuse === 'industrial', 'industry');
 
     // --- CALCUL SCORE ---
-    const calculateScore = (weights: any) => {
+    const calculateScore = (weights: Record<string, number>) => {
       let total =
         education.score_norm * weights.education +
         sante.score_norm * weights.sante +
@@ -208,7 +216,7 @@ export async function fetchQuartier(lat: number, lon: number): Promise<QuartierD
       if (aerien.present && aerien.distance < 2000) total *= 0.9;
       if (industriel.present && industriel.distance < 300) total *= 0.9;
 
-      const maxWeight = Object.values(weights).reduce((a: any, b: any) => a + b, 0) as number;
+      const maxWeight = Object.values(weights).reduce((a, b) => a + b, 0);
       return Math.round((total / maxWeight) * 10);
     };
 

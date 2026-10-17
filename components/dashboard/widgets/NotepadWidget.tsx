@@ -11,6 +11,11 @@ const MAX_LENGTH = 20_000;
 
 /** Bloc-notes du bien, enregistré côté serveur (visible uniquement par son auteur). */
 export default function NotepadWidget({ propertyId }: { propertyId: string }) {
+    // key : état repartant de zéro (chargement) à chaque changement de bien
+    return <Notepad key={propertyId} propertyId={propertyId} />;
+}
+
+function Notepad({ propertyId }: { propertyId: string }) {
     const [note, setNote] = useState("");
     const [isExpanded, setIsExpanded] = useState(true);
     const [state, setState] = useState<SaveState>('loading');
@@ -23,9 +28,6 @@ export default function NotepadWidget({ propertyId }: { propertyId: string }) {
 
     useEffect(() => {
         let cancelled = false;
-        setState('loading');
-        setLoadFailed(false);
-        noteId.current = null;
         notesApi.list(propertyId)
             .then((notes) => {
                 if (cancelled) return;

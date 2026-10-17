@@ -4,8 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Upload, CheckCircle, Loader2, Shield, MapPin } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { AddressAutocompleteSimple } from '@/components/ui/AddressAutocompleteSimple';
+import { AddressAutocompleteSimple, type AddressFeature } from '@/components/ui/AddressAutocompleteSimple';
 import { useAuth } from '@/app/context/AuthContext';
 import { apiErrorMessage, propertiesApi } from '@/app/lib/api';
 import { fetchRnbBuilding } from '@/app/lib/rnb';
@@ -55,7 +54,7 @@ export default function AddPropertyPage() {
         }
     };
 
-    const handleAddressSelect = async (feature: any) => {
+    const handleAddressSelect = async (feature: AddressFeature) => {
         const addressData: AddressData = {
             label: feature.properties.label,
             coordinates: feature.geometry.coordinates,
@@ -165,7 +164,7 @@ export default function AddPropertyPage() {
                         <div>
                             <label className="block text-sm font-medium text-bricq-slate mb-2">Adresse du bien *</label>
                             <p className="text-xs text-bricq-slate/50 mb-3 flex items-center gap-1">
-                                <Shield size={12} /> Recherchez l'adresse exacte de votre propriété
+                                <Shield size={12} /> Recherchez l’adresse exacte de votre propriété
                             </p>
 
                             {!selectedAddress ? (
@@ -271,7 +270,7 @@ export default function AddPropertyPage() {
                                     </label>
                                 </div>
                                 <p className="mt-2 text-xs text-bricq-slate/50 flex items-center gap-1">
-                                    <Shield size={12} /> Votre justificatif n'est visible que par vous et par l'équipe chargée de la vérification.
+                                    <Shield size={12} /> Votre justificatif n’est visible que par vous et par l’équipe chargée de la vérification.
                                 </p>
                             </div>
                         )}
@@ -280,7 +279,7 @@ export default function AddPropertyPage() {
                         {isAdmin && (
                             <div className="p-4 bg-blue-50 border border-blue-200 rounded-sm">
                                 <p className="text-sm text-blue-800">
-                                    <strong>Compte administrateur</strong> - Le justificatif est facultatif et le bien est vérifié d'office.
+                                    <strong>Compte administrateur</strong> - Le justificatif est facultatif et le bien est vérifié d’office.
                                 </p>
                             </div>
                         )}

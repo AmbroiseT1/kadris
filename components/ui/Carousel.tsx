@@ -47,7 +47,7 @@ const Card = ({ card, index }: CardProps) => {
   );
 };
 
-export const AppleCarousel = ({ items }: { items: any[] }) => {
+export const AppleCarousel = ({ items }: { items: CardProps["card"][] }) => {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);

@@ -18,7 +18,7 @@ export const TabOwner = () => {
             </div>
             <h2 className="font-serif text-3xl font-bold mb-4">Données Privées Propriétaire</h2>
             <p className="text-white/70 mb-8 text-lg">
-               L'historique des travaux, les factures, les diagnostics complets (DPE) et les plans sont accessibles uniquement au propriétaire vérifié.
+               L’historique des travaux, les factures, les diagnostics complets (DPE) et les plans sont accessibles uniquement au propriétaire vérifié.
             </p>
             <button
                onClick={() => router.push('/login')}
