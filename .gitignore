@@ -53,6 +53,9 @@ __pycache__/
 *.db-wal
 backend/.cache/
 
+# Documents déposés par les utilisateurs (UPLOAD_DIR)
+uploads/
+
 # Logs and misc
 *.log
 *.tmp
