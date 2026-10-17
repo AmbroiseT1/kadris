@@ -100,14 +100,23 @@ def georisques_ok_routes():
             {
                 "results": 3,
                 "data": [
+                    {"libelle_risque_jo": "Tempête", "date_debut_evt": "25/12/1999"},
                     {"libelle_risque_jo": "Inondations et/ou Coulées de Boue", "date_debut_evt": "01/06/2016"},
                     {"libelle_risque_jo": "Sécheresse", "date_debut_evt": "01/07/2003"},
-                    {"libelle_risque_jo": "Tempête", "date_debut_evt": "25/12/1999"},
                 ],
             },
         ),
         f"{G}/cavites": (200, {"results": 2, "data": [{"type": "carrière", "nom": "C1"}, {"type": "cave", "nom": "C2"}]}),
-        f"{G}/installations_classees": (200, {"results": 0, "data": []}),
+        f"{G}/installations_classees": (
+            200,
+            {
+                "results": 2,
+                "data": [
+                    {"raisonSociale": "FERME", "regime": "Non ICPE"},
+                    {"raisonSociale": "USINE", "regime": "Autorisation", "statutSeveso": "Seveso seuil bas"},
+                ],
+            },
+        ),
         f"{G}/zonage_sismique": (200, {"data": [{"code_zone": "1", "zone_sismicite": "1 - TRES FAIBLE"}]}),
         f"{G}/radon": (200, {"data": [{"classe_potentiel": "1"}]}),
     }
@@ -123,8 +132,12 @@ def test_risks_maps_georisques(mock_http, pd_client):
     assert body["argiles"] == {"status": "ok", "niveau": "Fort", "libelle": "Exposition forte", "code": "3"}
     assert body["inondation"]["en_zone"] is True
     assert body["catnat"]["count"] == 3
+    # Dates JJ/MM/AAAA triées chronologiquement (plus récent d'abord)
+    assert [e["date_debut"] for e in body["catnat"]["evenements"]] == ["01/06/2016", "01/07/2003", "25/12/1999"]
     assert body["cavites"]["count"] == 2
-    assert body["installations"]["count"] == 0
+    # Les établissements « Non ICPE » renvoyés par l'API sont écartés
+    assert body["installations"]["count"] == 1
+    assert body["installations"]["items"][0]["nom"] == "USINE"
     assert body["sismicite"]["zone"] == "1"
     assert body["radon"]["classe"] == "1"
     assert body["pdf_url"].endswith("latlon=2.35220,48.85660")

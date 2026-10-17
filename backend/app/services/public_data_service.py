@@ -198,6 +198,13 @@ def _total(payload: Any) -> int:
     return len(_data_list(payload))
 
 
+def _sortable_date(value: Any) -> str:
+    """Géorisques renvoie des dates JJ/MM/AAAA : conversion en AAAA-MM-JJ pour trier."""
+    s = str(value or "")
+    m = re.match(r"^(\d{2})/(\d{2})/(\d{4})", s)
+    return f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else s
+
+
 def _niveau_argiles(payload: Any) -> dict:
     if not isinstance(payload, dict) or not (payload.get("exposition") or payload.get("codeExposition") is not None):
         return {"status": "empty"}
@@ -280,7 +287,7 @@ async def fetch_risks(lat: float, lon: float, code_insee: Optional[str]) -> dict
                 return {"status": "error"}
             payload = await _gaspar_with_fallback(client, "/gaspar/catnat", code, {"page_size": 100})
             items = _data_list(payload)
-            items.sort(key=lambda e: str(e.get("date_debut_evt") or ""), reverse=True)
+            items.sort(key=lambda e: _sortable_date(e.get("date_debut_evt")), reverse=True)
             return {
                 "status": "ok",
                 "count": _total(payload),
@@ -307,13 +314,15 @@ async def fetch_risks(lat: float, lon: float, code_insee: Optional[str]) -> dict
 
         async def installations() -> dict:
             payload = await _get_json(
-                client, f"{GEORISQUES_BASE}/installations_classees", {"latlon": latlon, "rayon": 1000, "page_size": 50}
+                client, f"{GEORISQUES_BASE}/installations_classees", {"latlon": latlon, "rayon": 1000, "page_size": 100}
             )
-            items = _data_list(payload)
+            # La base renvoie aussi des établissements « Non ICPE » : on les écarte
+            items = [i for i in _data_list(payload) if str(i.get("regime") or "").lower() != "non icpe"]
             return {
                 "status": "ok",
                 "rayon_m": 1000,
-                "count": _total(payload),
+                "count": len(items),
+                "count_partiel": _total(payload) > len(_data_list(payload)),
                 "items": [
                     {
                         "nom": i.get("raisonSociale") or i.get("nom_ets") or i.get("nom"),
