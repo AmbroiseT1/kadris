@@ -1,393 +1,293 @@
 "use client";
 
-import { LogoMark } from "@/components/ui/Logo";
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { motion, useInView } from 'framer-motion';
-import { ArrowRight, Search, FileSearch, Shield, TrendingUp, Users, Clock, CheckCircle, Sparkles, Eye, Lock } from 'lucide-react';
+import { ArrowRight, Check, CircleSlash, FileCheck2, KeyRound, Lock, Search, ShieldCheck, Trash2, UserCheck } from 'lucide-react';
+import SiteHeader from '@/components/ui/SiteHeader';
+import SiteFooter from '@/components/ui/SiteFooter';
+import { AddressAutocomplete } from '@/components/ui/AddressAutocomplete';
+import StatusChip from '@/components/ui/StatusChip';
+import Reveal from '@/components/motion/Reveal';
+import { useBrickNavigate } from '@/components/motion/useBrickNavigate';
+
+/* Le mur des sources : une brique par base publique, posée rangée par rangée. */
+const MUR: { nom: string; quoi: string }[][] = [
+  [{ nom: 'IGN', quoi: 'forme du bâtiment' }, { nom: 'Cadastre', quoi: 'parcelle' }, { nom: 'BDNB', quoi: 'bâti, hauteur' }],
+  [{ nom: 'ADEME', quoi: 'DPE' }, { nom: 'Géorisques', quoi: 'risques' }, { nom: 'PLU', quoi: 'urbanisme' }, { nom: 'DVF', quoi: 'ventes' }],
+  [{ nom: 'Arcep', quoi: 'fibre, mobile' }, { nom: "Hub'Eau", quoi: 'eau potable' }, { nom: 'OSM', quoi: 'commerces, écoles' }],
+];
+
+const ETAPES = [
+  { n: '01', titre: 'Vous tapez une adresse.', texte: "La Base Adresse Nationale la reconnaît et nous donne son identifiant officiel. Pas de compte, pas d'e-mail." },
+  { n: '02', titre: 'On interroge les sources.', texte: "En parallèle, directement chez chaque organisme public. Chaque réponse arrive avec sa date. Une source qui ne répond pas est marquée comme telle." },
+  { n: '03', titre: 'Vous lisez un rapport.', texte: "Une page, un sommaire, une phrase de synthèse en haut. Chaque bloc dit d'où il vient. Vous pouvez le partager ou l'imprimer." },
+];
+
+type Couche = { id: string; nom: string; hauteur: string; lit: string[]; source: string; limite: string };
+const COUCHES: Couche[] = [
+  {
+    id: 'toit', nom: 'Toit et volume', hauteur: 'h = 9 à 12 m',
+    lit: ['Contour au sol du bâtiment', 'Hauteur, nombre de niveaux', 'Matériaux de toiture'],
+    source: 'IGN BD TOPO, BDNB',
+    limite: "La forme du toit est déduite des matériaux. Ce n'est pas un relevé : les lucarnes, cheminées ou vérandas n'apparaissent pas.",
+  },
+  {
+    id: 'murs', nom: 'Murs et énergie', hauteur: 'h = 3 à 9 m',
+    lit: ['Classe énergie (DPE) et émissions', 'Matériaux des murs', 'Année de construction'],
+    source: 'ADEME, BDNB',
+    limite: "Le DPE affiché est celui déposé pour ce bâtiment. S'il n'y en a pas, on le dit, on ne l'invente pas.",
+  },
+  {
+    id: 'regles', nom: 'Règles de construction', hauteur: 'h = 0 m',
+    lit: ['Zone du PLU', 'Servitudes (monuments, réseaux)', 'Constructibilité indicative'],
+    source: "Géoportail de l'urbanisme",
+    limite: "Indicatif. Pour un projet de travaux, seule la mairie fait foi.",
+  },
+  {
+    id: 'sol', nom: 'Terrain et risques', hauteur: 'h = sous le sol',
+    lit: ['Retrait-gonflement des argiles', 'Inondation, séisme, radon', 'Sites pollués, installations classées'],
+    source: 'Géorisques',
+    limite: "Un aléa est une probabilité, pas un dommage constaté. Il ne remplace pas l'état des risques officiel, que le rapport vous permet de télécharger.",
+  },
+  {
+    id: 'marche', nom: 'Ventes voisines', hauteur: 'autour',
+    lit: ['Ventes réelles à proximité', 'Prix médian au m²', 'Ventes passées de ce bâtiment'],
+    source: 'DVF (DGFiP)',
+    limite: "Ce sont des prix de vente passés, pas une estimation. Les ventes les plus récentes arrivent avec plusieurs mois de décalage.",
+  },
+];
+
+const PAS = [
+  { titre: "Ce n'est pas une expertise.", texte: "Bricq rassemble ce que l'État publie. Personne ne s'est déplacé chez vous." },
+  { titre: "Ce n'est pas un diagnostic officiel.", texte: "Pour vendre, les diagnostics obligatoires restent obligatoires. Bricq vous aide à les ranger." },
+  { titre: "« Non évalué » ne veut pas dire « rien à signaler ».", texte: "Quand une source ne répond pas, la rubrique est hachurée en gris. Jamais en vert." },
+  { titre: "La maquette 3D est une reconstitution.", texte: "Elle sert à se repérer, pas à mesurer." },
+];
+
+const FAQ = [
+  { q: "C'est gratuit ?", r: "Oui, le rapport est gratuit et sans compte. L'espace propriétaire aussi." },
+  { q: "D'où viennent les données ?", r: "Uniquement de bases publiques ouvertes : IGN, cadastre, BDNB (CSTB), ADEME, DGFiP (DVF), Géorisques, Géoportail de l'urbanisme, Arcep, Hub'Eau et OpenStreetMap. Chaque bloc du rapport cite la sienne." },
+  { q: "Mon adresse est-elle enregistrée ?", r: "Pas pour un rapport consulté sans compte : nous ne la conservons pas. Elle n'est enregistrée que si vous ajoutez votre logement dans l'espace propriétaire." },
+  { q: "Une information est fausse, je fais quoi ?", r: "Elle est fausse à la source. Écrivez-nous à contact@bricq.fr avec l'adresse : on vous dit à quel organisme la signaler." },
+  { q: "Pourquoi ma maison n'a pas la bonne forme en 3D ?", r: "Si le contour IGN n'est pas disponible, on affiche un volume approximatif à partir de la surface et de la hauteur. La légende sous la maquette l'indique." },
+];
 
 export default function HowItWorksPage() {
-    return (
-        <main className="min-h-screen bg-papier text-texte">
+  const { navigate, overlay } = useBrickNavigate();
+  const [couche, setCouche] = useState<string>('toit');
+  const active = COUCHES.find((c) => c.id === couche) ?? COUCHES[0];
 
-            {/* Navigation */}
-            <nav className="fixed top-0 left-0 right-0 z-50 bg-papier/95 backdrop-blur-sm border-b border-trait">
-                <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-                    <Link href="/" className="flex items-center gap-3">
-                        <LogoMark className="w-10 h-10 text-encre" />
-                        <span className="text-2xl font-bold font-serif tracking-tighter text-texte">bricq</span>
-                    </Link>
-                    <Link href="/" className="text-sm text-texte-2 hover:text-texte transition-colors">
-                        ← Retour à l’accueil
-                    </Link>
-                </div>
-            </nav>
+  return (
+    <div className="min-h-screen bg-papier text-texte">
+      <SiteHeader />
 
-            {/* Hero Section - THE WHY */}
-            <section className="relative pt-32 pb-24 overflow-hidden">
-                {/* Animated gradient background */}
-                <div className="absolute inset-0 opacity-30">
-                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-brique-soft rounded-full blur-3xl animate-pulse"></div>
-                    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-ok-soft rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-                </div>
-
-                <div className="container mx-auto px-6 relative z-10">
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8 }}
-                        className="text-center max-w-4xl mx-auto"
-                    >
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-brique-soft border border-brique/30 rounded-full mb-8">
-                            <Sparkles size={16} className="text-brique" />
-                            <span className="text-sm font-bold text-brique uppercase tracking-wider">Le Pourquoi</span>
-                        </div>
-
-                        <h1 className="font-serif text-5xl md:text-7xl font-bold mb-8 leading-tight">
-                            L’immobilier mérite la{' '}
-                            <span className="relative inline-block">
-                                <span className="relative z-10 bg-gradient-to-r from-brique to-ok-soft bg-clip-text text-transparent">
-                                    transparence
-                                </span>
-                                <motion.div
-                                    className="absolute bottom-2 left-0 right-0 h-3 bg-brique-soft"
-                                    initial={{ scaleX: 0 }}
-                                    animate={{ scaleX: 1 }}
-                                    transition={{ delay: 0.5, duration: 0.8 }}
-                                ></motion.div>
-                            </span>
-                        </h1>
-
-                        <p className="text-xl md:text-2xl text-texte-2 mb-12 leading-relaxed font-light max-w-3xl mx-auto">
-                            Chaque année, des millions de Français achètent ou vendent un bien immobilier <span className="font-bold text-texte">à l’aveugle</span>.
-                            bricq change les règles du jeu en rendant l’invisible visible.
-                        </p>
-
-                        {/* Stats Pills */}
-                        <div className="flex flex-wrap gap-4 justify-center mb-12">
-                            <StatPill icon={<Eye size={20} />} value="80%" label="des acheteurs ignorent les risques" />
-                            <StatPill icon={<Clock size={20} />} value="6 mois" label="pour découvrir un vice caché" />
-                            <StatPill icon={<TrendingUp size={20} />} value="15k€" label="perdus en moyenne" />
-                        </div>
-
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.8, duration: 0.5 }}
-                        >
-                            <Link
-                                href="#how"
-                                className="inline-flex items-center gap-3 px-8 py-4 bg-encre text-white rounded-sm font-serif font-bold uppercase tracking-wider hover:bg-encre/90 transition-all shadow-lg hover:shadow-xl group"
-                            >
-                                Découvrir comment
-                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        </motion.div>
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* The Problem Section */}
-            <section className="py-24 bg-white border-y border-trait">
-                <div className="container mx-auto px-6">
-                    <div className="max-w-4xl mx-auto">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            whileInView={{ opacity: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.8 }}
-                        >
-                            <h2 className="font-serif text-4xl md:text-5xl font-bold text-center mb-16">
-                                Le problème qu’on résout
-                            </h2>
-
-                            <div className="grid md:grid-cols-3 gap-8">
-                                <ProblemCard
-                                    icon={<Lock size={32} />}
-                                    title="Information verrouillée"
-                                    description="Les données existent mais sont éparpillées dans 12+ bases différentes. Inaccessibles au commun des mortels."
-                                    color="terracotta"
-                                />
-                                <ProblemCard
-                                    icon={<Users size={32} />}
-                                    title="Asymétrie totale"
-                                    description="Les pros ont accès à tout. Les particuliers signent à l'aveugle. Cette inégalité coûte cher."
-                                    color="slate"
-                                />
-                                <ProblemCard
-                                    icon={<Clock size={32} />}
-                                    title="Découverte tardive"
-                                    description="Les problèmes apparaissent 6 mois après l'achat. Trop tard pour négocier ou se retirer."
-                                    color="sage"
-                                />
-                            </div>
-                        </motion.div>
-                    </div>
-                </div>
-            </section>
-
-            {/* HOW Section - Timeline */}
-            <section id="how" className="py-32 bg-gradient-to-b from-papier to-white">
-                <div className="container mx-auto px-6">
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="text-center mb-20"
-                    >
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-ok-soft border border-ok/30 rounded-full mb-8">
-                            <Sparkles size={16} className="text-ok" />
-                            <span className="text-sm font-bold text-ok uppercase tracking-wider">Comment ça marche</span>
-                        </div>
-
-                        <h2 className="font-serif text-4xl md:text-6xl font-bold mb-6">
-                            Trois étapes pour tout savoir
-                        </h2>
-                        <p className="text-xl text-texte-2 max-w-2xl mx-auto font-light">
-                            De la recherche à la décision éclairée, bricq vous accompagne à chaque instant.
-                        </p>
-                    </motion.div>
-
-                    <div className="max-w-5xl mx-auto">
-                        <StepCard
-                            number="01"
-                            title="Recherchez votre adresse"
-                            description="Entrez simplement l'adresse du bien qui vous intéresse. Notre moteur intelligent interroge instantanément 12+ bases de données officielles : cadastre, DVF, géorisques, DPE, et bien plus."
-                            icon={<Search size={48} />}
-                            features={[
-                                "Base Adresse Nationale (BAN)",
-                                "Données Valeurs Foncières (DVF)",
-                                "Base Nationale des Bâtiments (BDNB)",
-                                "Géorisques & Plans de Prévention"
-                            ]}
-                            delay={0}
-                        />
-
-                        <StepCard
-                            number="02"
-                            title="Analysez le rapport complet"
-                            description="En moins de 3 secondes, accédez au 'passeport immobilier' : historique des ventes, diagnostics énergétiques, risques naturels, qualité du quartier. Tout est là, clairement présenté."
-                            icon={<FileSearch size={48} />}
-                            features={[
-                                "Historique des transactions (prix, dates)",
-                                "Performance énergétique & travaux",
-                                "Exposition aux risques (inondation, argile)",
-                                "Analyse du quartier (transports, services)"
-                            ]}
-                            delay={0.2}
-                            reverse
-                        />
-
-                        <StepCard
-                            number="03"
-                            title="Décidez en confiance"
-                            description="Armé de données certifiées, vous négociez mieux, évitez les pièges et investissez sereinement. Pour les propriétaires, c'est un carnet numérique qui valorise votre bien."
-                            icon={<Shield size={48} />}
-                            features={[
-                                "Comparable de prix au m² réels",
-                                "Alertes sur vices potentiels",
-                                "Export PDF pour votre banque/notaire",
-                                "Suivi de la valeur dans le temps (proprio)"
-                            ]}
-                            delay={0.4}
-                        />
-                    </div>
-                </div>
-            </section>
-
-            {/* Technology Section */}
-            <section className="py-24 bg-encre text-white relative overflow-hidden">
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-0 left-0 w-full h-full" style={{
-                        backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
-                        backgroundSize: '40px 40px'
-                    }}></div>
-                </div>
-
-                <div className="container mx-auto px-6 relative z-10">
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="text-center mb-16"
-                    >
-                        <h2 className="font-serif text-4xl md:text-5xl font-bold mb-6">
-                            La technologie au service de la transparence
-                        </h2>
-                        <p className="text-xl text-white/70 max-w-2xl mx-auto font-light">
-                            Nous croyons que la donnée publique doit être publiquement accessible
-                        </p>
-                    </motion.div>
-
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        <TechCard
-                            title="APIs Gouvernementales"
-                            description="Connexion directe aux sources officielles (IGN, DGFIP, MTE)"
-                        />
-                        <TechCard
-                            title="Traitement instantané"
-                            description="Agrégation de 12+ sources en moins de 3 secondes"
-                        />
-                        <TechCard
-                            title="Mise à jour continue"
-                            description="Synchronisation hebdomadaire avec les bases officielles"
-                        />
-                        <TechCard
-                            title="Sécurité & confidentialité"
-                            description="Chiffrement bout en bout, conformité RGPD totale"
-                        />
-                    </div>
-                </div>
-            </section>
-
-            {/* CTA Final */}
-            <section className="py-32 bg-gradient-to-br from-papier via-white to-ok-soft">
-                <div className="container mx-auto px-6">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        className="max-w-4xl mx-auto text-center"
-                    >
-                        <h2 className="font-serif text-4xl md:text-6xl font-bold mb-8">
-                            Prêt à voir l’invisible ?
-                        </h2>
-                        <p className="text-xl text-texte-2 mb-12 max-w-2xl mx-auto font-light">
-                            Rejoignez les milliers d’utilisateurs qui prennent des décisions immobilières éclairées.
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <Link
-                                href="/"
-                                className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-encre text-white rounded-sm font-serif font-bold uppercase tracking-wider hover:bg-encre/90 transition-all shadow-lg hover:shadow-xl group"
-                            >
-                                Essayer gratuitement
-                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                            <Link
-                                href="/login"
-                                className="inline-flex items-center justify-center gap-3 px-8 py-4 border-2 border-texte text-texte rounded-sm font-serif font-bold uppercase tracking-wider hover:bg-encre hover:text-white transition-all"
-                            >
-                                Espace Propriétaire
-                            </Link>
-                        </div>
-                    </motion.div>
-                </div>
-            </section>
-        </main>
-    );
-}
-
-// Components
-function StatPill({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex items-center gap-3 px-6 py-3 bg-white border border-trait rounded-full shadow-sm"
-        >
-            <div className="text-brique">{icon}</div>
-            <div className="text-left">
-                <div className="font-bold text-texte text-lg">{value}</div>
-                <div className="text-xs text-texte-2">{label}</div>
+      <main id="contenu">
+        {/* 1. EN UNE PHRASE */}
+        <section className="relative overflow-hidden border-b border-trait">
+          <div aria-hidden className="absolute inset-0 motif-briques opacity-50" />
+          <div className="relative mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 pt-14 pb-16 md:pt-20 md:pb-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="grid grid-cols-1 gap-6 min-w-0">
+              <span className="label">Méthode et sources</span>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05]">
+                Une adresse.<br />Dix sources publiques.<br /><span className="text-brique">Un rapport.</span>
+              </h1>
+              <p className="text-lg text-texte-2 max-w-lg">
+                Tout ce que l&apos;État publie sur un logement existe déjà, mais en dix endroits. Bricq va le chercher pour vous, le range et vous dit d&apos;où vient chaque ligne.
+              </p>
             </div>
-        </motion.div>
-    );
-}
 
-function ProblemCard({ icon, title, description, color }: { icon: React.ReactNode; title: string; description: string; color: string }) {
-    const colorClasses = {
-        terracotta: 'border-brique/30 bg-brique-soft',
-        slate: 'border-trait bg-encre-soft',
-        sage: 'border-ok/30 bg-ok-soft'
-    };
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className={`p-8 border-2 rounded-lg ${colorClasses[color as keyof typeof colorClasses]} hover:scale-105 transition-transform duration-300`}
-        >
-            <div className="text-texte mb-4">{icon}</div>
-            <h3 className="font-serif text-xl font-bold mb-3 text-texte">{title}</h3>
-            <p className="text-texte-2 leading-relaxed">{description}</p>
-        </motion.div>
-    );
-}
-
-function StepCard({ number, title, description, icon, features, delay, reverse }: {
-    number: string;
-    title: string;
-    description: string;
-    icon: React.ReactNode;
-    features: string[];
-    delay: number;
-    reverse?: boolean;
-}) {
-    const ref = useRef(null);
-    const isInView = useInView(ref, { once: true, margin: "-100px" });
-
-    return (
-        <motion.div
-            ref={ref}
-            initial={{ opacity: 0, x: reverse ? 50 : -50 }}
-            animate={isInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.8, delay }}
-            className="relative mb-20"
-        >
-            <div className={`flex flex-col ${reverse ? 'md:flex-row-reverse' : 'md:flex-row'} gap-12 items-center`}>
-                {/* Icon Circle */}
-                <div className="flex-shrink-0">
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-brique-soft rounded-full blur-xl"></div>
-                        <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-brique to-ok-soft flex items-center justify-center text-white shadow-2xl">
-                            {icon}
-                        </div>
-                        <div className="absolute -top-4 -right-4 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-xl border-4 border-papier">
-                            <span className="font-serif text-2xl font-bold text-texte">{number}</span>
-                        </div>
-                    </div>
+            {/* Le mur des sources */}
+            <figure aria-label="Les sources publiques interrogées, empilées comme un mur" className="grid gap-2 min-w-0">
+              {MUR.map((rangee, r) => (
+                <div key={r} className={`flex gap-1.5 sm:gap-2 ${r % 2 ? 'pl-3 sm:pl-12' : ''}`}>
+                  {rangee.map((b, j) => {
+                    const delay = (MUR.slice(0, r).flat().length + j + 1) * 90;
+                    return (
+                      <div
+                        key={b.nom}
+                        className="flex-1 min-w-0 rounded-sm bg-brique text-white px-1.5 sm:px-3 py-2.5 sm:py-4 shadow-[inset_0_-3px_0_rgba(0,0,0,0.18)] motion-safe:animate-[pose-brique_520ms_var(--ease-pose)_both]"
+                        style={{ animationDelay: `${delay}ms`, flexGrow: b.nom.length > 8 ? 1.6 : 1 }}
+                      >
+                        <span className="block font-display font-extrabold text-[13px] sm:text-lg leading-tight break-words">{b.nom}</span>
+                        <span className="block font-mono text-[0.68rem] sm:text-xs text-white/80 leading-tight break-words">{b.quoi}</span>
+                      </div>
+                    );
+                  })}
                 </div>
+              ))}
+              <figcaption className="mt-2 font-mono text-xs text-texte-2">Une brique par base publique. Toutes ouvertes, toutes gratuites.</figcaption>
+            </figure>
+          </div>
+        </section>
 
-                {/* Content */}
-                <div className="flex-1">
-                    <h3 className="font-serif text-3xl md:text-4xl font-bold mb-4 text-texte">{title}</h3>
-                    <p className="text-lg text-texte-2 mb-6 leading-relaxed font-light">{description}</p>
+        {/* 2. EN TROIS TEMPS */}
+        <section aria-labelledby="temps-titre" className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid gap-10">
+          <div className="grid gap-3 max-w-2xl">
+            <span className="label">Le fonctionnement</span>
+            <h2 id="temps-titre" className="text-3xl md:text-4xl font-extrabold">Trois temps, quelques secondes.</h2>
+          </div>
+          <ol className="grid md:grid-cols-3 gap-0 md:gap-0 border-t-2 border-encre">
+            {ETAPES.map((e, i) => (
+              <Reveal as="li" key={e.n} delay={i * 120} className="relative grid gap-3 content-start pt-6 pb-8 md:pr-8 border-b md:border-b-0 md:border-r last:border-0 border-trait border-dashed">
+                {/* Cote de plan */}
+                <span aria-hidden className="absolute -top-[7px] left-0 w-3 h-3 rounded-full bg-papier border-2 border-encre" />
+                <span className="font-mono text-sm text-brique font-bold">{e.n}</span>
+                <h3 className="text-2xl font-extrabold">{e.titre}</h3>
+                <p className="text-texte-2">{e.texte}</p>
+              </Reveal>
+            ))}
+          </ol>
+        </section>
 
-                    <div className="grid sm:grid-cols-2 gap-3">
-                        {features.map((feature, i) => (
-                            <motion.div
-                                key={i}
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={isInView ? { opacity: 1, x: 0 } : {}}
-                                transition={{ delay: delay + 0.2 + (i * 0.1) }}
-                                className="flex items-start gap-2"
-                            >
-                                <CheckCircle size={16} className="text-ok mt-0.5 flex-shrink-0" />
-                                <span className="text-sm text-texte">{feature}</span>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
+        {/* 3. LA COUPE INTERACTIVE */}
+        <section aria-labelledby="coupe-titre" className="bg-encre text-papier">
+          <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid gap-10">
+            <div className="grid gap-3 max-w-2xl">
+              <span className="label text-papier/70">Démonter le rapport</span>
+              <h2 id="coupe-titre" className="text-3xl md:text-4xl font-extrabold">Choisissez une couche du bâtiment.</h2>
+              <p className="text-papier/80">Pour chacune : ce qu&apos;on lit, où on le lit, et ce que ça ne dit pas.</p>
             </div>
-        </motion.div>
-    );
-}
 
-function TechCard({ title, description }: { title: string; description: string }) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="p-6 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all duration-300"
-        >
-            <h4 className="font-serif text-xl font-bold mb-3">{title}</h4>
-            <p className="text-white/70 text-sm leading-relaxed">{description}</p>
-        </motion.div>
-    );
+            <div className="grid lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-8 items-start">
+              {/* Coupe du bâtiment : chaque couche est un bouton */}
+              <div role="tablist" aria-label="Couches du bâtiment" className="grid gap-1.5">
+                {COUCHES.map((c, i) => {
+                  const on = c.id === couche;
+                  const width = ['w-[62%] mx-auto', 'w-[78%] mx-auto', 'w-[88%] mx-auto', 'w-full', 'w-full'][i];
+                  return (
+                    <button
+                      key={c.id}
+                      role="tab"
+                      type="button"
+                      id={`tab-${c.id}`}
+                      aria-selected={on}
+                      aria-controls="couche-detail"
+                      onClick={() => setCouche(c.id)}
+                      className={`${width} ${i === 0 ? 'rounded-t-[48px]' : 'rounded-sm'} ${i === 4 ? 'border-dashed' : ''} min-h-[56px] px-4 flex items-center justify-between gap-3 border-2 text-left transition-colors ${on ? 'bg-brique border-brique text-white' : 'bg-white/5 border-white/15 text-papier hover:bg-white/10'}`}
+                    >
+                      <span className="font-bold">{c.nom}</span>
+                      <span className={`font-mono text-xs ${on ? 'text-white/85' : 'text-papier/60'}`}>{c.hauteur}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div id="couche-detail" role="tabpanel" aria-labelledby={`tab-${active.id}`} key={active.id} className="card bg-surface text-texte p-6 grid gap-5 motion-safe:animate-[pose-brique_380ms_var(--ease-pose)_both]">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h3 className="text-2xl font-extrabold">{active.nom}</h3>
+                  <span className="font-mono text-xs text-texte-2">Source : {active.source}</span>
+                </div>
+                <div className="grid gap-2">
+                  <span className="label">Ce qu&apos;on lit</span>
+                  <ul className="grid gap-1.5">
+                    {active.lit.map((l) => (
+                      <li key={l} className="flex items-start gap-2"><Check size={18} className="text-ok mt-0.5 shrink-0" aria-hidden /> {l}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="grid gap-2 p-4 rounded-sm bg-vigil-soft border-l-4 border-vigil">
+                  <span className="label text-vigil">Ce que ça ne dit pas</span>
+                  <p>{active.limite}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. CE QUE BRICQ NE FAIT PAS */}
+        <section aria-labelledby="pas-titre" className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-10">
+          <div className="grid gap-4 content-start">
+            <span className="label">Franchement</span>
+            <h2 id="pas-titre" className="text-3xl md:text-4xl font-extrabold">Ce que Bricq ne fait pas.</h2>
+            <p className="text-texte-2">On préfère vous le dire ici que vous le faire découvrir chez le notaire.</p>
+            <div className="flex flex-wrap gap-2 pt-2">
+              <StatusChip status="ok">Vérifié</StatusChip>
+              <StatusChip status="vigil">À surveiller</StatusChip>
+              <StatusChip status="alerte">À traiter</StatusChip>
+              <StatusChip status="inconnu">Non évalué</StatusChip>
+            </div>
+            <p className="text-sm text-texte-2">Les quatre états du rapport. Toujours une couleur, une icône et un mot.</p>
+          </div>
+          <ul className="grid sm:grid-cols-2 gap-4">
+            {PAS.map((p, i) => (
+              <Reveal as="li" key={p.titre} delay={i * 80} className="card p-5 grid gap-2 content-start">
+                <CircleSlash size={22} className="text-brique" aria-hidden />
+                <h3 className="text-lg font-bold">{p.titre}</h3>
+                <p className="text-texte-2">{p.texte}</p>
+              </Reveal>
+            ))}
+          </ul>
+        </section>
+
+        {/* 5. L'ESPACE PROPRIÉTAIRE */}
+        <section aria-labelledby="espace-titre" className="bg-surface border-y border-trait">
+          <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid gap-10">
+            <div className="grid gap-3 max-w-2xl">
+              <span className="label">Si c&apos;est votre logement</span>
+              <h2 id="espace-titre" className="text-3xl md:text-4xl font-extrabold">Le rapport devient un carnet de santé.</h2>
+            </div>
+            <ol className="grid md:grid-cols-4 gap-4">
+              {[
+                { icon: KeyRound, t: 'Créez un compte', d: 'E-mail et mot de passe. C’est tout.' },
+                { icon: UserCheck, t: 'Ajoutez le logement', d: 'Avec un justificatif (taxe foncière, acte). On vérifie que c’est bien le vôtre.' },
+                { icon: FileCheck2, t: 'Rangez vos papiers', d: 'Factures, diagnostics, devis. Ils sont lus et classés automatiquement.' },
+                { icon: Search, t: 'Suivez l’état', d: 'Travaux, rappels, charges. La maquette 3D prend la couleur de l’entretien.' },
+              ].map(({ icon: Icon, t, d }, i) => (
+                <Reveal as="li" key={t} delay={i * 90} className="relative grid gap-3 content-start p-5 rounded-lg border border-trait bg-papier">
+                  <span className="font-mono text-xs text-texte-2">Étape {i + 1}</span>
+                  <Icon size={24} className="text-encre" aria-hidden />
+                  <h3 className="text-lg font-bold">{t}</h3>
+                  <p className="text-sm text-texte-2">{d}</p>
+                </Reveal>
+              ))}
+            </ol>
+            <div className="grid md:grid-cols-3 gap-4 text-sm">
+              {[
+                { icon: Lock, t: 'Privé par défaut', d: 'Vos documents ne sont visibles que par vous.' },
+                { icon: ShieldCheck, t: 'Rien de partagé sans vous', d: 'Aucune donnée n’est transmise à un tiers.' },
+                { icon: Trash2, t: 'Supprimable à tout moment', d: 'Un logement supprimé l’est avec tous ses documents.' },
+              ].map(({ icon: Icon, t, d }) => (
+                <div key={t} className="flex items-start gap-3">
+                  <Icon size={20} className="text-ok mt-0.5 shrink-0" aria-hidden />
+                  <p><span className="font-bold">{t}.</span> <span className="text-texte-2">{d}</span></p>
+                </div>
+              ))}
+            </div>
+            <Link href="/register" className="btn btn-encre justify-self-start">Créer mon espace <ArrowRight size={16} aria-hidden /></Link>
+          </div>
+        </section>
+
+        {/* 6. QUESTIONS */}
+        <section aria-labelledby="faq-titre" className="mx-auto max-w-[860px] px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid gap-8">
+          <h2 id="faq-titre" className="text-3xl md:text-4xl font-extrabold">Questions directes, réponses courtes.</h2>
+          <div className="grid border-t border-trait">
+            {FAQ.map((f) => (
+              <details key={f.q} className="group border-b border-trait">
+                <summary className="list-none cursor-pointer min-h-[60px] py-4 flex items-center justify-between gap-4 font-display text-lg font-bold">
+                  {f.q}
+                  <span aria-hidden className="w-8 h-8 shrink-0 grid place-items-center rounded-full border border-trait-fort text-brique transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <p className="pb-5 text-texte-2 max-w-2xl">{f.r}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        {/* 7. ESSAYER */}
+        <section aria-labelledby="essai-titre" className="relative overflow-hidden bg-brique text-white">
+          <div aria-hidden className="absolute inset-0 opacity-15 [background-image:linear-gradient(#000_1px,transparent_1px),linear-gradient(90deg,#000_1px,transparent_1px),linear-gradient(90deg,#000_1px,transparent_1px)] [background-size:100%_28px,80px_56px,80px_56px] [background-position:0_0,0_0,40px_28px]" />
+          <div className="relative mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-16 md:py-20 grid gap-6 [&>*]:min-w-0">
+            <h2 id="essai-titre" className="text-3xl md:text-5xl font-extrabold text-white">Le plus simple, c&apos;est d&apos;essayer.</h2>
+            <p className="text-white/85 text-lg">Votre adresse, la maison de vos parents, celle que vous visitez samedi.</p>
+            <div className="w-full max-w-2xl bg-surface rounded-sm p-1">
+              <AddressAutocomplete onSelect={(f) => navigate(`/report/${encodeURIComponent(f.properties.id)}`)} />
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <SiteFooter />
+      {overlay}
+    </div>
+  );
 }

@@ -20,7 +20,7 @@ const Building3D = dynamic(() => import('@/components/building3d/Building3D'), {
 const SOURCES = [
   { nom: 'BDNB', quoi: 'Bâtiment, matériaux, hauteur' },
   { nom: 'ADEME', quoi: 'Diagnostics de performance énergétique' },
-  { nom: 'DVF', quoi: 'Ventes immobilières depuis 2014' },
+  { nom: 'DVF', quoi: 'Ventes immobilières des dernières années' },
   { nom: 'Géorisques', quoi: 'Inondation, argiles, radon, séismes' },
   { nom: 'Géoportail de l’urbanisme', quoi: 'Zonage PLU et servitudes' },
   { nom: 'IGN', quoi: 'Forme du bâtiment et parcelle' },
@@ -64,8 +64,8 @@ export default function Home() {
         {/* ACCUEIL */}
         <section className="relative overflow-hidden border-b border-trait">
           <div aria-hidden className="absolute inset-0 motif-briques opacity-60" />
-          <div className="relative mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 pt-14 pb-16 md:pt-24 md:pb-24 grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] gap-12 items-center">
-            <div className="grid gap-6" id="recherche">
+          <div className="relative mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 pt-14 pb-16 md:pt-24 md:pb-24 grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] gap-12 items-center">
+            <div className="grid grid-cols-1 gap-6 min-w-0" id="recherche">
               <span className="label">Passeport du logement</span>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05]">
                 Tout ce que les données publiques savent de votre logement.
@@ -134,7 +134,7 @@ export default function Home() {
 
         {/* COUPE DU BÂTIMENT */}
         <section aria-labelledby="coupe-titre" className="bg-encre text-papier">
-          <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="grid gap-5">
               <span className="label text-papier/70">Le rapport en coupe</span>
               <h2 id="coupe-titre" className="text-3xl md:text-4xl font-extrabold text-papier">Du sol au toit, chaque couche a sa source.</h2>
@@ -160,7 +160,7 @@ export default function Home() {
         </section>
 
         {/* ESPACE PROPRIÉTAIRE */}
-        <section aria-labelledby="espace-titre" className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-12 items-center">
+        <section aria-labelledby="espace-titre" className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-12 items-center">
           <div className="grid gap-5">
             <span className="label">Espace propriétaire</span>
             <h2 id="espace-titre" className="text-3xl md:text-4xl font-extrabold">Le carnet de santé de votre maison, en 3D.</h2>
