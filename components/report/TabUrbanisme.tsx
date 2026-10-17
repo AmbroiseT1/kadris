@@ -3,6 +3,9 @@ import React from 'react';
 import { Scroll, Landmark, Building2, FileDown, Download, Info, CheckCircle, AlertTriangle, Map, Ban, Car, Ruler, Trees, Droplets, ExternalLink } from 'lucide-react';
 import { BuildingData } from '@/app/lib/types';
 import { UrbanismeData, PrescriptionItem } from '@/app/lib/urbanisme';
+import { ConnectivityData } from '@/app/lib/arcep';
+import { formatDateFr, SourceInfo } from '@/app/lib/sources';
+import { SourceBadge, UnavailableBlock } from './SourceBadge';
 
 // --- SOUS-COMPOSANT : BOUTON DOCUMENT ---
 const DocLinkButton = ({ url, label = "Voir le document" }: { url?: string | null, label?: string }) => {
@@ -99,15 +102,21 @@ const PrescriptionCard = ({ item }: { item: PrescriptionItem }) => {
 // --- COMPOSANT PRINCIPAL ---
 
 export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
-   if (!data?.urbanisme) return <div className="p-8 text-center text-bricq-slate/50">Chargement des règles d'urbanisme...</div>;
+   if (!data) return <div className="p-8 text-center text-bricq-slate/50">Chargement des règles d'urbanisme...</div>;
 
-   const u = data.urbanisme as UrbanismeData;
-   const zone = u.zonage;
-   const doc = u.document;
-   const contraintes = u.contraintes || [];
+   const sources = data.sources || {};
+   const u: UrbanismeData | undefined = data.urbanisme;
+   const zone = u?.zonage;
+   const doc = u?.document;
+   const contraintes = u?.contraintes || [];
 
    return (
       <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+         {!u ? (
+            sources.urbanisme?.status === 'error'
+               ? <UnavailableBlock title="Urbanisme (PLU, servitudes)" source={sources.urbanisme} />
+               : <div className="p-8 text-center text-bricq-slate/50">Chargement des règles d'urbanisme...</div>
+         ) : (<>
 
          {/* 1. HEADER : ZONAGE ET DOCUMENT */}
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -222,7 +231,7 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
                   ))}
                </div>
             ) : (
-               <p className="text-sm text-gray-400 italic text-center py-4">Aucune prescription spécifique (type OAP, Espace Boisé) détectée sur cette parcelle.</p>
+               <p className="text-sm text-gray-400 italic text-center py-4">{u.indisponibles?.includes('prescriptions') ? 'Prescriptions : données indisponibles (Géoportail de l’Urbanisme).' : 'Aucune prescription spécifique (type OAP, Espace Boisé) détectée sur cette parcelle.'}</p>
             )}
          </div>
 
@@ -249,12 +258,14 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
                   ))}
                </div>
             ) : (
-               <p className="text-sm text-gray-400 italic text-center py-4">Aucune servitude majeure (Monument historique, Pipeline...) détectée.</p>
+               <p className="text-sm text-gray-400 italic text-center py-4">{u.indisponibles?.includes('servitudes') ? 'Servitudes : données indisponibles (Géoportail de l’Urbanisme).' : 'Aucune servitude majeure (Monument historique, Pipeline...) détectée.'}</p>
             )}
+            <SourceBadge source={sources.urbanisme} className="mt-4" />
          </div>
+         </>)}
 
          {/* 4. RÉSEAUX & SANTÉ PUBLIQUE */}
-         {data.eau_potable && (
+         {data.eau_potable ? (
             <div className="bg-white border border-stone-200 rounded-sm p-5">
                <h3 className="font-serif text-lg font-bold text-bricq-slate mb-4 border-b border-stone-100 pb-2 flex items-center gap-2">
                   <Droplets size={20} className="text-blue-500" /> Qualité de l'Eau Potable
@@ -276,21 +287,21 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
 
                   <div className="flex-1 pt-1">
                      <p className="text-sm font-medium text-slate-800 mb-2">
-                        "{data.eau_potable.conclusion}"
+                        &laquo; {data.eau_potable.conclusion} &raquo;
                      </p>
-                     <div className="flex items-center gap-4 text-xs text-slate-500 font-mono">
+                     <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 font-mono">
                         <span className="flex items-center gap-1"><CheckCircle size={12} /> Réseau : {data.eau_potable.reseau}</span>
-                        <span>Prélèvement du : {new Date(data.eau_potable.date_prelevement).toLocaleDateString('fr-FR')}</span>
+                        <span>Prélèvement du : {formatDateFr(data.eau_potable.date_prelevement)}</span>
                      </div>
                   </div>
                </div>
 
                {data.eau_potable.parametres_cles.length > 0 && (
                   <div>
-                     <h4 className="font-bold text-sm text-bricq-slate mb-3 uppercase tracking-wider opacity-70">Analyses Physico-Chimiques</h4>
+                     <h4 className="font-bold text-sm text-bricq-slate mb-3 uppercase tracking-wider opacity-70">Dernières analyses (contrôle sanitaire)</h4>
                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                        {data.eau_potable.parametres_cles.map((param, idx) => (
-                           <div key={idx} className="p-3 rounded-sm border border-stone-100 bg-stone-50/50 flex flex-col items-center text-center">
+                        {data.eau_potable.parametres_cles.map((param) => (
+                           <div key={param.id} className="p-3 rounded-sm border border-stone-100 bg-stone-50/50 flex flex-col items-center text-center">
                               <div className="text-xs text-slate-400 font-bold uppercase mb-1 font-mono">{param.nom}</div>
                               <div className={`font-black text-lg ${param.code_couleur === 'red' ? 'text-red-600' : param.code_couleur === 'green' ? 'text-green-600' : 'text-slate-700'}`}>
                                  {typeof param.valeur === 'number' ? param.valeur.toLocaleString('fr-FR') : param.valeur}
@@ -306,73 +317,99 @@ export const TabUrbanisme = ({ data }: { data: BuildingData | null }) => {
                      </div>
                   </div>
                )}
+               <SourceBadge source={sources.eau} className="mt-4" />
             </div>
-         )}
+         ) : sources.eau && sources.eau.status !== 'loading' ? (
+            <UnavailableBlock title="Qualité de l'eau potable" source={sources.eau} />
+         ) : null}
 
          {/* 5. CONNECTIVITÉ NUMÉRIQUE */}
-         {data.connectivite && (
-            <div className="bg-white border border-stone-200 rounded-sm p-5">
-               <h3 className="font-serif text-lg font-bold text-bricq-slate mb-6 border-b border-stone-100 pb-2 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-600"><path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" /></svg>
-                  Connectivité & Réseaux Numériques
-               </h3>
-
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                  <div className="bg-purple-50 rounded-sm p-6 flex flex-col items-center justify-center text-center border border-purple-100">
-                     <div className="text-sm font-bold text-purple-800 uppercase tracking-wide mb-2 font-mono">Score Connectivité</div>
-                     <div className="text-5xl font-black text-purple-600 mb-2">{data.connectivite.score_connectivite}<span className="text-2xl text-purple-300">/100</span></div>
-                     <div className="text-xs text-purple-500 font-medium px-3 py-1 bg-white rounded-sm border border-purple-100">
-                        {data.connectivite.score_connectivite >= 80 ? "Excellente" : data.connectivite.score_connectivite >= 50 ? "Bonne" : "Moyenne"}
-                     </div>
-                  </div>
-
-                  <div className="md:col-span-2 space-y-4">
-                     <div className={`p-4 rounded-sm border flex items-start gap-4 ${data.connectivite.fixe.fibre ? 'bg-green-50 border-green-100' : 'bg-orange-50 border-orange-100'}`}>
-                        <div className={`p-2 rounded-sm ${data.connectivite.fixe.fibre ? 'bg-green-200 text-green-700' : 'bg-orange-200 text-orange-700'}`}>
-                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2" /><rect x="2" y="14" width="20" height="8" rx="2" ry="2" /><line x1="6" y1="6" x2="6.01" y2="6" /><line x1="6" y1="18" x2="6.01" y2="18" /></svg>
-                        </div>
-                        <div>
-                           <div className="font-bold text-slate-800 text-lg flex items-center gap-2">
-                              Internet Fixe : {data.connectivite.fixe.techno_principale}
-                              {data.connectivite.fixe.fibre && <CheckCircle size={16} className="text-green-600" />}
-                           </div>
-                           <div className="text-sm text-slate-600 mt-1">
-                              Débit théorique max : <span className="font-bold">{data.connectivite.fixe.max_debit}</span>
-                           </div>
-                           <div className="flex flex-wrap gap-2 mt-3">
-                              {data.connectivite.fixe.operateurs.map((op, i) => (
-                                 <span key={i} className="text-[10px] font-bold uppercase bg-white border border-stone-200 text-slate-500 px-2 py-1 rounded-sm font-mono">
-                                    {op}
-                                 </span>
-                              ))}
-                           </div>
-                        </div>
-                     </div>
-
-                     <div className="p-4 rounded-sm border border-stone-100 bg-stone-50 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                           <div className="p-2 bg-white rounded-sm border border-stone-200 text-slate-500">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>
-                           </div>
-                           <div>
-                              <div className="font-bold text-slate-800">Réseau Mobile</div>
-                              <div className="text-xs text-slate-500">Couverture : {data.connectivite.mobile.couverture}</div>
-                           </div>
-                        </div>
-                        <div className="flex gap-2">
-                           <div className={`px-3 py-1 rounded-sm text-xs font-bold border ${data.connectivite.mobile.g5 ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
-                              5G
-                           </div>
-                           <div className={`px-3 py-1 rounded-sm text-xs font-bold border ${data.connectivite.mobile.g4 ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
-                              4G+
-                           </div>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-            </div>
-         )}
+         {data.connectivite ? (
+            <ConnectivityBlock c={data.connectivite} source={sources.connectivite} />
+         ) : sources.connectivite && sources.connectivite.status !== 'loading' ? (
+            <UnavailableBlock title="Connectivité (fibre, mobile)" source={sources.connectivite} />
+         ) : null}
       </div>
    );
 };
+
+const Unverified = ({ label }: { label: string }) => (
+   <div className="p-4 rounded-sm border border-slate-200 bg-slate-50 text-sm text-slate-500">
+      <span className="font-bold text-slate-700">{label}</span> : données indisponibles (non vérifié).
+   </div>
+);
+
+const ConnectivityBlock = ({ c, source }: { c: ConnectivityData; source?: SourceInfo }) => (
+   <div className="bg-white border border-stone-200 rounded-sm p-5">
+      <h3 className="font-serif text-lg font-bold text-bricq-slate mb-6 border-b border-stone-100 pb-2 flex items-center gap-2">
+         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-600" aria-hidden><path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" /></svg>
+         Connectivité & Réseaux Numériques
+      </h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+         <div className="bg-purple-50 rounded-sm p-6 flex flex-col items-center justify-center text-center border border-purple-100">
+            <div className="text-sm font-bold text-purple-800 uppercase tracking-wide mb-2 font-mono">Score Connectivité</div>
+            {c.score_connectivite !== null ? (
+               <>
+                  <div className="text-5xl font-black text-purple-600 mb-2">{c.score_connectivite}<span className="text-2xl text-purple-300">/100</span></div>
+                  <div className="text-xs text-purple-500 font-medium px-3 py-1 bg-white rounded-sm border border-purple-100">
+                     {c.score_connectivite >= 80 ? "Excellente" : c.score_connectivite >= 50 ? "Bonne" : "Moyenne"}
+                  </div>
+               </>
+            ) : (
+               <div className="text-sm text-purple-700 font-medium">Non évalué (données partielles)</div>
+            )}
+         </div>
+
+         <div className="md:col-span-2 space-y-4">
+            {c.fixe ? (
+               <div className={`p-4 rounded-sm border flex items-start gap-4 ${c.fixe.fibre ? 'bg-green-50 border-green-100' : 'bg-orange-50 border-orange-100'}`}>
+                  <div className={`p-2 rounded-sm ${c.fixe.fibre ? 'bg-green-200 text-green-700' : 'bg-orange-200 text-orange-700'}`}>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect x="2" y="2" width="20" height="8" rx="2" ry="2" /><rect x="2" y="14" width="20" height="8" rx="2" ry="2" /><line x1="6" y1="6" x2="6.01" y2="6" /><line x1="6" y1="18" x2="6.01" y2="18" /></svg>
+                  </div>
+                  <div>
+                     <div className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                        Internet Fixe : {c.fixe.techno_principale}
+                        {c.fixe.fibre && <CheckCircle size={16} className="text-green-600" />}
+                     </div>
+                     <div className="text-sm text-slate-600 mt-1">
+                        Débit théorique max : <span className="font-bold">{c.fixe.max_debit}</span>
+                     </div>
+                     <div className="flex flex-wrap gap-2 mt-3">
+                        {c.fixe.operateurs.map((op, i) => (
+                           <span key={i} className="text-[10px] font-bold uppercase bg-white border border-stone-200 text-slate-500 px-2 py-1 rounded-sm font-mono">
+                              {op}
+                           </span>
+                        ))}
+                     </div>
+                  </div>
+               </div>
+            ) : <Unverified label="Internet fixe" />}
+
+            {c.mobile ? (
+               <div className="p-4 rounded-sm border border-stone-100 bg-stone-50 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                     <div className="p-2 bg-white rounded-sm border border-stone-200 text-slate-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>
+                     </div>
+                     <div>
+                        <div className="font-bold text-slate-800">Réseau Mobile</div>
+                        <div className="text-xs text-slate-500">Couverture : {c.mobile.couverture}</div>
+                     </div>
+                  </div>
+                  <div className="flex gap-2">
+                     <div className={`px-3 py-1 rounded-sm text-xs font-bold border ${c.mobile.g5 ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
+                        5G
+                     </div>
+                     <div className={`px-3 py-1 rounded-sm text-xs font-bold border ${c.mobile.g4 ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
+                        4G+
+                     </div>
+                  </div>
+               </div>
+            ) : <Unverified label="Réseau mobile" />}
+         </div>
+      </div>
+      <SourceBadge source={source} className="mt-4" />
+   </div>
+);
