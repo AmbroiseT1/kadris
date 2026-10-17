@@ -27,11 +27,11 @@ export default function AddDocumentModal({ isOpen, onClose, onSave }: AddDocumen
     const analyzeFileWithAI = async (file: File) => {
         setIsAnalyzing(true);
         try {
-            const formData = new FormData();
-            formData.append('file', file);
+            const upload = new FormData();
+            upload.append('file', file);
 
             // Appel authentifié à l'API (URL via NEXT_PUBLIC_API_URL, token ajouté par l'intercepteur)
-            const response = await api.post('/documents/analyze', formData);
+            const response = await api.post('/documents/analyze', upload);
             const data = response.data;
 
             // Mapping intelligent des données

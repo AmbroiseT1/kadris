@@ -9,6 +9,7 @@ export interface RiskData {
   cavites?: { count: number };
   installations?: any[];
   catnat?: { count: number };
+  _raw?: unknown;
 }
 
 /**

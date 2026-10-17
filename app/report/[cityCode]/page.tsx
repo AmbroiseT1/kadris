@@ -197,7 +197,7 @@ export default function ReportPage({ params }: { params: Promise<{ cityCode: str
           {activeTab === 'quartier' && <TabQuartier data={buildingData} />}
           {activeTab === 'risks' && <TabRisks data={buildingData} />}
           {activeTab === 'urba' && <TabUrbanisme data={buildingData} />}
-          {activeTab === 'dvf' && <TabDVF transactions={dvfData} loading={loadingDVF} surface={buildingData?.surface_sol} surface_terrain={buildingData?.raw_bdnb?.surface_terrain} />}
+          {activeTab === 'dvf' && <TabDVF transactions={dvfData} loading={loadingDVF} marketStats={null} surface={buildingData?.surface_sol} surface_terrain={buildingData?.raw_bdnb?.surface_terrain} />}
           {activeTab === 'analyse' && <TabAnalyse data={buildingData} dvf={dvfData} />}
           {activeTab === 'owner' && <TabOwner />}
         </div>
