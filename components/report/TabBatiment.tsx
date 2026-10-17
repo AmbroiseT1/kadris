@@ -146,9 +146,9 @@ const DataRow = ({ label, value, tooltip }: { label: string, value: unknown, too
 
     if (typeof value === 'boolean') {
         displayValue = value ? (
-            <span className="inline-flex items-center gap-1 text-green-700 bg-green-50 px-2 py-0.5 rounded-sm text-xs font-bold border border-green-100"><CheckCircle size={12} /> Oui</span>
+            <span className="inline-flex items-center gap-1 text-ok bg-ok-soft px-2 py-0.5 rounded-sm text-xs font-bold border border-ok/30"><CheckCircle size={12} /> Oui</span>
         ) : (
-            <span className="inline-flex items-center gap-1 text-slate-400 bg-slate-100 px-2 py-0.5 rounded-sm text-xs border border-slate-200"><XCircle size={12} /> Non</span>
+            <span className="inline-flex items-center gap-1 text-texte-2 bg-papier px-2 py-0.5 rounded-sm text-xs border border-trait"><XCircle size={12} /> Non</span>
         );
         unit = '';
     } else if (Array.isArray(value)) {
@@ -162,22 +162,22 @@ const DataRow = ({ label, value, tooltip }: { label: string, value: unknown, too
     }
 
     return (
-        <div className="group relative flex justify-between items-center py-3 border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors px-2 -mx-2">
+        <div className="group relative flex justify-between items-center py-3 border-b border-trait last:border-0 hover:bg-papier transition-colors px-2 -mx-2">
             <div className="flex items-center gap-1.5">
-                <span className="text-sm text-slate-600 font-medium flex items-center gap-1">{label}</span>
+                <span className="text-sm text-texte-2 font-medium flex items-center gap-1">{label}</span>
                 {tooltip && (
                     <div className="relative group/tooltip">
-                        <Info size={12} className="text-slate-300 hover:text-bricq-terracotta cursor-help transition-colors" />
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-bricq-slate text-white text-xs rounded-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center leading-relaxed font-light">
+                        <Info size={12} className="text-texte-2 hover:text-brique cursor-help transition-colors" />
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-encre text-white text-xs rounded-sm opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center leading-relaxed font-light">
                             {tooltip}
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-bricq-slate"></div>
                         </div>
                     </div>
                 )}
             </div>
-            <span className="text-sm text-bricq-slate font-bold text-right max-w-[60%] break-words">
+            <span className="text-sm text-texte font-bold text-right max-w-[60%] break-words">
                 {displayValue}
-                {unit && <span className="font-normal text-slate-500 pl-1 font-mono text-xs">{unit}</span>}
+                {unit && <span className="font-normal text-texte-2 pl-1 font-mono text-xs">{unit}</span>}
             </span>
         </div>
     );
@@ -194,14 +194,14 @@ const BentoCard = ({ title, icon: Icon, description, data, keys }: {
     if (!validKeys.length) return null;
 
     return (
-        <div className="bg-white border border-stone-200 rounded-sm p-5">
-            <div className="flex items-start gap-3 mb-5 border-b border-stone-100 pb-3">
-                <div className="p-2 bg-bricq-cream/50 rounded-sm text-bricq-terracotta border border-bricq-terracotta/10">
+        <div className="bg-white border border-trait rounded-sm p-5">
+            <div className="flex items-start gap-3 mb-5 border-b border-trait pb-3">
+                <div className="p-2 bg-papier rounded-sm text-brique border border-brique/30">
                     <Icon size={20} />
                 </div>
                 <div>
-                    <h3 className="font-serif font-bold text-bricq-slate text-base">{title}</h3>
-                    <p className="text-xs text-slate-400 mt-0.5 leading-tight font-light">{description}</p>
+                    <h3 className="font-serif font-bold text-texte text-base">{title}</h3>
+                    <p className="text-xs text-texte-2 mt-0.5 leading-tight font-light">{description}</p>
                 </div>
             </div>
             <div className="space-y-1">
@@ -224,7 +224,7 @@ const BentoCard = ({ title, icon: Icon, description, data, keys }: {
 export const TabBatiment = ({ data, sources }: { data: any; sources?: { bdnb?: SourceInfo; dpe?: SourceInfo } }) => {
     const [showAll, setShowAll] = useState(false);
 
-    if (!data) return <div className="p-8 text-center text-slate-400">Données Bâtiment indisponibles.</div>;
+    if (!data) return <div className="p-8 text-center text-texte-2">Données Bâtiment indisponibles.</div>;
 
     const annee = resolveAnneeConstruction(data);
     const smartYear = annee.source === 'inconnue' ? '--' : annee.label;
@@ -244,13 +244,13 @@ export const TabBatiment = ({ data, sources }: { data: any; sources?: { bdnb?: S
 
             {/* HERO */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-bricq-slate text-white p-8 rounded-sm border border-bricq-slate col-span-1 md:col-span-2 relative overflow-hidden">
+                <div className="bg-encre text-white p-8 rounded-sm border border-texte col-span-1 md:col-span-2 relative overflow-hidden">
                     <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
                     <div className="p-3 bg-white/10 rounded-sm backdrop-blur-sm border border-white/10 inline-block">
                         <Building size={32} className="text-white" />
                     </div>
                     <div className="relative z-10 mt-4">
-                        <div className="text-xs uppercase text-bricq-terracotta font-bold tracking-widest mb-2 flex items-center gap-2 font-mono">
+                        <div className="text-xs uppercase text-brique font-bold tracking-widest mb-2 flex items-center gap-2 font-mono">
                             <Info size={10} /> Fiche Technique Officielle
                         </div>
                         <h2 className="text-2xl md:text-3xl font-serif font-bold mb-2">
@@ -262,19 +262,19 @@ export const TabBatiment = ({ data, sources }: { data: any; sources?: { bdnb?: S
                     </div>
                 </div>
 
-                <div className="bg-white border border-stone-200 p-6 rounded-sm flex flex-col justify-center items-center text-center relative group">
-                    <div className="absolute top-3 right-3 text-stone-200 group-hover:text-bricq-terracotta transition-colors">
+                <div className="bg-white border border-trait p-6 rounded-sm flex flex-col justify-center items-center text-center relative group">
+                    <div className="absolute top-3 right-3 text-texte-2 group-hover:text-brique transition-colors">
                         <Calendar size={18} />
                     </div>
-                    <div className="text-xs uppercase text-slate-400 font-bold tracking-wider mb-2 font-mono">Année d’Origine</div>
-                    <div className="text-5xl font-black text-bricq-slate group-hover:scale-105 transition-transform duration-300">
+                    <div className="text-xs uppercase text-texte-2 font-bold tracking-wider mb-2 font-mono">Année d’Origine</div>
+                    <div className="text-5xl font-black text-texte group-hover:scale-105 transition-transform duration-300">
                         {smartYear}
                     </div>
-                    <div className="text-[10px] text-slate-400 mt-1">
+                    <div className="text-xs text-texte-2 mt-1">
                         {annee.source === 'fiscale' ? 'Source : fichiers fonciers (BDNB)' : annee.source === 'dpe' ? 'Source : DPE (année déclarée)' : annee.source === 'periode' ? 'Période estimée' : ''}
                     </div>
                     {annee.source === 'fiscale' && annee.annee !== null && parseInt(data.annee_construction_dpe) === annee.annee && (
-                        <div className="text-[10px] text-green-600 bg-green-50 px-2 py-1 rounded-sm mt-2 font-bold border border-green-100">
+                        <div className="text-xs text-ok bg-ok-soft px-2 py-1 rounded-sm mt-2 font-bold border border-ok/30">
                             Confirmée par le DPE
                         </div>
                     )}
@@ -282,7 +282,7 @@ export const TabBatiment = ({ data, sources }: { data: any; sources?: { bdnb?: S
             </div>
 
             {dpeMatch && (
-                <div className={`p-3 rounded-sm border text-sm ${data.dpe_reel?.match === 'proximite' ? 'bg-orange-50 border-orange-100 text-orange-800' : 'bg-stone-50 border-stone-200 text-slate-600'}`} role="note">
+                <div className={`p-3 rounded-sm border text-sm ${data.dpe_reel?.match === 'proximite' ? 'bg-vigil-soft border-vigil/30 text-vigil' : 'bg-papier border-trait text-texte-2'}`} role="note">
                     <strong>Performance énergétique :</strong> {dpeMatch}
                     {data.dpe_reel?.date_etablissement_dpe && <> — établi le {new Date(data.dpe_reel.date_etablissement_dpe).toLocaleDateString('fr-FR')}</>}
                 </div>
@@ -305,24 +305,24 @@ export const TabBatiment = ({ data, sources }: { data: any; sources?: { bdnb?: S
 
             {/* MODE EXPERT */}
             {remainingKeys.length > 0 && (
-                <div className="border-t border-stone-100 pt-8">
+                <div className="border-t border-trait pt-8">
                     <button
                         onClick={() => setShowAll(!showAll)}
-                        className="flex items-center justify-center gap-3 w-full py-4 text-sm font-bold text-bricq-slate bg-white border border-stone-200 hover:bg-stone-50 hover:border-bricq-slate/30 rounded-sm transition-all group"
+                        className="flex items-center justify-center gap-3 w-full py-4 text-sm font-bold text-texte bg-white border border-trait hover:bg-papier hover:border-trait-fort rounded-sm transition-all group"
                     >
                         {showAll ? "Masquer les données brutes" : `Afficher les ${remainingKeys.length} autres données techniques`}
-                        <span className="bg-stone-100 p-1 rounded-sm group-hover:bg-stone-200 transition-colors">
+                        <span className="bg-papier p-1 rounded-sm group-hover:bg-trait transition-colors">
                             {showAll ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         </span>
                     </button>
 
                     {showAll && (
-                        <div className="mt-6 p-6 bg-stone-50 rounded-sm border border-stone-100 animate-in fade-in slide-in-from-top-2">
+                        <div className="mt-6 p-6 bg-papier rounded-sm border border-trait animate-in fade-in slide-in-from-top-2">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3 text-xs">
                                 {remainingKeys.map(key => (
-                                    <div key={key} className="flex flex-col border-b border-stone-200/50 pb-2">
-                                        <span className="text-slate-400 font-mono mb-1 truncate" title={key}>{key}</span>
-                                        <span className="font-bold text-slate-700 break-all">
+                                    <div key={key} className="flex flex-col border-b border-trait pb-2">
+                                        <span className="text-texte-2 font-mono mb-1 truncate" title={key}>{key}</span>
+                                        <span className="font-bold text-texte break-all">
                                             {typeof data[key] === 'object' ? 'Donnée Complexe' : String(data[key])}
                                         </span>
                                     </div>

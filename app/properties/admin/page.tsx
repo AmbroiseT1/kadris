@@ -77,48 +77,48 @@ export default function AdminVerificationPage() {
     if (authLoading) return null;
     if (!isAdmin) {
         return (
-            <div className="min-h-screen bg-[#fdfbf7] flex items-center justify-center p-8">
-                <p className="text-bricq-slate">Accès réservé aux administrateurs.</p>
+            <div className="min-h-screen bg-papier flex items-center justify-center p-8">
+                <p className="text-texte">Accès réservé aux administrateurs.</p>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#fdfbf7] p-8">
+        <div className="min-h-screen bg-papier p-8">
             <div className="max-w-5xl mx-auto">
-                <Link href="/properties" className="inline-flex items-center gap-2 text-bricq-slate/70 hover:text-bricq-slate mb-8">
+                <Link href="/properties" className="inline-flex items-center gap-2 text-texte-2 hover:text-texte mb-8">
                     <ArrowLeft size={18} /> Retour à mes biens
                 </Link>
-                <h1 className="font-serif text-4xl font-bold text-bricq-slate mb-6">Justificatifs de propriété</h1>
+                <h1 className="font-serif text-4xl font-bold text-texte mb-6">Justificatifs de propriété</h1>
 
                 <div className="flex gap-2 mb-6">
                     {FILTERS.map((f) => (
                         <button
                             key={f.id}
                             onClick={() => { setFilter(f.id); setActionError(null); }}
-                            className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${filter === f.id ? 'bg-bricq-slate text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                            className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${filter === f.id ? 'bg-encre text-white' : 'bg-papier text-texte-2 hover:bg-trait'}`}
                         >
                             {f.label}
                         </button>
                     ))}
                 </div>
 
-                {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
+                {error && <p role="alert" className="mb-4 text-sm text-alerte">{error}</p>}
 
                 {loading ? (
-                    <div className="flex items-center gap-2 text-bricq-slate/60"><Loader2 className="animate-spin" size={18} /> Chargement...</div>
+                    <div className="flex items-center gap-2 text-texte-2"><Loader2 className="animate-spin" size={18} /> Chargement...</div>
                 ) : items.length === 0 ? (
-                    <p className="text-bricq-slate/60 py-12 text-center">Aucun bien dans cette catégorie.</p>
+                    <p className="text-texte-2 py-12 text-center">Aucun bien dans cette catégorie.</p>
                 ) : (
                     <ul className="space-y-4">
                         {items.map((p) => (
-                            <li key={p.id} className="bg-white border border-bricq-slate/10 p-5">
+                            <li key={p.id} className="bg-white border border-trait p-5">
                                 <div className="flex flex-wrap justify-between gap-4">
                                     <div>
-                                        <p className="font-serif font-bold text-bricq-slate flex items-center gap-2">
-                                            <MapPin size={16} className="text-bricq-terracotta" /> {p.address_label}
+                                        <p className="font-serif font-bold text-texte flex items-center gap-2">
+                                            <MapPin size={16} className="text-brique" /> {p.address_label}
                                         </p>
-                                        <p className="text-xs text-bricq-slate/60 mt-1">
+                                        <p className="text-xs text-texte-2 mt-1">
                                             {p.owner_email} · ajouté le {new Date(p.created_at).toLocaleDateString('fr-FR')}
                                         </p>
                                     </div>
@@ -127,12 +127,12 @@ export default function AdminVerificationPage() {
 
                                 <div className="mt-4 flex flex-wrap gap-2">
                                     {p.proof_documents.length === 0 ? (
-                                        <span className="text-xs text-red-700">Aucun justificatif fourni</span>
+                                        <span className="text-xs text-alerte">Aucun justificatif fourni</span>
                                     ) : p.proof_documents.map((d) => (
                                         <button
                                             key={d.id}
                                             onClick={() => download(p.id, d)}
-                                            className="flex items-center gap-1 text-xs border border-bricq-slate/20 px-2 py-1 hover:bg-bricq-slate/5"
+                                            className="flex items-center gap-1 text-xs border border-trait px-2 py-1 hover:bg-encre-soft"
                                         >
                                             <Download size={12} /> {d.original_filename || d.title}
                                         </button>
@@ -146,19 +146,19 @@ export default function AdminVerificationPage() {
                                         placeholder="Commentaire pour le propriétaire (optionnel)"
                                         value={comments[p.id] ?? ''}
                                         onChange={(e) => setComments((prev) => ({ ...prev, [p.id]: e.target.value }))}
-                                        className="flex-1 min-w-[220px] px-3 py-1.5 text-sm border border-gray-300"
+                                        className="flex-1 min-w-[220px] px-3 py-1.5 text-sm border border-trait-fort"
                                     />
                                     <button
                                         onClick={() => decide(p.id, 'verified')}
                                         disabled={busy === p.id}
-                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold uppercase bg-green-700 text-white disabled:opacity-50"
+                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold uppercase bg-ok text-white disabled:opacity-50"
                                     >
                                         <Check size={14} /> Valider
                                     </button>
                                     <button
                                         onClick={() => decide(p.id, 'rejected')}
                                         disabled={busy === p.id}
-                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold uppercase bg-red-600 text-white disabled:opacity-50"
+                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold uppercase bg-alerte text-white disabled:opacity-50"
                                     >
                                         <X size={14} /> Refuser
                                     </button>

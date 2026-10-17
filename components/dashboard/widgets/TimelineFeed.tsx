@@ -25,7 +25,7 @@ export default function TimelineFeed({ works, onAddClick, onDelete, ...state }: 
             <div className="flex justify-end mb-6">
                 <button
                     onClick={onAddClick}
-                    className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-full hover:bg-gray-800 transition-colors text-sm font-mono font-bold uppercase"
+                    className="flex items-center gap-2 px-4 py-2 bg-texte text-white rounded-full hover:bg-texte transition-colors text-sm font-mono font-bold uppercase"
                 >
                     <Plus size={16} />
                     <span>Ajouter</span>
@@ -36,15 +36,15 @@ export default function TimelineFeed({ works, onAddClick, onDelete, ...state }: 
                 <div className="relative border-l-2 border-black/20 ml-4 space-y-12">
                     {works.map((work) => (
                         <div key={work.id} className="relative pl-8 group">
-                            <div className={`absolute -left-[9px] top-0 w-4 h-4 border-2 border-black rounded-full ${work.status === 'done' ? 'bg-black' : 'bg-white'}`} />
+                            <div className={`absolute -left-[9px] top-0 w-4 h-4 border-2 border-texte rounded-full ${work.status === 'done' ? 'bg-texte' : 'bg-white'}`} />
                             <div className="flex items-start justify-between gap-4">
-                                <div className="font-mono text-sm text-gray-500 mb-1">
+                                <div className="font-mono text-sm text-texte-2 mb-1">
                                     {work.date ? formatDate(work.date) : 'Sans date'} - {STATUS_LABEL[work.status] ?? work.status}
-                                    {work.category && <span className="ml-2 text-[10px] bg-gray-100 px-1.5 py-0.5 rounded">{work.category}</span>}
+                                    {work.category && <span className="ml-2 text-xs bg-papier px-1.5 py-0.5 rounded">{work.category}</span>}
                                 </div>
                                 <button
                                     onClick={() => onDelete(work)}
-                                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-gray-400 hover:text-red-600 transition"
+                                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-texte-2 hover:text-alerte transition"
                                     title="Supprimer"
                                     aria-label={`Supprimer ${work.title}`}
                                 >
@@ -53,10 +53,10 @@ export default function TimelineFeed({ works, onAddClick, onDelete, ...state }: 
                             </div>
                             <h3 className="text-xl font-bold font-serif mb-2">{work.title}</h3>
                             {work.description && (
-                                <p className="font-handwriting text-gray-700 italic mb-2 whitespace-pre-line">{work.description}</p>
+                                <p className="font-handwriting text-texte italic mb-2 whitespace-pre-line">{work.description}</p>
                             )}
                             {(work.provider || work.cost !== null && work.cost !== undefined) && (
-                                <p className="font-mono text-xs text-gray-500">
+                                <p className="font-mono text-xs text-texte-2">
                                     {[work.provider, formatEuro(work.cost)].filter(Boolean).join(' · ')}
                                 </p>
                             )}

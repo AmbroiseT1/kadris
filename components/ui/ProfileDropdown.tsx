@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { User, LogOut, Settings, FileText, Shield } from 'lucide-react';
+import { User, LogOut, Settings, Home, Shield } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -12,95 +12,69 @@ export default function ProfileDropdown() {
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
+        if (!isOpen) return;
+        const onClick = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setIsOpen(false);
         };
-
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-
+        const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setIsOpen(false); };
+        document.addEventListener('mousedown', onClick);
+        document.addEventListener('keydown', onKey);
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('mousedown', onClick);
+            document.removeEventListener('keydown', onKey);
         };
     }, [isOpen]);
 
     if (!user) return null;
 
-    // On extrait le nom de l'email pour l'affichage (en attendant d'avoir un champ nom)
     const displayName = user.email.split('@')[0];
+    const item = "flex items-center gap-3 px-3 min-h-[44px] text-sm text-texte hover:bg-encre-soft rounded-md transition-colors";
 
     return (
         <div className="relative" ref={dropdownRef}>
             <button
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 p-2 rounded-full hover:bg-bricq-slate/5 transition-colors group"
-                aria-label="Profile menu"
+                className="flex items-center justify-center w-11 h-11 rounded-full border border-trait-fort bg-surface hover:border-texte transition-colors"
+                aria-label="Menu du compte"
+                aria-expanded={isOpen}
+                aria-haspopup="menu"
             >
-                <div className="w-8 h-8 rounded-full bg-bricq-terracotta/10 flex items-center justify-center text-bricq-terracotta border border-bricq-terracotta/20 group-hover:bg-bricq-terracotta group-hover:text-white transition-colors">
-                    <User size={16} />
-                </div>
+                <User size={18} aria-hidden />
             </button>
 
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute right-0 top-full mt-2 w-72 bg-white border border-bricq-slate/10 rounded-xl shadow-xl z-50 overflow-hidden"
+                        role="menu"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 6 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="absolute right-0 top-full mt-2 w-72 bg-surface border border-trait rounded-lg shadow-overlay z-50 overflow-hidden"
                     >
-                        {/* User Info Header */}
-                        <div className="px-5 py-4 border-b border-bricq-slate/5 bg-bricq-cream/30">
-                            <p className="font-serif font-bold text-bricq-slate text-lg capitalize">
-                                {displayName}
-                            </p>
-                            <p className="text-xs text-bricq-slate/60 mt-0.5 font-mono">{user.email}</p>
+                        <div className="px-4 py-3 border-b border-trait">
+                            <p className="font-display font-bold text-texte capitalize">{displayName}</p>
+                            <p className="text-xs text-texte-2 mt-0.5 font-mono break-all">{user.email}</p>
                         </div>
-
-                        {/* Menu Items */}
-                        <div className="p-2 space-y-1">
-                            <Link
-                                href="/profile"
-                                onClick={() => setIsOpen(false)}
-                                className="flex items-center gap-3 px-3 py-2.5 text-sm text-bricq-slate hover:bg-bricq-sage/10 rounded-lg transition-colors group"
-                            >
-                                <Settings size={16} className="text-bricq-slate/50 group-hover:text-bricq-slate" />
-                                <span className="font-medium">Mon Profil</span>
+                        <div className="p-2 grid gap-0.5">
+                            <Link role="menuitem" href="/dashboard" onClick={() => setIsOpen(false)} className={item}>
+                                <Home size={16} aria-hidden /> Mon espace propriétaire
                             </Link>
-
-                            <Link
-                                href="/dashboard"
-                                onClick={() => setIsOpen(false)}
-                                className="flex items-center gap-3 px-3 py-2.5 text-sm text-bricq-slate hover:bg-bricq-sage/10 rounded-lg transition-colors group"
-                            >
-                                <FileText size={16} className="text-bricq-slate/50 group-hover:text-bricq-slate" />
-                                <span className="font-medium">Mes Documents</span>
+                            <Link role="menuitem" href="/profile" onClick={() => setIsOpen(false)} className={item}>
+                                <Settings size={16} aria-hidden /> Mon profil
                             </Link>
-
-                            <Link
-                                href="/privacy"
-                                onClick={() => setIsOpen(false)}
-                                className="flex items-center gap-3 px-3 py-2.5 text-sm text-bricq-slate hover:bg-bricq-sage/10 rounded-lg transition-colors group"
-                            >
-                                <Shield size={16} className="text-bricq-slate/50 group-hover:text-bricq-slate" />
-                                <span className="font-medium">Données & Confidentialité</span>
+                            <Link role="menuitem" href="/confidentialite" onClick={() => setIsOpen(false)} className={item}>
+                                <Shield size={16} aria-hidden /> Données et confidentialité
                             </Link>
-
-                            <div className="h-px bg-bricq-slate/5 my-1 mx-2"></div>
-
+                            <div className="h-px bg-trait my-1 mx-2" />
                             <button
-                                onClick={() => {
-                                    logout();
-                                    setIsOpen(false);
-                                }}
-                                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors group"
+                                type="button"
+                                role="menuitem"
+                                onClick={() => { logout(); setIsOpen(false); }}
+                                className={`${item} w-full text-alerte hover:bg-alerte-soft`}
                             >
-                                <LogOut size={16} className="text-red-400 group-hover:text-red-600" />
-                                <span className="font-medium">Déconnexion</span>
+                                <LogOut size={16} aria-hidden /> Se déconnecter
                             </button>
                         </div>
                     </motion.div>

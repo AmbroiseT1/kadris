@@ -44,34 +44,34 @@ const TaskItem = ({ task, onToggle, onDelete }: { task: Task; onToggle: () => vo
     const completed = task.done;
     const priority = task.priority ?? 'MOYENNE';
     return (
-        <div className={`group flex items-center justify-between p-3 border rounded-lg transition-colors ${completed ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-300 hover:border-[#c05621]'}`}>
+        <div className={`group flex items-center justify-between p-3 border rounded-lg transition-colors ${completed ? 'bg-papier border-trait' : 'bg-white border-trait-fort hover:border-[#c05621]'}`}>
             <div className="flex items-center gap-3">
                 <button
                     onClick={onToggle}
-                    className="text-gray-400 hover:text-[#c05621] transition-colors"
+                    className="text-texte-2 hover:text-[#c05621] transition-colors"
                     aria-label={completed ? 'Marquer comme à faire' : 'Marquer comme faite'}
                 >
-                    {completed ? <CheckCircle2 size={20} className="text-green-600" /> : <Circle size={20} />}
+                    {completed ? <CheckCircle2 size={20} className="text-ok" /> : <Circle size={20} />}
                 </button>
                 <div>
-                    <p className={`font-medium ${completed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>{task.title}</p>
+                    <p className={`font-medium ${completed ? 'text-texte-2 line-through' : 'text-texte'}`}>{task.title}</p>
                     <div className="flex gap-2 items-center">
-                        {task.category && <span className="text-[10px] font-mono font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">{task.category}</span>}
-                        {task.due_date && <span className="text-[10px] font-mono text-gray-400">Échéance {formatDate(task.due_date)}</span>}
-                        {task.estimated_cost != null && <span className="text-[10px] font-mono text-gray-400">{formatEuro(task.estimated_cost)}</span>}
+                        {task.category && <span className="text-xs font-mono font-bold text-texte-2 bg-papier px-1.5 py-0.5 rounded">{task.category}</span>}
+                        {task.due_date && <span className="text-xs font-mono text-texte-2">Échéance {formatDate(task.due_date)}</span>}
+                        {task.estimated_cost != null && <span className="text-xs font-mono text-texte-2">{formatEuro(task.estimated_cost)}</span>}
                     </div>
                 </div>
             </div>
             <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded-full ${priority === 'URGENTE' ? 'bg-red-100 text-red-700' :
-                    priority === 'MOYENNE' ? 'bg-orange-100 text-orange-700' :
-                        'bg-blue-100 text-blue-700'
+                <span className={`text-xs font-mono font-bold px-2 py-1 rounded-full ${priority === 'URGENTE' ? 'bg-alerte-soft text-alerte' :
+                    priority === 'MOYENNE' ? 'bg-vigil-soft text-vigil' :
+                        'bg-encre-soft text-encre'
                     }`}>
                     {priority}
                 </span>
                 <button
                     onClick={onDelete}
-                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-gray-400 hover:text-red-600 transition"
+                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-texte-2 hover:text-alerte transition"
                     aria-label={`Supprimer ${task.title}`}
                 >
                     <Trash2 size={14} />

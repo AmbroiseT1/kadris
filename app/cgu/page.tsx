@@ -35,7 +35,7 @@ export default function CguPage() {
 
             <LegalSection title="3. Nature des informations fournies">
                 <p>
-                    <strong className="text-bricq-slate">Les rapports bricq sont fournis à titre purement informatif.</strong> Ils ne constituent ni un diagnostic technique immobilier (DTI, DPE réglementaire, état des risques et pollutions, état parasitaire, etc.), ni une expertise, ni un conseil juridique, fiscal, financier ou de négociation, ni une estimation de valeur ayant une valeur d’expertise.
+                    <strong className="text-texte">Les rapports bricq sont fournis à titre purement informatif.</strong> Ils ne constituent ni un diagnostic technique immobilier (DTI, DPE réglementaire, état des risques et pollutions, état parasitaire, etc.), ni une expertise, ni un conseil juridique, fiscal, financier ou de négociation, ni une estimation de valeur ayant une valeur d’expertise.
                 </p>
                 <p>
                     Les données affichées proviennent de bases publiques tierces dont l’Éditeur ne maîtrise ni l’exactitude, ni l’exhaustivité, ni les délais de mise à jour. L’Éditeur ne garantit donc pas l’exactitude, la complétude ou l’actualité de ces données, et l’absence d’une information dans un rapport ne signifie pas l’absence de risque ou de désordre.

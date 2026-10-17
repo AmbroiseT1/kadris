@@ -8,7 +8,7 @@ export default function AiConsent({ checked, onChange, disabled }: {
     disabled?: boolean;
 }) {
     return (
-        <label className="flex items-start gap-2 text-xs text-gray-600 cursor-pointer select-none">
+        <label className="flex items-start gap-2 text-xs text-texte-2 cursor-pointer select-none">
             <input
                 type="checkbox"
                 className="mt-0.5 accent-black"
@@ -18,7 +18,7 @@ export default function AiConsent({ checked, onChange, disabled }: {
             />
             <span>
                 J&apos;accepte que ce document soit envoyé à Google (Gemini) pour analyse.{' '}
-                <Link href="/confidentialite" target="_blank" className="underline hover:text-black">
+                <Link href="/confidentialite" target="_blank" className="underline hover:text-texte">
                     En savoir plus
                 </Link>
             </span>

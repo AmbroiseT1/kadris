@@ -10,10 +10,10 @@ import { SourceBadge } from './SourceBadge';
 type Tone = 'danger' | 'warning' | 'ok' | 'unknown';
 
 const TONE: Record<Tone, string> = {
-   danger: 'bg-red-50 border-red-100 text-red-800',
-   warning: 'bg-orange-50 border-orange-100 text-orange-800',
-   ok: 'bg-green-50 border-green-100 text-green-800',
-   unknown: 'bg-slate-50 border-slate-200 text-slate-500',
+   danger: 'bg-alerte-soft border-alerte/30 text-alerte',
+   warning: 'bg-vigil-soft border-vigil/30 text-vigil',
+   ok: 'bg-ok-soft border-ok/30 text-ok',
+   unknown: 'bg-papier border-trait text-texte-2',
 };
 
 const RiskRow = ({ title, status = 'error', value, tone, detail }: { title: string; status?: RiskSectionStatus; value?: string; tone?: Tone; detail?: React.ReactNode }) => {
@@ -23,12 +23,12 @@ const RiskRow = ({ title, status = 'error', value, tone, detail }: { title: stri
    return (
       <div className={`p-4 rounded-sm border ${TONE[effectiveTone]}`}>
          <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-bold text-bricq-slate">{title}</span>
+            <span className="text-sm font-bold text-texte">{title}</span>
             <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide">
                <Icon size={14} aria-hidden /> {label}
             </span>
          </div>
-         {status === 'ok' && detail && <div className="mt-2 text-xs text-slate-600">{detail}</div>}
+         {status === 'ok' && detail && <div className="mt-2 text-xs text-texte-2">{detail}</div>}
       </div>
    );
 };
@@ -45,9 +45,9 @@ export const TabRisks = ({ data }: { data: BuildingData | null }) => {
 
    if (!r) {
       return (
-         <div className="p-12 text-center bg-slate-50 rounded-2xl border border-slate-100">
-            <Shield className="mx-auto h-12 w-12 text-slate-300 mb-4" />
-            <p className="text-slate-500">
+         <div className="p-12 text-center bg-papier rounded-2xl border border-trait">
+            <Shield className="mx-auto h-12 w-12 text-texte-2 mb-4" />
+            <p className="text-texte-2">
                {source?.status === 'loading'
                   ? 'Interrogation de Géorisques en cours…'
                   : "Les coordonnées du bien sont nécessaires pour générer l'État des Risques."}
@@ -64,16 +64,16 @@ export const TabRisks = ({ data }: { data: BuildingData | null }) => {
       <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
 
          {/* 1. SYNTHÈSE DES RUBRIQUES */}
-         <section className="bg-white p-6 rounded-sm border border-stone-200" aria-labelledby="risks-synthese">
-            <h3 id="risks-synthese" className="font-serif text-xl font-bold text-bricq-slate mb-1 flex items-center gap-2">
-               <Shield size={20} className="text-bricq-terracotta" /> Synthèse des risques
+         <section className="bg-white p-6 rounded-sm border border-trait" aria-labelledby="risks-synthese">
+            <h3 id="risks-synthese" className="font-serif text-xl font-bold text-texte mb-1 flex items-center gap-2">
+               <Shield size={20} className="text-brique" /> Synthèse des risques
             </h3>
-            <p className="text-xs text-slate-500 mb-4">
+            <p className="text-xs text-texte-2 mb-4">
                Inondation, CatNat, sismicité et radon sont évalués à l&apos;échelle de la commune ; argiles au point ; cavités (500 m) et ICPE (1 km) autour du bien.
             </p>
 
             {r.status === 'unavailable' && (
-               <div className="mb-4 p-3 bg-red-50 border border-red-100 text-red-800 text-sm rounded-sm" role="alert">
+               <div className="mb-4 p-3 bg-alerte-soft border border-alerte/30 text-alerte text-sm rounded-sm" role="alert">
                   Géorisques n&apos;a pas répondu : les risques ne sont pas évalués. Cela ne signifie pas l&apos;absence de risque — consultez le PDF officiel ci-dessous.
                </div>
             )}
@@ -135,12 +135,12 @@ export const TabRisks = ({ data }: { data: BuildingData | null }) => {
          </section>
 
          {/* 2. ERP OFFICIEL */}
-         <div className="bg-white p-8 rounded-2xl border border-bricq-slate/5 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+         <div className="bg-white p-8 rounded-2xl border border-trait shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex-1">
-               <h3 className="font-serif text-2xl font-bold text-bricq-slate mb-2">
+               <h3 className="font-serif text-2xl font-bold text-texte mb-2">
                   État des Risques et Pollutions (ERP)
                </h3>
-               <p className="text-slate-600 max-w-2xl leading-relaxed">
+               <p className="text-texte-2 max-w-2xl leading-relaxed">
                   Document officiel généré par le Ministère de la Transition Écologique. Seul ce document fait foi pour la vente.
                </p>
             </div>
@@ -148,7 +148,7 @@ export const TabRisks = ({ data }: { data: BuildingData | null }) => {
                href={r.pdf_url}
                target="_blank"
                rel="noopener noreferrer"
-               className="group flex items-center justify-center gap-3 bg-bricq-slate hover:bg-bricq-terracotta text-white px-8 py-4 rounded-xl font-bold transition-all shadow-md"
+               className="group flex items-center justify-center gap-3 bg-encre hover:bg-brique text-white px-8 py-4 rounded-xl font-bold transition-all shadow-md"
             >
                <Download size={20} aria-hidden />
                <span>Télécharger le PDF Officiel</span>
@@ -156,7 +156,7 @@ export const TabRisks = ({ data }: { data: BuildingData | null }) => {
          </div>
 
          {/* 3. VISUALISATION (IFRAME) */}
-         <div className="bg-slate-100 rounded-2xl border border-slate-200 overflow-hidden shadow-inner h-[800px] relative group print:hidden">
+         <div className="bg-papier rounded-2xl border border-trait overflow-hidden shadow-inner h-[560px] relative group hidden md:block print:hidden">
             <iframe
                src={`${r.pdf_url}#view=FitH`}
                className="w-full h-full relative z-10"
@@ -167,7 +167,7 @@ export const TabRisks = ({ data }: { data: BuildingData | null }) => {
                href={r.pdf_url}
                target="_blank"
                rel="noopener noreferrer"
-               className="absolute bottom-6 right-6 z-20 bg-white text-slate-800 px-4 py-2 rounded-lg shadow-lg border border-slate-200 text-sm font-bold flex items-center gap-2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-slate-50"
+               className="absolute bottom-6 right-6 z-20 bg-white text-texte px-4 py-2 rounded-lg shadow-lg border border-trait text-sm font-bold flex items-center gap-2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-papier"
             >
                <ExternalLink size={14} aria-hidden /> Ouvrir en plein écran
             </a>

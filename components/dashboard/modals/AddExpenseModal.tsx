@@ -19,7 +19,7 @@ const emptyForm = {
     provider: '',
 };
 
-const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c05621] focus:border-transparent bg-white";
+const inputClass = "w-full px-3 py-2 border border-trait-fort rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c05621] focus:border-transparent bg-white";
 
 export default function AddExpenseModal({ isOpen, onClose, propertyId, onSaved }: AddExpenseModalProps) {
     const [formData, setFormData] = useState(emptyForm);
@@ -72,11 +72,11 @@ export default function AddExpenseModal({ isOpen, onClose, propertyId, onSaved }
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-[#fdfbf7] w-full max-w-md rounded-xl shadow-2xl overflow-hidden border border-[#e5e7eb]"
+                    className="bg-papier w-full max-w-md rounded-xl shadow-2xl overflow-hidden border border-[#e5e7eb]"
                 >
                     <div className="flex justify-between items-center p-6 border-b border-[#e5e7eb]">
-                        <h2 className="text-xl font-serif font-bold text-gray-900">Ajouter une charge</h2>
-                        <button onClick={close} className="text-gray-500 hover:text-gray-700 transition-colors">
+                        <h2 className="text-xl font-serif font-bold text-texte">Ajouter une charge</h2>
+                        <button onClick={close} className="text-texte-2 hover:text-texte transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -85,7 +85,7 @@ export default function AddExpenseModal({ isOpen, onClose, propertyId, onSaved }
 
                     <form onSubmit={handleSubmit} className="p-6 space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Nom de la dépense</label>
+                            <label className="block text-sm font-medium text-texte mb-1">Nom de la dépense</label>
                             <input
                                 type="text"
                                 name="name"
@@ -100,14 +100,14 @@ export default function AddExpenseModal({ isOpen, onClose, propertyId, onSaved }
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                <label className="block text-sm font-medium text-texte mb-1">Type</label>
                                 <select name="type" value={formData.type} onChange={handleChange} className={inputClass}>
                                     <option value="OPEX">OPEX - Charges Courantes</option>
                                     <option value="CAPEX">CAPEX - Investissement</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Fréquence</label>
+                                <label className="block text-sm font-medium text-texte mb-1">Fréquence</label>
                                 <select name="frequency" value={formData.frequency} onChange={handleChange} className={inputClass}>
                                     <option value="mensuel">Mensuel</option>
                                     <option value="annuel">Annuel</option>
@@ -118,7 +118,7 @@ export default function AddExpenseModal({ isOpen, onClose, propertyId, onSaved }
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Montant</label>
+                                <label className="block text-sm font-medium text-texte mb-1">Montant</label>
                                 <div className="relative">
                                     <input
                                         type="number"
@@ -131,11 +131,11 @@ export default function AddExpenseModal({ isOpen, onClose, propertyId, onSaved }
                                         className={`${inputClass} pr-8`}
                                         required
                                     />
-                                    <span className="absolute right-3 top-2 text-gray-500">€</span>
+                                    <span className="absolute right-3 top-2 text-texte-2">€</span>
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Fournisseur</label>
+                                <label className="block text-sm font-medium text-texte mb-1">Fournisseur</label>
                                 <input
                                     type="text"
                                     name="provider"
@@ -148,13 +148,13 @@ export default function AddExpenseModal({ isOpen, onClose, propertyId, onSaved }
                             </div>
                         </div>
 
-                        {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+                        {error && <p role="alert" className="text-sm text-alerte">{error}</p>}
 
                         <div className="flex justify-end pt-4 space-x-3">
                             <button
                                 type="button"
                                 onClick={close}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                className="px-4 py-2 text-sm font-medium text-texte bg-papier rounded-lg hover:bg-trait transition-colors"
                             >
                                 Annuler
                             </button>

@@ -11,36 +11,36 @@ export const MapLayersViz: React.FC = () => {
       
       {/* Layer 3: Market Data (Top) */}
       <motion.div 
-        className="absolute w-48 h-48 bg-white/90 rounded-xl shadow-lg border border-bricq-slate/20 flex items-center justify-center z-30 transform preserve-3d transition-all duration-500 group-hover:-translate-y-12 group-hover:rotate-x-12 group-hover:shadow-xl"
+        className="absolute w-48 h-48 bg-white/90 rounded-xl shadow-lg border border-trait flex items-center justify-center z-30 transform preserve-3d transition-all duration-500 group-hover:-translate-y-12 group-hover:rotate-x-12 group-hover:shadow-xl"
         style={{ rotateX: 60, rotateZ: -45, translateZ: 60 }}
       >
-         <div className="text-bricq-terracotta flex flex-col items-center gap-2">
+         <div className="text-brique flex flex-col items-center gap-2">
             <DollarSign size={32} strokeWidth={1.5} />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-bricq-slate">Valeur & Marché</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-texte">Valeur & Marché</span>
          </div>
          {/* Grid lines */}
-         <div className="absolute inset-0 border-2 border-bricq-terracotta/10 rounded-xl"></div>
+         <div className="absolute inset-0 border-2 border-brique/30 rounded-xl"></div>
       </motion.div>
 
       {/* Layer 2: Risk Data (Middle) */}
       <motion.div 
-        className="absolute w-48 h-48 bg-bricq-sage/20 backdrop-blur-sm rounded-xl shadow-md border border-bricq-sage/30 flex items-center justify-center z-20 transform preserve-3d transition-all duration-500 group-hover:translate-y-0 group-hover:rotate-x-12"
+        className="absolute w-48 h-48 bg-ok-soft backdrop-blur-sm rounded-xl shadow-md border border-ok/30 flex items-center justify-center z-20 transform preserve-3d transition-all duration-500 group-hover:translate-y-0 group-hover:rotate-x-12"
         style={{ rotateX: 60, rotateZ: -45, translateZ: 30 }}
       >
-        <div className="text-bricq-slate flex flex-col items-center gap-2 opacity-80">
+        <div className="text-texte flex flex-col items-center gap-2 opacity-80">
             <AlertTriangle size={32} strokeWidth={1.5} />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Risques & Sols</span>
+            <span className="text-xs font-bold uppercase tracking-widest">Risques & Sols</span>
          </div>
       </motion.div>
 
       {/* Layer 1: Cadastre (Bottom) */}
       <motion.div 
-        className="absolute w-48 h-48 bg-bricq-slate/90 rounded-xl shadow-xl flex items-center justify-center z-10 transform preserve-3d transition-all duration-500 group-hover:translate-y-12 group-hover:rotate-x-12"
+        className="absolute w-48 h-48 bg-encre/90 rounded-xl shadow-xl flex items-center justify-center z-10 transform preserve-3d transition-all duration-500 group-hover:translate-y-12 group-hover:rotate-x-12"
         style={{ rotateX: 60, rotateZ: -45, translateZ: 0 }}
       >
          <div className="text-white/80 flex flex-col items-center gap-2">
             <Map size={32} strokeWidth={1.5} />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Cadastre</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-white/60">Cadastre</span>
          </div>
          <svg className="absolute inset-0 w-full h-full opacity-20 p-4" viewBox="0 0 100 100">
             <path d="M10,10 L40,10 L40,40 L10,40 Z" fill="none" stroke="white" strokeWidth="2"/>
@@ -50,7 +50,7 @@ export const MapLayersViz: React.FC = () => {
          </svg>
       </motion.div>
       
-      <div className="absolute -bottom-8 text-xs font-sans text-bricq-slate/40 tracking-widest uppercase">
+      <div className="absolute -bottom-8 text-xs font-sans text-texte-2 tracking-widest uppercase">
         Survoler pour décomposer
       </div>
     </div>
@@ -60,14 +60,14 @@ export const MapLayersViz: React.FC = () => {
 // --- VISUAL 2: DATA SYNTHESIS CARD ---
 export const DataSynthesisCard: React.FC = () => {
   return (
-    <div className="bg-white rounded-xl shadow-xl border border-bricq-slate/10 overflow-hidden max-w-sm mx-auto font-sans">
+    <div className="bg-white rounded-xl shadow-xl border border-trait overflow-hidden max-w-sm mx-auto font-sans">
        {/* Header */}
-       <div className="bg-bricq-slate p-4 flex justify-between items-center text-white">
+       <div className="bg-encre p-4 flex justify-between items-center text-white">
           <div>
              <div className="text-xs opacity-60 uppercase tracking-wider font-bold">Synthèse Adresse</div>
              <div className="font-serif text-lg">14 Rue de la République</div>
           </div>
-          <div className="w-8 h-8 bg-bricq-terracotta rounded-full flex items-center justify-center font-bold text-sm">A</div>
+          <div className="w-8 h-8 bg-brique rounded-full flex items-center justify-center font-bold text-sm">A</div>
        </div>
 
        {/* Body */}
@@ -76,8 +76,8 @@ export const DataSynthesisCard: React.FC = () => {
           {/* Price Graph Simulation */}
           <div>
              <div className="flex justify-between items-baseline mb-2">
-                <span className="text-sm font-bold text-bricq-slate">Historique Prix / m²</span>
-                <span className="text-xs text-bricq-terracotta font-medium">+12% sur 5 ans</span>
+                <span className="text-sm font-bold text-texte">Historique Prix / m²</span>
+                <span className="text-xs text-brique font-medium">+12% sur 5 ans</span>
              </div>
              <div className="h-24 flex items-end gap-1">
                 {[40, 45, 42, 55, 60, 75].map((h, i) => (
@@ -87,11 +87,11 @@ export const DataSynthesisCard: React.FC = () => {
                      whileInView={{ height: `${h}%` }}
                      viewport={{ once: true }}
                      transition={{ delay: i * 0.1 }}
-                     className={`flex-1 rounded-t-sm ${i === 5 ? 'bg-bricq-terracotta' : 'bg-bricq-slate/20'}`}
+                     className={`flex-1 rounded-t-sm ${i === 5 ? 'bg-brique' : 'bg-encre-soft'}`}
                    />
                 ))}
              </div>
-             <div className="flex justify-between text-[10px] text-bricq-slate/40 mt-1">
+             <div className="flex justify-between text-xs text-texte-2 mt-1">
                 <span>2018</span>
                 <span>2023</span>
              </div>
@@ -99,31 +99,31 @@ export const DataSynthesisCard: React.FC = () => {
 
           {/* Risk Items */}
           <div className="grid grid-cols-2 gap-3">
-             <div className="bg-bricq-cream p-3 rounded-lg border border-bricq-slate/5">
-                <div className="text-xs text-bricq-slate/50 font-bold uppercase mb-1">Argiles</div>
-                <div className="text-bricq-terracotta font-bold flex items-center gap-1">
-                   <div className="w-2 h-2 rounded-full bg-bricq-terracotta"></div> Fort
+             <div className="bg-papier p-3 rounded-lg border border-trait">
+                <div className="text-xs text-texte-2 font-bold uppercase mb-1">Argiles</div>
+                <div className="text-brique font-bold flex items-center gap-1">
+                   <div className="w-2 h-2 rounded-full bg-brique"></div> Fort
                 </div>
              </div>
-             <div className="bg-bricq-cream p-3 rounded-lg border border-bricq-slate/5">
-                <div className="text-xs text-bricq-slate/50 font-bold uppercase mb-1">Inondation</div>
-                <div className="text-bricq-sage font-bold flex items-center gap-1">
-                   <div className="w-2 h-2 rounded-full bg-bricq-sage"></div> Faible
+             <div className="bg-papier p-3 rounded-lg border border-trait">
+                <div className="text-xs text-texte-2 font-bold uppercase mb-1">Inondation</div>
+                <div className="text-ok font-bold flex items-center gap-1">
+                   <div className="w-2 h-2 rounded-full bg-ok"></div> Faible
                 </div>
              </div>
           </div>
 
           {/* Sale History List */}
           <div>
-             <div className="text-xs font-bold text-bricq-slate mb-2 uppercase tracking-wider">Dernières Ventes (DVF)</div>
+             <div className="text-xs font-bold text-texte mb-2 uppercase tracking-wider">Dernières Ventes (DVF)</div>
              <div className="space-y-2">
-                <div className="flex justify-between text-sm border-b border-bricq-slate/5 pb-1">
-                   <span className="text-bricq-slate/70">Jan 2022</span>
-                   <span className="font-medium text-bricq-slate">245 000 €</span>
+                <div className="flex justify-between text-sm border-b border-trait pb-1">
+                   <span className="text-texte-2">Jan 2022</span>
+                   <span className="font-medium text-texte">245 000 €</span>
                 </div>
-                <div className="flex justify-between text-sm border-b border-bricq-slate/5 pb-1">
-                   <span className="text-bricq-slate/70">Mar 2015</span>
-                   <span className="font-medium text-bricq-slate">198 000 €</span>
+                <div className="flex justify-between text-sm border-b border-trait pb-1">
+                   <span className="text-texte-2">Mar 2015</span>
+                   <span className="font-medium text-texte">198 000 €</span>
                 </div>
              </div>
           </div>

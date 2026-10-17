@@ -13,15 +13,15 @@ interface TabAnalyseProps {
 
 // Helper to calculate color based on score
 const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600";
-    if (score >= 50) return "text-orange-500";
-    return "text-red-500";
+    if (score >= 80) return "text-ok";
+    if (score >= 50) return "text-vigil";
+    return "text-alerte";
 };
 
 const getScoreBg = (score: number) => {
-    if (score >= 80) return "bg-green-100 text-green-800";
-    if (score >= 50) return "bg-orange-100 text-orange-800";
-    return "bg-red-100 text-red-800";
+    if (score >= 80) return "bg-ok-soft text-ok";
+    if (score >= 50) return "bg-vigil-soft text-vigil";
+    return "bg-alerte-soft text-alerte";
 };
 
 export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
@@ -78,7 +78,7 @@ export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
             {/* HEADER / GLOBAL SCORE */}
-            <div className="bg-gradient-to-br from-bricq-slate to-slate-900 rounded-sm p-6 text-white relative overflow-hidden shadow-lg">
+            <div className="bg-gradient-to-br from-encre to-encre rounded-sm p-6 text-white relative overflow-hidden shadow-lg">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                     <Sparkles size={120} />
                 </div>
@@ -86,20 +86,20 @@ export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
                 <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
                     <div>
                         <div className="flex items-center gap-2 mb-2">
-                            <Sparkles className="text-yellow-400" size={20} />
+                            <Sparkles className="text-vigil" size={20} />
                             <h2 className="font-serif text-2xl font-bold">Analyse bricq 360°</h2>
                         </div>
-                        <p className="text-slate-300 max-w-md text-sm">
+                        <p className="text-texte-2 max-w-md text-sm">
                             Synthèse intelligente basée sur les caractéristiques techniques, l’environnement et la dynamique de marché de votre bien.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <div className="text-right">
-                            <div className="text-xs uppercase tracking-widest text-slate-400 font-bold">Score Global</div>
-                            <div className="text-5xl font-black tracking-tighter">{globalScore}<span className="text-2xl text-slate-500">/100</span></div>
+                            <div className="text-xs uppercase tracking-widest text-texte-2 font-bold">Score Global</div>
+                            <div className="text-5xl font-black tracking-tighter">{globalScore}<span className="text-2xl text-texte-2">/100</span></div>
                         </div>
-                        <div className={`h-20 w-2 rounded-full ${globalScore >= 70 ? 'bg-green-500' : globalScore >= 50 ? 'bg-orange-500' : 'bg-red-500'}`}></div>
+                        <div className={`h-20 w-2 rounded-full ${globalScore >= 70 ? 'bg-ok' : globalScore >= 50 ? 'bg-vigil' : 'bg-alerte'}`}></div>
                     </div>
                 </div>
             </div>
@@ -110,30 +110,30 @@ export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
                 {/* BATI CARD */}
                 <motion.div
                     whileHover={{ y: -5 }}
-                    className="bg-white p-5 rounded-sm border border-stone-200 shadow-sm flex flex-col justify-between"
+                    className="bg-white p-5 rounded-sm border border-trait shadow-sm flex flex-col justify-between"
                 >
                     <div>
                         <div className="flex justify-between items-start mb-4">
-                            <div className="bg-blue-50 p-2 rounded-full">
-                                <Home size={20} className="text-blue-600" />
+                            <div className="bg-encre-soft p-2 rounded-full">
+                                <Home size={20} className="text-encre" />
                             </div>
                             <span className={`font-black text-2xl ${getScoreColor(batiScore)}`}>{batiScore}</span>
                         </div>
-                        <h3 className="font-bold text-bricq-slate mb-1">Qualité du Bâti</h3>
-                        <p className="text-xs text-slate-500 mb-4">Basé sur le DPE, l’année de construction et les matériaux.</p>
+                        <h3 className="font-bold text-texte mb-1">Qualité du Bâti</h3>
+                        <p className="text-xs text-texte-2 mb-4">Basé sur le DPE, l’année de construction et les matériaux.</p>
 
                         <div className="space-y-2">
                             <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">Performance Énergétique</span>
+                                <span className="text-texte-2">Performance Énergétique</span>
                                 <span className="font-bold">{data.dpe_lettre || 'Non noté'}</span>
                             </div>
                             <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">Construction</span>
+                                <span className="text-texte-2">Construction</span>
                                 <span className="font-bold">{data.annee_construction || '--'}</span>
                             </div>
                         </div>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-stone-100">
+                    <div className="mt-4 pt-3 border-t border-trait">
                         <div className={`text-xs px-2 py-1 rounded inline-block font-medium ${getScoreBg(batiScore)}`}>
                             {batiScore >= 80 ? "Excellent état" : batiScore >= 50 ? "Standard" : "Rénovation conseillée"}
                         </div>
@@ -143,31 +143,31 @@ export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
                 {/* ENVIRONNEMENT CARD */}
                 <motion.div
                     whileHover={{ y: -5 }}
-                    className="bg-white p-5 rounded-sm border border-stone-200 shadow-sm flex flex-col justify-between"
+                    className="bg-white p-5 rounded-sm border border-trait shadow-sm flex flex-col justify-between"
                 >
                     <div>
                         <div className="flex justify-between items-start mb-4">
-                            <div className="bg-green-50 p-2 rounded-full">
-                                <Trees size={20} className="text-green-600" />
+                            <div className="bg-ok-soft p-2 rounded-full">
+                                <Trees size={20} className="text-ok" />
                             </div>
-                            <span className={`font-black text-2xl ${risksEvaluated ? getScoreColor(envScore) : 'text-slate-400'}`}>{risksEvaluated ? envScore : '—'}</span>
+                            <span className={`font-black text-2xl ${risksEvaluated ? getScoreColor(envScore) : 'text-texte-2'}`}>{risksEvaluated ? envScore : '—'}</span>
                         </div>
-                        <h3 className="font-bold text-bricq-slate mb-1">Environnement</h3>
-                        <p className="text-xs text-slate-500 mb-4">Analyse des risques naturels et de la situation géographique.</p>
+                        <h3 className="font-bold text-texte mb-1">Environnement</h3>
+                        <p className="text-xs text-texte-2 mb-4">Analyse des risques naturels et de la situation géographique.</p>
 
                         <div className="space-y-2">
                             <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">Risques Majeurs</span>
+                                <span className="text-texte-2">Risques Majeurs</span>
                                 <span className="font-bold">{risksEvaluated ? `${riskCount} détecté(s)${risks?.status === 'partial' ? ' (partiel)' : ''}` : 'Non évalué'}</span>
                             </div>
                             <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">Argiles</span>
+                                <span className="text-texte-2">Argiles</span>
                                 <span className="font-bold">{argilesLabel}</span>
                             </div>
                         </div>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-stone-100">
-                        <div className={`text-xs px-2 py-1 rounded inline-block font-medium ${risksEvaluated ? getScoreBg(envScore) : 'bg-slate-100 text-slate-600'}`}>
+                    <div className="mt-4 pt-3 border-t border-trait">
+                        <div className={`text-xs px-2 py-1 rounded inline-block font-medium ${risksEvaluated ? getScoreBg(envScore) : 'bg-papier text-texte-2'}`}>
                             {!risksEvaluated ? "Données indisponibles" : envScore >= 80 ? "Zone Sereine" : envScore >= 50 ? "Vigilance requise" : "Zone à risques"}
                         </div>
                     </div>
@@ -176,30 +176,30 @@ export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
                 {/* MARCHE CARD */}
                 <motion.div
                     whileHover={{ y: -5 }}
-                    className="bg-white p-5 rounded-sm border border-stone-200 shadow-sm flex flex-col justify-between"
+                    className="bg-white p-5 rounded-sm border border-trait shadow-sm flex flex-col justify-between"
                 >
                     <div>
                         <div className="flex justify-between items-start mb-4">
-                            <div className="bg-purple-50 p-2 rounded-full">
-                                <TrendingUp size={20} className="text-purple-600" />
+                            <div className="bg-encre-soft p-2 rounded-full">
+                                <TrendingUp size={20} className="text-encre" />
                             </div>
                             <span className={`font-black text-2xl ${getScoreColor(marketScore)}`}>{marketScore}</span>
                         </div>
-                        <h3 className="font-bold text-bricq-slate mb-1">Attractivité Marché</h3>
-                        <p className="text-xs text-slate-500 mb-4">Basé sur le volume de transactions à proximité (500m).</p>
+                        <h3 className="font-bold text-texte mb-1">Attractivité Marché</h3>
+                        <p className="text-xs text-texte-2 mb-4">Basé sur le volume de transactions à proximité (500m).</p>
 
                         <div className="space-y-2">
                             <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">Volume Ventes</span>
+                                <span className="text-texte-2">Volume Ventes</span>
                                 <span className="font-bold">{txCount} ventes (5 ans)</span>
                             </div>
                             <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">Dynamisme</span>
+                                <span className="text-texte-2">Dynamisme</span>
                                 <span className="font-bold">{marketScore >= 80 ? "Très Élevé" : "Moyen"}</span>
                             </div>
                         </div>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-stone-100">
+                    <div className="mt-4 pt-3 border-t border-trait">
                         <div className={`text-xs px-2 py-1 rounded inline-block font-medium ${getScoreBg(marketScore)}`}>
                             {marketScore >= 80 ? "Marché Liquide" : marketScore >= 50 ? "Marché Actif" : "Marché Calme"}
                         </div>
@@ -209,13 +209,13 @@ export const TabAnalyse = ({ data, dvf }: TabAnalyseProps) => {
             </div>
 
             {/* AI INSIGHT */}
-            <div className="bg-stone-50 border border-stone-200 rounded-sm p-5 flex gap-4 items-start">
+            <div className="bg-papier border border-trait rounded-sm p-5 flex gap-4 items-start">
                 <div className="bg-white p-2 rounded-full shadow-sm">
-                    <Sparkles size={18} className="text-bricq-terracotta" />
+                    <Sparkles size={18} className="text-brique" />
                 </div>
                 <div>
-                    <h4 className="font-bold text-bricq-slate text-sm mb-1">L’avis de l’Expert</h4>
-                    <p className="text-sm text-slate-600 leading-relaxed">
+                    <h4 className="font-bold text-texte text-sm mb-1">L’avis de l’Expert</h4>
+                    <p className="text-sm text-texte-2 leading-relaxed">
                         {globalScore >= 70
                             ? "Ce bien présente d'excellents fondamentaux. La qualité du bâti combinée à un environnement favorable en fait un actif patrimonial solide. Le marché local est dynamique, suggérant une bonne liquidité à la revente."
                             : globalScore >= 50

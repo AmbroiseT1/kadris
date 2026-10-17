@@ -97,7 +97,7 @@ function Notepad({ propertyId }: { propertyId: string }) {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`bg-[#fef9c3] shadow-lg border border-yellow-200 rounded-lg overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'w-72 h-80' : 'w-72 h-12'}`}
+            className={`bg-[#fef9c3] shadow-lg border border-vigil/30 rounded-lg overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'w-72 h-80' : 'w-72 h-12'}`}
             style={{
                 transform: 'rotate(-1deg)', // Slight rotation for "post-it" feel
                 boxShadow: '3px 3px 10px rgba(0,0,0,0.1)'
@@ -108,11 +108,11 @@ function Notepad({ propertyId }: { propertyId: string }) {
                 className="bg-[#fde047] px-4 py-2 flex items-center justify-between cursor-pointer select-none"
                 onClick={() => setIsExpanded(!isExpanded)}
             >
-                <div className="flex items-center gap-2 text-yellow-800">
+                <div className="flex items-center gap-2 text-vigil">
                     <PenLine size={16} />
                     <span className="font-bold font-handwriting text-sm uppercase tracking-wider">Bloc-notes</span>
                 </div>
-                <div className="text-xs text-yellow-700 opacity-60">
+                <div className="text-xs text-vigil opacity-60">
                     {isExpanded ? '▼' : '▲'}
                 </div>
             </div>
@@ -125,7 +125,7 @@ function Notepad({ propertyId }: { propertyId: string }) {
                         onChange={(e) => setNote(e.target.value)}
                         disabled={state === 'loading' || loadFailed}
                         maxLength={MAX_LENGTH}
-                        className="flex-1 w-full bg-transparent p-4 resize-none outline-none text-gray-700 font-medium text-sm leading-relaxed disabled:opacity-60"
+                        className="flex-1 w-full bg-transparent p-4 resize-none outline-none text-texte font-medium text-sm leading-relaxed disabled:opacity-60"
                         placeholder="Écrivez vos idées ici..."
                         style={{
                             backgroundImage: 'linear-gradient(transparent, transparent 23px, #e5e7eb 24px)',
@@ -135,16 +135,16 @@ function Notepad({ propertyId }: { propertyId: string }) {
                     />
 
                     {/* Footer Actions */}
-                    <div className="px-3 py-2 flex justify-between items-center border-t border-yellow-200/50">
+                    <div className="px-3 py-2 flex justify-between items-center border-t border-vigil/30">
                         <span
-                            className={`text-[10px] italic truncate ${state === 'error' ? 'text-red-700' : 'text-yellow-600'}`}
+                            className={`text-xs italic truncate ${state === 'error' ? 'text-alerte' : 'text-vigil'}`}
                             role={state === 'error' ? 'alert' : undefined}
                         >
                             {statusText}
                         </span>
                         <button
                             onClick={(e) => { e.stopPropagation(); handleClear(); }}
-                            className="p-1.5 hover:bg-yellow-200 rounded-full text-yellow-700 transition-colors"
+                            className="p-1.5 hover:bg-vigil-soft rounded-full text-vigil transition-colors"
                             title="Effacer tout"
                         >
                             <Trash2 size={14} />

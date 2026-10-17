@@ -179,22 +179,22 @@ export default function AddDocumentModal({ isOpen, onClose, propertyId, onSaved,
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-[#fdfbf7] w-full max-w-md rounded-xl shadow-2xl overflow-hidden border border-[#e5e7eb]"
+                    className="bg-papier w-full max-w-md rounded-xl shadow-2xl overflow-hidden border border-[#e5e7eb]"
                 >
                     <div className="flex justify-between items-center p-6 border-b border-[#e5e7eb]">
-                        <h2 className="text-xl font-serif font-bold text-gray-900 flex items-center gap-2">
+                        <h2 className="text-xl font-serif font-bold text-texte flex items-center gap-2">
                             Ajouter un document
-                            {isAnalyzing && <Sparkles size={18} className="text-yellow-500 animate-pulse" />}
+                            {isAnalyzing && <Sparkles size={18} className="text-vigil animate-pulse" />}
                         </h2>
-                        <button onClick={close} className="text-gray-500 hover:text-gray-700 transition-colors">
+                        <button onClick={close} className="text-texte-2 hover:text-texte transition-colors">
                             <X size={24} />
                         </button>
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-6 space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Fichier</label>
-                            <div className={`border-2 border-dashed rounded-lg p-4 transition-colors text-center cursor-pointer relative ${isAnalyzing ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300 hover:border-black'}`}>
+                            <label className="block text-sm font-medium text-texte mb-1">Fichier</label>
+                            <div className={`border-2 border-dashed rounded-lg p-4 transition-colors text-center cursor-pointer relative ${isAnalyzing ? 'border-vigil/30 bg-vigil-soft' : 'border-trait-fort hover:border-texte'}`}>
                                 <input
                                     type="file"
                                     onChange={handleFileChange}
@@ -203,13 +203,13 @@ export default function AddDocumentModal({ isOpen, onClose, propertyId, onSaved,
                                     disabled={isAnalyzing || isSaving}
                                 />
                                 {formData.file ? (
-                                    <div className="flex items-center justify-center gap-2 text-black font-medium">
+                                    <div className="flex items-center justify-center gap-2 text-texte font-medium">
                                         <FileText size={20} />
                                         <span className="truncate max-w-[200px]">{formData.file.name}</span>
-                                        {isAnalyzing && <span className="text-xs text-yellow-600 animate-pulse">(Analyse en cours...)</span>}
+                                        {isAnalyzing && <span className="text-xs text-vigil animate-pulse">(Analyse en cours...)</span>}
                                     </div>
                                 ) : (
-                                    <div className="text-gray-500">
+                                    <div className="text-texte-2">
                                         <Upload size={24} className="mx-auto mb-2" />
                                         <span className="text-sm">Cliquez pour déposer un fichier (PDF ou image, 10 Mo max)</span>
                                     </div>
@@ -218,11 +218,11 @@ export default function AddDocumentModal({ isOpen, onClose, propertyId, onSaved,
                             <div className="mt-2">
                                 <AiConsent checked={consent} onChange={handleConsentChange} disabled={isAnalyzing || isSaving} />
                             </div>
-                            {aiNotice && <p className="mt-1 text-xs text-amber-700">{aiNotice}</p>}
+                            {aiNotice && <p className="mt-1 text-xs text-vigil">{aiNotice}</p>}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Titre du document</label>
+                            <label className="block text-sm font-medium text-texte mb-1">Titre du document</label>
                             <div className="relative">
                                 <input
                                     type="text"
@@ -231,12 +231,12 @@ export default function AddDocumentModal({ isOpen, onClose, propertyId, onSaved,
                                     onChange={handleChange}
                                     maxLength={200}
                                     placeholder="Ex: Facture Entretien Chaudière"
-                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white ${isAnalyzing ? 'animate-pulse bg-gray-50' : 'border-gray-300'}`}
+                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white ${isAnalyzing ? 'animate-pulse bg-papier' : 'border-trait-fort'}`}
                                     required
                                 />
                                 {isAnalyzing && (
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                        <Loader2 size={16} className="animate-spin text-gray-400" />
+                                        <Loader2 size={16} className="animate-spin text-texte-2" />
                                     </div>
                                 )}
                             </div>
@@ -244,30 +244,30 @@ export default function AddDocumentModal({ isOpen, onClose, propertyId, onSaved,
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                <label className="block text-sm font-medium text-texte mb-1">Type</label>
                                 <select
                                     name="type"
                                     value={formData.type}
                                     onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
+                                    className="w-full px-3 py-2 border border-trait-fort rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
                                 >
                                     {DOCUMENT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                                <label className="block text-sm font-medium text-texte mb-1">Date</label>
                                 <input
                                     type="date"
                                     name="date"
                                     value={formData.date}
                                     onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
+                                    className="w-full px-3 py-2 border border-trait-fort rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <label className="block text-sm font-medium text-texte mb-1">Description</label>
                             <textarea
                                 name="description"
                                 value={formData.description}
@@ -275,24 +275,24 @@ export default function AddDocumentModal({ isOpen, onClose, propertyId, onSaved,
                                 maxLength={5000}
                                 placeholder="Ajoutez une description optionnelle..."
                                 rows={3}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white resize-none"
+                                className="w-full px-3 py-2 border border-trait-fort rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white resize-none"
                             />
                         </div>
 
-                        {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+                        {error && <p role="alert" className="text-sm text-alerte">{error}</p>}
 
                         <div className="flex justify-end pt-4 space-x-3">
                             <button
                                 type="button"
                                 onClick={close}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                className="px-4 py-2 text-sm font-medium text-texte bg-papier rounded-lg hover:bg-trait transition-colors"
                             >
                                 Annuler
                             </button>
                             <button
                                 type="submit"
                                 disabled={isAnalyzing || isSaving || !formData.file}
-                                className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
+                                className="px-4 py-2 text-sm font-medium text-white bg-texte rounded-lg hover:bg-texte transition-colors shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
                             >
                                 {isSaving && <Loader2 size={14} className="animate-spin" />}
                                 {isAnalyzing ? 'Analyse...' : 'Ajouter au coffre'}

@@ -1,5 +1,6 @@
 "use client";
 
+import { LogoMark } from "@/components/ui/Logo";
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -74,13 +75,13 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col md:flex-row bg-bricq-cream">
+        <div className="min-h-screen flex flex-col md:flex-row bg-papier">
             {/* Colonne de Gauche (Visuel) */}
-            <div className="hidden md:flex w-1/2 bg-bricq-terracotta text-white items-center justify-center p-12 relative overflow-hidden">
+            <div className="hidden md:flex w-1/2 bg-brique text-white items-center justify-center p-12 relative overflow-hidden">
                 <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10"></div>
                 <div className="relative z-10 max-w-lg">
                     <Link href="/" className="flex items-center gap-3 mb-8 hover:opacity-80 transition-opacity cursor-pointer">
-                        <img src="/bricq-logo.png" alt="bricq Logo" className="w-10 h-10 object-contain mix-blend-screen brightness-0 invert" />
+                        <LogoMark className="w-10 h-10 text-papier" />
                         <span className="text-3xl font-bold font-serif tracking-tighter">bricq</span>
                     </Link>
                     <h1 className="font-serif text-4xl font-bold mb-6 leading-tight">
@@ -108,11 +109,11 @@ export default function RegisterPage() {
                 <div className="w-full max-w-md space-y-8">
                     <div className="text-center md:text-left">
                         <Link href="/" className="inline-flex items-center gap-2 mb-8">
-                            <img src="/bricq-logo.png" alt="bricq Logo" className="w-8 h-8 object-contain mix-blend-multiply" />
-                            <span className="text-2xl font-bold font-serif tracking-tighter text-bricq-slate">bricq</span>
+                            <LogoMark className="w-8 h-8 text-encre" />
+                            <span className="text-2xl font-bold font-serif tracking-tighter text-texte">bricq</span>
                         </Link>
-                        <h2 className="text-3xl font-bold text-bricq-slate font-serif">Créer un compte</h2>
-                        <p className="mt-2 text-bricq-slate/60">
+                        <h2 className="text-3xl font-bold text-texte font-serif">Créer un compte</h2>
+                        <p className="mt-2 text-texte-2">
                             Commencez à gérer votre patrimoine immobilier simplement.
                         </p>
                     </div>
@@ -120,60 +121,60 @@ export default function RegisterPage() {
                     <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
                         <div className="space-y-4">
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-bricq-slate mb-1">
+                                <label htmlFor="email" className="block text-sm font-medium text-texte mb-1">
                                     Adresse Email
                                 </label>
                                 <input
                                     id="email"
                                     type="email"
                                     autoComplete="email"
-                                    className="appearance-none block w-full px-4 py-3 border border-bricq-slate/20 rounded-lg placeholder-bricq-slate/30 text-bricq-slate focus:outline-none focus:ring-2 focus:ring-bricq-terracotta/20 focus:border-bricq-terracotta transition-colors bg-white"
+                                    className="appearance-none block w-full px-4 py-3 border border-trait rounded-lg placeholder:text-texte-2 text-texte focus:outline-none focus:ring-2 focus:ring-brique-soft focus:border-brique transition-colors bg-white"
                                     placeholder="vous@exemple.com"
                                     {...register("email")}
                                 />
                                 {errors.email && (
-                                    <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+                                    <p className="text-alerte text-xs mt-1">{errors.email.message}</p>
                                 )}
                             </div>
                             <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-bricq-slate mb-1">
+                                <label htmlFor="password" className="block text-sm font-medium text-texte mb-1">
                                     Mot de passe
                                 </label>
                                 <input
                                     id="password"
                                     type="password"
                                     autoComplete="new-password"
-                                    className="appearance-none block w-full px-4 py-3 border border-bricq-slate/20 rounded-lg placeholder-bricq-slate/30 text-bricq-slate focus:outline-none focus:ring-2 focus:ring-bricq-terracotta/20 focus:border-bricq-terracotta transition-colors bg-white"
+                                    className="appearance-none block w-full px-4 py-3 border border-trait rounded-lg placeholder:text-texte-2 text-texte focus:outline-none focus:ring-2 focus:ring-brique-soft focus:border-brique transition-colors bg-white"
                                     placeholder="••••••••"
                                     {...register("password")}
                                 />
                                 {errors.password && (
-                                    <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+                                    <p className="text-alerte text-xs mt-1">{errors.password.message}</p>
                                 )}
                             </div>
                             <div>
-                                <label htmlFor="confirmPassword" className="block text-sm font-medium text-bricq-slate mb-1">
+                                <label htmlFor="confirmPassword" className="block text-sm font-medium text-texte mb-1">
                                     Confirmer le mot de passe
                                 </label>
                                 <input
                                     id="confirmPassword"
                                     type="password"
                                     autoComplete="new-password"
-                                    className="appearance-none block w-full px-4 py-3 border border-bricq-slate/20 rounded-lg placeholder-bricq-slate/30 text-bricq-slate focus:outline-none focus:ring-2 focus:ring-bricq-terracotta/20 focus:border-bricq-terracotta transition-colors bg-white"
+                                    className="appearance-none block w-full px-4 py-3 border border-trait rounded-lg placeholder:text-texte-2 text-texte focus:outline-none focus:ring-2 focus:ring-brique-soft focus:border-brique transition-colors bg-white"
                                     placeholder="••••••••"
                                     {...register("confirmPassword")}
                                 />
                                 {errors.confirmPassword && (
-                                    <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>
+                                    <p className="text-alerte text-xs mt-1">{errors.confirmPassword.message}</p>
                                 )}
                             </div>
                         </div>
 
                         {error && (
-                            <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-md">
+                            <div className="bg-alerte-soft border-l-4 border-alerte/30 p-4 rounded-r-md">
                                 <div className="flex">
                                     <div className="ml-3">
-                                        <p className="text-sm text-red-700">{error}</p>
+                                        <p className="text-sm text-alerte">{error}</p>
                                     </div>
                                 </div>
                             </div>
@@ -182,7 +183,7 @@ export default function RegisterPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-bricq-terracotta hover:bg-bricq-terracotta/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bricq-terracotta disabled:opacity-70 disabled:cursor-not-allowed transition-all shadow-lg shadow-bricq-terracotta/20"
+                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-brique hover:bg-brique/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brique disabled:opacity-70 disabled:cursor-not-allowed transition-all shadow-lg shadow-bricq-terracotta/20"
                         >
                             {isLoading ? (
                                 <Loader2 className="animate-spin h-5 w-5" />
@@ -195,9 +196,9 @@ export default function RegisterPage() {
                     </form>
 
                     <div className="text-center mt-6">
-                        <p className="text-sm text-bricq-slate/60">
+                        <p className="text-sm text-texte-2">
                             Déjà un compte ?{' '}
-                            <Link href="/login" className="font-bold text-bricq-slate hover:text-bricq-slate/80 transition-colors">
+                            <Link href="/login" className="font-bold text-texte hover:text-texte transition-colors">
                                 Se connecter
                             </Link>
                         </p>

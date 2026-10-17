@@ -17,7 +17,7 @@ export default function MotDePasseOubliePage() {
                 <p>
                     Envoyez un email à l’adresse suivante en indiquant l’adresse email associée à votre compte bricq :
                 </p>
-                <p className="font-mono text-bricq-slate">[email de support]</p>
+                <p className="font-mono text-texte">[email de support]</p>
                 <p>
                     Pour protéger vos données, nous pourrons vous demander une vérification de votre identité avant toute modification de votre accès. Nous vous répondons dans les meilleurs délais.
                 </p>
@@ -31,7 +31,7 @@ export default function MotDePasseOubliePage() {
             </LegalSection>
 
             <p>
-                <Link href="/login" className="font-bold text-bricq-terracotta hover:text-bricq-terracotta/80 transition-colors">
+                <Link href="/login" className="font-bold text-brique hover:text-brique transition-colors">
                     ← Retour à la connexion
                 </Link>
             </p>

@@ -1,5 +1,6 @@
 "use client";
 
+import { LogoMark } from "@/components/ui/Logo";
 import React, { useRef } from 'react';
 import Link from 'next/link';
 import { motion, useInView } from 'framer-motion';
@@ -7,16 +8,16 @@ import { ArrowRight, Search, FileSearch, Shield, TrendingUp, Users, Clock, Check
 
 export default function HowItWorksPage() {
     return (
-        <main className="min-h-screen bg-bricq-cream text-bricq-slate">
+        <main className="min-h-screen bg-papier text-texte">
 
             {/* Navigation */}
-            <nav className="fixed top-0 left-0 right-0 z-50 bg-bricq-cream/95 backdrop-blur-sm border-b border-bricq-slate/10">
+            <nav className="fixed top-0 left-0 right-0 z-50 bg-papier/95 backdrop-blur-sm border-b border-trait">
                 <div className="container mx-auto px-6 py-4 flex justify-between items-center">
                     <Link href="/" className="flex items-center gap-3">
-                        <img src="/bricq-logo.png" alt="bricq Logo" className="w-10 h-10 object-contain mix-blend-multiply" />
-                        <span className="text-2xl font-bold font-serif tracking-tighter text-bricq-slate">bricq</span>
+                        <LogoMark className="w-10 h-10 text-encre" />
+                        <span className="text-2xl font-bold font-serif tracking-tighter text-texte">bricq</span>
                     </Link>
-                    <Link href="/" className="text-sm text-bricq-slate/60 hover:text-bricq-slate transition-colors">
+                    <Link href="/" className="text-sm text-texte-2 hover:text-texte transition-colors">
                         ← Retour à l’accueil
                     </Link>
                 </div>
@@ -26,8 +27,8 @@ export default function HowItWorksPage() {
             <section className="relative pt-32 pb-24 overflow-hidden">
                 {/* Animated gradient background */}
                 <div className="absolute inset-0 opacity-30">
-                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-bricq-terracotta/20 rounded-full blur-3xl animate-pulse"></div>
-                    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-bricq-sage/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-brique-soft rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-ok-soft rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
                 </div>
 
                 <div className="container mx-auto px-6 relative z-10">
@@ -37,19 +38,19 @@ export default function HowItWorksPage() {
                         transition={{ duration: 0.8 }}
                         className="text-center max-w-4xl mx-auto"
                     >
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-bricq-terracotta/10 border border-bricq-terracotta/20 rounded-full mb-8">
-                            <Sparkles size={16} className="text-bricq-terracotta" />
-                            <span className="text-sm font-bold text-bricq-terracotta uppercase tracking-wider">Le Pourquoi</span>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-brique-soft border border-brique/30 rounded-full mb-8">
+                            <Sparkles size={16} className="text-brique" />
+                            <span className="text-sm font-bold text-brique uppercase tracking-wider">Le Pourquoi</span>
                         </div>
 
                         <h1 className="font-serif text-5xl md:text-7xl font-bold mb-8 leading-tight">
                             L’immobilier mérite la{' '}
                             <span className="relative inline-block">
-                                <span className="relative z-10 bg-gradient-to-r from-bricq-terracotta to-bricq-sage bg-clip-text text-transparent">
+                                <span className="relative z-10 bg-gradient-to-r from-brique to-ok-soft bg-clip-text text-transparent">
                                     transparence
                                 </span>
                                 <motion.div
-                                    className="absolute bottom-2 left-0 right-0 h-3 bg-bricq-terracotta/20"
+                                    className="absolute bottom-2 left-0 right-0 h-3 bg-brique-soft"
                                     initial={{ scaleX: 0 }}
                                     animate={{ scaleX: 1 }}
                                     transition={{ delay: 0.5, duration: 0.8 }}
@@ -57,8 +58,8 @@ export default function HowItWorksPage() {
                             </span>
                         </h1>
 
-                        <p className="text-xl md:text-2xl text-bricq-slate/70 mb-12 leading-relaxed font-light max-w-3xl mx-auto">
-                            Chaque année, des millions de Français achètent ou vendent un bien immobilier <span className="font-bold text-bricq-slate">à l’aveugle</span>.
+                        <p className="text-xl md:text-2xl text-texte-2 mb-12 leading-relaxed font-light max-w-3xl mx-auto">
+                            Chaque année, des millions de Français achètent ou vendent un bien immobilier <span className="font-bold text-texte">à l’aveugle</span>.
                             bricq change les règles du jeu en rendant l’invisible visible.
                         </p>
 
@@ -76,7 +77,7 @@ export default function HowItWorksPage() {
                         >
                             <Link
                                 href="#how"
-                                className="inline-flex items-center gap-3 px-8 py-4 bg-bricq-slate text-white rounded-sm font-serif font-bold uppercase tracking-wider hover:bg-bricq-slate/90 transition-all shadow-lg hover:shadow-xl group"
+                                className="inline-flex items-center gap-3 px-8 py-4 bg-encre text-white rounded-sm font-serif font-bold uppercase tracking-wider hover:bg-encre/90 transition-all shadow-lg hover:shadow-xl group"
                             >
                                 Découvrir comment
                                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -87,7 +88,7 @@ export default function HowItWorksPage() {
             </section>
 
             {/* The Problem Section */}
-            <section className="py-24 bg-white border-y border-bricq-slate/10">
+            <section className="py-24 bg-white border-y border-trait">
                 <div className="container mx-auto px-6">
                     <div className="max-w-4xl mx-auto">
                         <motion.div
@@ -126,7 +127,7 @@ export default function HowItWorksPage() {
             </section>
 
             {/* HOW Section - Timeline */}
-            <section id="how" className="py-32 bg-gradient-to-b from-bricq-cream to-white">
+            <section id="how" className="py-32 bg-gradient-to-b from-papier to-white">
                 <div className="container mx-auto px-6">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
@@ -134,15 +135,15 @@ export default function HowItWorksPage() {
                         viewport={{ once: true }}
                         className="text-center mb-20"
                     >
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-bricq-sage/10 border border-bricq-sage/20 rounded-full mb-8">
-                            <Sparkles size={16} className="text-bricq-sage" />
-                            <span className="text-sm font-bold text-bricq-sage uppercase tracking-wider">Comment ça marche</span>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-ok-soft border border-ok/30 rounded-full mb-8">
+                            <Sparkles size={16} className="text-ok" />
+                            <span className="text-sm font-bold text-ok uppercase tracking-wider">Comment ça marche</span>
                         </div>
 
                         <h2 className="font-serif text-4xl md:text-6xl font-bold mb-6">
                             Trois étapes pour tout savoir
                         </h2>
-                        <p className="text-xl text-bricq-slate/70 max-w-2xl mx-auto font-light">
+                        <p className="text-xl text-texte-2 max-w-2xl mx-auto font-light">
                             De la recherche à la décision éclairée, bricq vous accompagne à chaque instant.
                         </p>
                     </motion.div>
@@ -195,7 +196,7 @@ export default function HowItWorksPage() {
             </section>
 
             {/* Technology Section */}
-            <section className="py-24 bg-bricq-slate text-white relative overflow-hidden">
+            <section className="py-24 bg-encre text-white relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-0 left-0 w-full h-full" style={{
                         backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
@@ -240,7 +241,7 @@ export default function HowItWorksPage() {
             </section>
 
             {/* CTA Final */}
-            <section className="py-32 bg-gradient-to-br from-bricq-cream via-white to-bricq-sage/10">
+            <section className="py-32 bg-gradient-to-br from-papier via-white to-ok-soft">
                 <div className="container mx-auto px-6">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -251,21 +252,21 @@ export default function HowItWorksPage() {
                         <h2 className="font-serif text-4xl md:text-6xl font-bold mb-8">
                             Prêt à voir l’invisible ?
                         </h2>
-                        <p className="text-xl text-bricq-slate/70 mb-12 max-w-2xl mx-auto font-light">
+                        <p className="text-xl text-texte-2 mb-12 max-w-2xl mx-auto font-light">
                             Rejoignez les milliers d’utilisateurs qui prennent des décisions immobilières éclairées.
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Link
                                 href="/"
-                                className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-bricq-slate text-white rounded-sm font-serif font-bold uppercase tracking-wider hover:bg-bricq-slate/90 transition-all shadow-lg hover:shadow-xl group"
+                                className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-encre text-white rounded-sm font-serif font-bold uppercase tracking-wider hover:bg-encre/90 transition-all shadow-lg hover:shadow-xl group"
                             >
                                 Essayer gratuitement
                                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                             </Link>
                             <Link
                                 href="/login"
-                                className="inline-flex items-center justify-center gap-3 px-8 py-4 border-2 border-bricq-slate text-bricq-slate rounded-sm font-serif font-bold uppercase tracking-wider hover:bg-bricq-slate hover:text-white transition-all"
+                                className="inline-flex items-center justify-center gap-3 px-8 py-4 border-2 border-texte text-texte rounded-sm font-serif font-bold uppercase tracking-wider hover:bg-encre hover:text-white transition-all"
                             >
                                 Espace Propriétaire
                             </Link>
@@ -284,12 +285,12 @@ function StatPill({ icon, value, label }: { icon: React.ReactNode; value: string
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex items-center gap-3 px-6 py-3 bg-white border border-bricq-slate/10 rounded-full shadow-sm"
+            className="flex items-center gap-3 px-6 py-3 bg-white border border-trait rounded-full shadow-sm"
         >
-            <div className="text-bricq-terracotta">{icon}</div>
+            <div className="text-brique">{icon}</div>
             <div className="text-left">
-                <div className="font-bold text-bricq-slate text-lg">{value}</div>
-                <div className="text-xs text-bricq-slate/60">{label}</div>
+                <div className="font-bold text-texte text-lg">{value}</div>
+                <div className="text-xs text-texte-2">{label}</div>
             </div>
         </motion.div>
     );
@@ -297,9 +298,9 @@ function StatPill({ icon, value, label }: { icon: React.ReactNode; value: string
 
 function ProblemCard({ icon, title, description, color }: { icon: React.ReactNode; title: string; description: string; color: string }) {
     const colorClasses = {
-        terracotta: 'border-bricq-terracotta/20 bg-bricq-terracotta/5',
-        slate: 'border-bricq-slate/20 bg-bricq-slate/5',
-        sage: 'border-bricq-sage/20 bg-bricq-sage/5'
+        terracotta: 'border-brique/30 bg-brique-soft',
+        slate: 'border-trait bg-encre-soft',
+        sage: 'border-ok/30 bg-ok-soft'
     };
 
     return (
@@ -310,9 +311,9 @@ function ProblemCard({ icon, title, description, color }: { icon: React.ReactNod
             transition={{ duration: 0.6 }}
             className={`p-8 border-2 rounded-lg ${colorClasses[color as keyof typeof colorClasses]} hover:scale-105 transition-transform duration-300`}
         >
-            <div className="text-bricq-slate mb-4">{icon}</div>
-            <h3 className="font-serif text-xl font-bold mb-3 text-bricq-slate">{title}</h3>
-            <p className="text-bricq-slate/70 leading-relaxed">{description}</p>
+            <div className="text-texte mb-4">{icon}</div>
+            <h3 className="font-serif text-xl font-bold mb-3 text-texte">{title}</h3>
+            <p className="text-texte-2 leading-relaxed">{description}</p>
         </motion.div>
     );
 }
@@ -341,20 +342,20 @@ function StepCard({ number, title, description, icon, features, delay, reverse }
                 {/* Icon Circle */}
                 <div className="flex-shrink-0">
                     <div className="relative">
-                        <div className="absolute inset-0 bg-bricq-terracotta/20 rounded-full blur-xl"></div>
-                        <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-bricq-terracotta to-bricq-sage flex items-center justify-center text-white shadow-2xl">
+                        <div className="absolute inset-0 bg-brique-soft rounded-full blur-xl"></div>
+                        <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-brique to-ok-soft flex items-center justify-center text-white shadow-2xl">
                             {icon}
                         </div>
-                        <div className="absolute -top-4 -right-4 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-xl border-4 border-bricq-cream">
-                            <span className="font-serif text-2xl font-bold text-bricq-slate">{number}</span>
+                        <div className="absolute -top-4 -right-4 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-xl border-4 border-papier">
+                            <span className="font-serif text-2xl font-bold text-texte">{number}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Content */}
                 <div className="flex-1">
-                    <h3 className="font-serif text-3xl md:text-4xl font-bold mb-4 text-bricq-slate">{title}</h3>
-                    <p className="text-lg text-bricq-slate/70 mb-6 leading-relaxed font-light">{description}</p>
+                    <h3 className="font-serif text-3xl md:text-4xl font-bold mb-4 text-texte">{title}</h3>
+                    <p className="text-lg text-texte-2 mb-6 leading-relaxed font-light">{description}</p>
 
                     <div className="grid sm:grid-cols-2 gap-3">
                         {features.map((feature, i) => (
@@ -365,8 +366,8 @@ function StepCard({ number, title, description, icon, features, delay, reverse }
                                 transition={{ delay: delay + 0.2 + (i * 0.1) }}
                                 className="flex items-start gap-2"
                             >
-                                <CheckCircle size={16} className="text-bricq-sage mt-0.5 flex-shrink-0" />
-                                <span className="text-sm text-bricq-slate/80">{feature}</span>
+                                <CheckCircle size={16} className="text-ok mt-0.5 flex-shrink-0" />
+                                <span className="text-sm text-texte">{feature}</span>
                             </motion.div>
                         ))}
                     </div>

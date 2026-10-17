@@ -1,33 +1,18 @@
 "use client";
 import React from 'react';
+import Link from 'next/link';
 import { Lock } from 'lucide-react';
 
-import { useRouter } from 'next/navigation';
-
-export const TabOwner = () => {
-   const router = useRouter();
-
-   return (
-      <div className="bg-bricq-slate text-white rounded-2xl p-12 text-center relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-         {/* Background effect */}
-         <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
-
-         <div className="relative z-10 max-w-lg mx-auto">
-            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6 text-bricq-terracotta">
-               <Lock size={32} />
-            </div>
-            <h2 className="font-serif text-3xl font-bold mb-4">Données Privées Propriétaire</h2>
-            <p className="text-white/70 mb-8 text-lg">
-               L’historique des travaux, les factures, les diagnostics complets (DPE) et les plans sont accessibles uniquement au propriétaire vérifié.
+/** Passage du rapport vers l'espace propriétaire. */
+export const TabOwner = () => (
+    <div className="card p-6 md:p-8 grid md:grid-cols-[1fr_auto] gap-6 items-center motif-briques">
+        <div className="grid gap-2 bg-surface/90 rounded-md">
+            <span className="label inline-flex items-center gap-2"><Lock size={14} aria-hidden /> Réservé au propriétaire</span>
+            <h3 className="text-xl font-bold">C&apos;est votre logement ? Ce rapport devient la première page de son carnet.</h3>
+            <p className="text-texte-2 max-w-[60ch]">
+                Ajoutez vos travaux, factures et diagnostics : la maquette 3D se colore selon l&apos;état de chaque partie, et vous recevez les échéances d&apos;entretien. Une pièce justificative est demandée pour vérifier que vous êtes propriétaire.
             </p>
-            <button
-               onClick={() => router.push('/login')}
-               className="bg-bricq-terracotta hover:bg-[#A04530] text-white px-8 py-3 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-            >
-               Je suis le propriétaire
-            </button>
-            <p className="mt-4 text-xs text-white/30 uppercase tracking-widest">Vérification par Titre de Propriété requise</p>
-         </div>
-      </div>
-   );
-};
+        </div>
+        <Link href="/properties/add" className="btn btn-primary">Ajouter mon logement</Link>
+    </div>
+);

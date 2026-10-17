@@ -1,8 +1,20 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MapPin, TrendingUp, AlertTriangle, Lock, Sparkles, Scroll, ShoppingBag, Database, FileText, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Check, Download, Share2 } from 'lucide-react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
+import SiteHeader from '@/components/ui/SiteHeader';
+import SiteFooter from '@/components/ui/SiteFooter';
+import { AddressAutocomplete } from '@/components/ui/AddressAutocomplete';
+import BrickLoader, { type BrickSource } from '@/components/motion/BrickLoader';
+import ReportSummary from '@/components/report/ReportSummary';
+import ReportSection from '@/components/report/ReportSection';
+import Biographie from '@/components/report/Biographie';
+import PlanTrace from '@/components/motion/PlanTrace';
+
+const Building3D = dynamic(() => import('@/components/building3d/Building3D'), { ssr: false, loading: () => <PlanTrace /> });
 
 // --- IMPORTS DES COMPOSANTS ---
 import { TabSynthese } from '@/components/report/TabSynthese';
@@ -27,23 +39,28 @@ import { fetchBuildingData, codeInseeFromCleInterop, isValidCleInterop } from '@
 import { formatDateFr, ReportSources, SourceKey, SourceInfo, sourceInfo } from '@/app/lib/sources';
 import { BuildingData } from '@/app/lib/types';
 
-const TABS = [
-  { id: 'synthese', label: 'Synthèse', icon: MapPin },
-  { id: 'batiment', label: 'Bâtiment', icon: Database },
-  { id: 'quartier', label: 'Quartier', icon: ShoppingBag },
-  { id: 'risks', label: 'Risques', icon: AlertTriangle },
-  { id: 'urba', label: 'Urbanisme', icon: Scroll },
-  { id: 'dvf', label: 'Prix & DVF', icon: TrendingUp },
-  { id: 'analyse', label: 'Analyse', icon: Sparkles },
-  { id: 'owner', label: 'Propriétaire', icon: Lock },
+const SECTIONS = [
+  { id: 'synthese', label: 'Synthèse', keys: [] as SourceKey[] },
+  { id: 'batiment', label: 'Bâtiment', keys: ['bdnb', 'dpe'] as SourceKey[] },
+  { id: 'risques', label: 'Risques', keys: ['risques'] as SourceKey[] },
+  { id: 'urbanisme', label: 'Urbanisme', keys: ['urbanisme'] as SourceKey[] },
+  { id: 'quartier', label: 'Quartier', keys: ['quartier', 'eau', 'connectivite'] as SourceKey[] },
+  { id: 'marche', label: 'Prix et ventes', keys: ['dvf'] as SourceKey[] },
+  { id: 'analyse', label: 'Analyse', keys: [] as SourceKey[] },
+  { id: 'histoire', label: 'Biographie', keys: [] as SourceKey[] },
+  { id: 'proprietaire', label: 'Propriétaire', keys: [] as SourceKey[] },
 ] as const;
 
-type TabId = typeof TABS[number]['id'];
+type SectionId = typeof SECTIONS[number]['id'];
+
+const SHORT_NAMES: Record<SourceKey, string> = {
+  bdnb: 'BDNB', dpe: 'ADEME', dvf: 'DVF', risques: 'Géorisques', urbanisme: 'PLU', quartier: 'Quartier', eau: 'Eau', connectivite: 'Arcep',
+};
 
 const ENRICHMENT_KEYS: SourceKey[] = ['risques', 'urbanisme', 'quartier', 'dvf', 'dpe', 'eau', 'connectivite'];
 
 export default function ReportClient({ cleInterop }: { cleInterop: string }) {
-  const [activeTab, setActiveTab] = useState<TabId>('synthese');
+  const router = useRouter();
   const [buildingData, setBuildingData] = useState<BuildingData | null>(null);
   const [dvfData, setDvfData] = useState<TransactionDVF[]>([]);
   const [marketStats, setMarketStats] = useState<BackendMarketStats | null>(null);
@@ -53,7 +70,6 @@ export default function ReportClient({ cleInterop }: { cleInterop: string }) {
   const [loadingDVF, setLoadingDVF] = useState(false);
   const [fetchError, setLoadError] = useState<string | null>(null);
   const loadError = validKey ? fetchError : "Identifiant d'adresse invalide.";
-  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
     if (!validKey) return;
@@ -182,114 +198,188 @@ export default function ReportClient({ cleInterop }: { cleInterop: string }) {
     return () => { cancelled = true; };
   }, [cleInterop, validKey]);
 
-  // --- Onglets accessibles : flèches gauche/droite, Début/Fin ---
-  const onTabKeyDown = useCallback((e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
-    let next = index;
-    if (e.key === 'ArrowRight') next = (index + 1) % TABS.length;
-    else if (e.key === 'ArrowLeft') next = (index - 1 + TABS.length) % TABS.length;
-    else if (e.key === 'Home') next = 0;
-    else if (e.key === 'End') next = TABS.length - 1;
-    else return;
-    e.preventDefault();
-    const id = TABS[next].id;
-    setActiveTab(id);
-    tabRefs.current[id]?.focus();
-  }, []);
-
   const sources = buildingData?.sources;
 
+  // --- Sommaire : section visible à l'écran (scrollspy) ---
+  const [current, setCurrent] = useState<SectionId>('synthese');
+  useEffect(() => {
+    if (!buildingData) return;
+    const els = SECTIONS.map((s) => document.getElementById(s.id)).filter((e): e is HTMLElement => !!e);
+    const io = new IntersectionObserver((entries) => {
+      const visible = entries.filter((e) => e.isIntersecting).sort((x, y) => x.boundingClientRect.top - y.boundingClientRect.top);
+      if (visible[0]) setCurrent(visible[0].target.id as SectionId);
+    }, { rootMargin: '-120px 0px -60% 0px' });
+    els.forEach((e) => io.observe(e));
+    return () => io.disconnect();
+  }, [buildingData]);
+
+  const [copied, setCopied] = useState(false);
+  const share = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* le lien reste dans la barre d'adresse */ }
+  };
+
+  const brickSources: BrickSource[] = (['bdnb', ...ENRICHMENT_KEYS] as SourceKey[]).map((k) => {
+    const st = sources?.[k]?.status;
+    return { key: k, label: SHORT_NAMES[k], state: !st || st === 'loading' ? 'loading' : st === 'error' ? 'error' : 'done' };
+  });
+  const stillLoading = loading || brickSources.some((b) => b.state === 'loading');
+  const generatedOn = new Date().toLocaleDateString('fr-FR');
+
+  const dotFor = (keys: SourceKey[]): string => {
+    const sts = keys.map((k) => sources?.[k]?.status);
+    if (sts.some((x) => x === 'loading' || x === undefined)) return 'bg-trait-fort';
+    if (sts.every((x) => x === 'error' || x === 'empty')) return 'bg-inconnu';
+    if (sts.some((x) => x === 'error' || x === 'partial')) return 'bg-vigil';
+    return 'bg-ok';
+  };
+
   return (
-    <div className="min-h-screen bg-bricq-cream font-sans text-bricq-slate pb-20 print:bg-white print:pb-0">
-      <style>{`@media print { @page { margin: 12mm; } .animate-in { animation: none !important; } }`}</style>
+    <div className="min-h-screen bg-papier text-texte print:bg-white">
+      <SiteHeader>
+        <AddressAutocomplete size="sm" buttonLabel="" placeholder="Autre adresse" label="Rechercher une autre adresse" onSelect={(f) => router.push(`/report/${encodeURIComponent(f.properties.id)}`)} />
+      </SiteHeader>
 
-      {/* HEADER STYLE NOTAIRE */}
-      <header className="bg-white border-b border-bricq-slate/10 sticky top-0 z-40 shadow-sm print:hidden">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/bricq-logo.png" alt="Bricq Logo" className="w-6 h-6 object-contain mix-blend-multiply" />
-              <span className="font-serif font-bold text-lg text-bricq-slate tracking-tighter">Bricq</span>
-            </Link>
-            <div className="h-6 w-px bg-bricq-slate/10 hidden md:block"></div>
-            <div className="hidden md:flex items-center gap-2 text-sm text-bricq-slate/60">
-              <FileText size={14} aria-hidden />
-              <span className="font-mono">Dossier : {cleInterop}</span>
-            </div>
+      <main id="contenu" className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-8 print:py-0">
+        {/* EN-TÊTE DU PASSEPORT */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
+          <div className="grid gap-2 min-w-0">
+            <span className="label">Passeport du logement · généré le {generatedOn}</span>
+            <h1 className="text-3xl md:text-4xl font-extrabold">
+              {buildingData?.adresse_ban || (loading ? "Chargement de l'adresse…" : 'Rapport immobilier')}
+            </h1>
+            <span className="font-mono text-xs text-texte-2 break-all">Dossier {cleInterop}</span>
           </div>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            disabled={loading || !buildingData}
-            className="bg-bricq-slate text-white px-5 py-2 rounded-sm text-sm font-bold uppercase tracking-wide hover:bg-bricq-slate/90 shadow-sm flex items-center gap-2 disabled:opacity-50"
-          >
-            <Download size={16} aria-hidden /> Export PDF
-          </button>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-6 py-8 print:py-0">
-        <div className="mb-10">
-          <h1 className="font-serif text-3xl md:text-4xl font-bold text-bricq-slate mb-2">
-            {buildingData?.adresse_ban || (loading ? "Chargement de l'adresse..." : 'Rapport immobilier')}
-          </h1>
-          <p className="text-bricq-slate/60 text-lg font-light">Passeport Immobilier & Audit Technique</p>
-          <p className="hidden print:block text-xs text-slate-500 mt-2">
-            Rapport généré le {new Date().toLocaleDateString('fr-FR')} — onglet « {TABS.find(t => t.id === activeTab)?.label} ». Données publiques : voir la source indiquée sous chaque bloc.
-          </p>
+          <div className="flex flex-wrap gap-2 no-print">
+            <button type="button" onClick={share} className="btn btn-secondary" aria-live="polite">
+              {copied ? <Check size={16} aria-hidden /> : <Share2 size={16} aria-hidden />} {copied ? 'Lien copié' : 'Partager'}
+            </button>
+            <button type="button" onClick={() => window.print()} disabled={loading || !buildingData} className="btn btn-secondary">
+              <Download size={16} aria-hidden /> Exporter en PDF
+            </button>
+            <Link href="/properties/add" className="btn btn-primary">C&apos;est mon logement</Link>
+          </div>
         </div>
 
         {loadError && (
-          <div className="mb-8 p-4 bg-red-50 border border-red-100 text-red-800 rounded-sm" role="alert">
-            {loadError}
+          <div className="mb-8 p-4 bg-alerte-soft border-l-4 border-alerte rounded-sm" role="alert">
+            <p className="font-bold">{loadError}</p>
             <SourceBadge source={sources?.bdnb ?? sourceInfo('bdnb', 'error')} className="mt-2" />
           </div>
         )}
 
-        {/* NAVIGATION ONGLETS STYLE DOSSIER */}
-        <div className="mb-8 border-b border-bricq-slate/10 print:hidden">
-          <div role="tablist" aria-label="Sections du rapport" className="flex flex-wrap gap-8">
-            {TABS.map((tab, index) => {
-              const selected = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  ref={(el) => { tabRefs.current[tab.id] = el; }}
-                  type="button"
-                  role="tab"
-                  id={`tab-${tab.id}`}
-                  aria-selected={selected}
-                  aria-controls={`panel-${tab.id}`}
-                  tabIndex={selected ? 0 : -1}
-                  onClick={() => setActiveTab(tab.id)}
-                  onKeyDown={(e) => onTabKeyDown(e, index)}
-                  className={`flex items-center gap-2 pb-3 text-sm font-bold uppercase tracking-wide border-b-2 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-bricq-terracotta ${selected ? 'border-bricq-terracotta text-bricq-terracotta' : 'border-transparent text-bricq-slate/40 hover:text-bricq-slate hover:border-bricq-slate/20'}`}
-                >
-                  <tab.icon size={16} aria-hidden /> {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        {stillLoading && !loadError && (
+          <div className="mb-8 no-print"><BrickLoader sources={brickSources} /></div>
+        )}
 
-        <div
-          role="tabpanel"
-          id={`panel-${activeTab}`}
-          aria-labelledby={`tab-${activeTab}`}
-          tabIndex={0}
-          className="min-h-[400px] animate-in fade-in slide-in-from-bottom-4 duration-500 focus:outline-none"
-        >
-          {activeTab === 'synthese' && <TabSynthese data={buildingData} dvf={dvfData} loading={loading} />}
-          {activeTab === 'batiment' && <TabBatiment data={buildingData ? { ...buildingData.dpe_reel?.raw, ...buildingData.raw_bdnb, dpe_reel: buildingData.dpe_reel } : null} sources={{ bdnb: sources?.bdnb, dpe: sources?.dpe }} />}
-          {activeTab === 'quartier' && <TabQuartier data={buildingData} />}
-          {activeTab === 'risks' && <TabRisks data={buildingData} />}
-          {activeTab === 'urba' && <TabUrbanisme data={buildingData} />}
-          {activeTab === 'dvf' && <TabDVF transactions={dvfData} loading={loadingDVF && sources?.dvf?.status === 'loading'} marketStats={marketStats} surface={buildingData?.dpe_reel?.surface_habitable_logement} surface_terrain={buildingData?.raw_bdnb?.surface_terrain} source={sources?.dvf} />}
-          {activeTab === 'analyse' && <TabAnalyse data={buildingData} dvf={dvfData} />}
-          {activeTab === 'owner' && <TabOwner />}
-        </div>
+        {buildingData && (
+          <>
+            {/* Sommaire mobile : pastilles défilantes */}
+            <nav aria-label="Sommaire du rapport" className="lg:hidden sticky top-16 z-30 -mx-4 px-4 py-2 bg-papier/95 backdrop-blur border-b border-trait mb-6 overflow-x-auto no-print">
+              <ul className="flex gap-2 w-max">
+                {SECTIONS.map((s) => (
+                  <li key={s.id}>
+                    <a href={`#${s.id}`} aria-current={current === s.id ? 'true' : undefined}
+                      className={`inline-flex items-center min-h-[36px] px-3 rounded-full border text-sm whitespace-nowrap ${current === s.id ? 'bg-texte text-papier border-texte font-bold' : 'border-trait-fort bg-surface'}`}>
+                      {s.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
 
+            <div className="grid lg:grid-cols-[210px_minmax(0,1fr)] gap-8">
+              {/* Sommaire ordinateur : collant à gauche */}
+              <nav aria-label="Sommaire du rapport" className="hidden lg:block no-print">
+                <ul className="sticky top-24 grid gap-0.5 text-sm">
+                  {SECTIONS.map((s) => (
+                    <li key={s.id}>
+                      <a href={`#${s.id}`} aria-current={current === s.id ? 'true' : undefined}
+                        className={`flex items-center justify-between gap-2 px-3 min-h-[38px] rounded-md border-l-[3px] ${current === s.id ? 'bg-surface border-brique font-bold text-texte' : 'border-transparent text-texte-2 hover:text-texte'}`}>
+                        {s.label}
+                        {s.keys.length > 0 && <span aria-hidden className={`w-2.5 h-2.5 rounded-full ${dotFor(s.keys)}`} />}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+
+              <div className="grid gap-14 min-w-0">
+                <section id="synthese" aria-labelledby="synthese-titre" className="scroll-mt-32 grid gap-6">
+                  <h2 id="synthese-titre" className="sr-only">Synthèse</h2>
+                  <ReportSummary data={buildingData} marketStats={marketStats} />
+                  <TabSynthese data={buildingData} dvf={dvfData} loading={loading} />
+                </section>
+
+                <ReportSection id="batiment" title="Bâtiment" term="bdnb" meta={<SourceMeta s={sources?.bdnb} />}>
+                  <div className="grid gap-6">
+                    {buildingData.coords && (
+                      <div className="card overflow-hidden h-[340px] md:h-[420px] no-print">
+                        <Building3D
+                          lat={buildingData.coords.lat}
+                          lon={buildingData.coords.lon}
+                          hints={{
+                            hauteur: buildingData.hauteur,
+                            nb_niveaux: buildingData.nb_niveaux,
+                            surface_sol: buildingData.surface_sol,
+                            materiaux_murs: buildingData.materiaux_murs,
+                            materiaux_toiture: buildingData.materiaux_toiture,
+                          }}
+                          className="h-full"
+                          label={`Maquette 3D du bâtiment situé ${buildingData.adresse_ban ?? 'à cette adresse'}`}
+                        />
+                      </div>
+                    )}
+                    <TabBatiment data={{ ...buildingData.dpe_reel?.raw, ...buildingData.raw_bdnb, dpe_reel: buildingData.dpe_reel }} sources={{ bdnb: sources?.bdnb, dpe: sources?.dpe }} />
+                  </div>
+                </ReportSection>
+
+                <ReportSection id="risques" title="Risques" term="alea" meta={<SourceMeta s={sources?.risques} />}>
+                  <TabRisks data={buildingData} />
+                </ReportSection>
+
+                <ReportSection id="urbanisme" title="Urbanisme" term="plu" meta={<SourceMeta s={sources?.urbanisme} />}>
+                  <TabUrbanisme data={buildingData} />
+                </ReportSection>
+
+                <ReportSection id="quartier" title="Quartier et réseaux" meta={<SourceMeta s={sources?.quartier} />}>
+                  <TabQuartier data={buildingData} />
+                </ReportSection>
+
+                <ReportSection id="marche" title="Prix et ventes" term="dvf" meta={<SourceMeta s={sources?.dvf} />}>
+                  <TabDVF transactions={dvfData} loading={loadingDVF && sources?.dvf?.status === 'loading'} marketStats={marketStats} surface={buildingData.dpe_reel?.surface_habitable_logement} surface_terrain={buildingData.raw_bdnb?.surface_terrain} source={sources?.dvf} />
+                </ReportSection>
+
+                <ReportSection id="analyse" title="Analyse croisée">
+                  <TabAnalyse data={buildingData} dvf={dvfData} />
+                </ReportSection>
+
+                <ReportSection id="histoire" title="Biographie du logement">
+                  <Biographie data={buildingData} dvf={dvfData} />
+                </ReportSection>
+
+                <ReportSection id="proprietaire" title="Propriétaire">
+                  <TabOwner />
+                </ReportSection>
+
+                <p className="text-xs text-texte-2 font-mono border-t border-trait pt-4">
+                  Rapport généré le {generatedOn} à partir de données publiques. La source et la date de chaque bloc sont indiquées sous celui-ci. Une rubrique « Non évalué » signifie que la source n&apos;a pas répondu, pas qu&apos;il n&apos;y a rien à signaler.
+                </p>
+              </div>
+            </div>
+          </>
+        )}
       </main>
+      <SiteFooter />
     </div>
   );
+}
+
+function SourceMeta({ s }: { s?: SourceInfo }) {
+  if (!s) return null;
+  const status = s.status === 'loading' ? 'chargement…' : s.status === 'error' ? 'indisponible' : s.status === 'partial' ? 'partiel' : s.status === 'empty' ? 'aucune donnée' : null;
+  return <span>{s.name}{s.dataDate ? ` · ${s.dataDate}` : ''}{status ? ` · ${status}` : ''}</span>;
 }

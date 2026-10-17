@@ -163,25 +163,25 @@ export default function IgnMapViewer({ lat, lon, zoom = 18, className = "h-full 
                 <div className="absolute bottom-4 right-4 z-[400] flex flex-col gap-2">
                     <button
                         onClick={() => setActiveLayer("Vue Aérienne")}
-                        className={`px-3 py-2 text-xs font-bold rounded-sm shadow-lg flex items-center gap-2 transition-all ${activeLayer === "Vue Aérienne" ? "bg-bricq-slate text-white" : "bg-white text-bricq-slate hover:bg-gray-50"}`}
+                        className={`px-3 py-2 text-xs font-bold rounded-sm shadow-lg flex items-center gap-2 transition-all ${activeLayer === "Vue Aérienne" ? "bg-encre text-white" : "bg-white text-texte hover:bg-papier"}`}
                     >
                         <Mountain size={14} /> Vue Aérienne
                     </button>
                     <button
                         onClick={() => setActiveLayer("Plan IGN")}
-                        className={`px-3 py-2 text-xs font-bold rounded-sm shadow-lg flex items-center gap-2 transition-all ${activeLayer === "Plan IGN" ? "bg-bricq-slate text-white" : "bg-white text-bricq-slate hover:bg-gray-50"}`}
+                        className={`px-3 py-2 text-xs font-bold rounded-sm shadow-lg flex items-center gap-2 transition-all ${activeLayer === "Plan IGN" ? "bg-encre text-white" : "bg-white text-texte hover:bg-papier"}`}
                     >
                         <MapIcon size={14} /> Plan IGN
                     </button>
                     <button
                         onClick={() => setActiveLayer("Cadastre")}
-                        className={`px-3 py-2 text-xs font-bold rounded-sm shadow-lg flex items-center gap-2 transition-all ${activeLayer === "Cadastre" ? "bg-bricq-slate text-white" : "bg-white text-bricq-slate hover:bg-gray-50"}`}
+                        className={`px-3 py-2 text-xs font-bold rounded-sm shadow-lg flex items-center gap-2 transition-all ${activeLayer === "Cadastre" ? "bg-encre text-white" : "bg-white text-texte hover:bg-papier"}`}
                     >
                         <Layers size={14} /> Sat. + Cadastre
                     </button>
                     <button
                         onClick={() => setActiveLayer("Plan Cadastral")}
-                        className={`px-3 py-2 text-xs font-bold rounded-sm shadow-lg flex items-center gap-2 transition-all ${activeLayer === "Plan Cadastral" ? "bg-bricq-slate text-white" : "bg-white text-bricq-slate hover:bg-gray-50"}`}
+                        className={`px-3 py-2 text-xs font-bold rounded-sm shadow-lg flex items-center gap-2 transition-all ${activeLayer === "Plan Cadastral" ? "bg-encre text-white" : "bg-white text-texte hover:bg-papier"}`}
                     >
                         <FileText size={14} /> Plan Cadastral
                     </button>
@@ -189,7 +189,7 @@ export default function IgnMapViewer({ lat, lon, zoom = 18, className = "h-full 
             )}
 
             {/* IGN Logo / Attribution Overlay */}
-            <div className="absolute bottom-1 right-1 z-[400] text-[10px] bg-white/80 px-1 rounded text-slate-500 pointer-events-none">
+            <div className="absolute bottom-1 right-1 z-[400] text-xs bg-white/80 px-1 rounded text-texte-2 pointer-events-none">
                 © IGN - Géoplateforme
             </div>
         </div>

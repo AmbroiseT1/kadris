@@ -67,12 +67,12 @@ export default function NeighborhoodMap({ center, pois }: NeighborhoodMapProps) 
 
     }, []);
 
-    if (!isMounted) return <div className="h-full w-full bg-gray-100 animate-pulse rounded-xl" />;
+    if (!isMounted) return <div className="h-full w-full bg-papier animate-pulse rounded-xl" />;
 
     // Validate center
     if (!center || isNaN(center.lat) || isNaN(center.lon)) {
         return (
-            <div className="h-full w-full bg-gray-100 flex items-center justify-center text-gray-500 rounded-xl">
+            <div className="h-full w-full bg-papier flex items-center justify-center text-texte-2 rounded-xl">
                 Coordonnées invalides
             </div>
         );
@@ -126,7 +126,7 @@ export default function NeighborhoodMap({ center, pois }: NeighborhoodMapProps) 
             {/* Property Marker */}
             <Marker position={[center.lat, center.lon]} icon={homeIcon}>
                 <Popup>
-                    <div className="font-bold text-bricq-terracotta">Votre Bien</div>
+                    <div className="font-bold text-brique">Votre Bien</div>
                 </Popup>
             </Marker>
 
@@ -139,7 +139,7 @@ export default function NeighborhoodMap({ center, pois }: NeighborhoodMapProps) 
                 >
                     <Popup>
                         <div className="font-bold">{poi.name}</div>
-                        <div className="text-xs capitalize text-gray-500">{poi.type.replace(/_/g, ' ')}</div>
+                        <div className="text-xs capitalize text-texte-2">{poi.type.replace(/_/g, ' ')}</div>
                         <div className="text-xs font-bold mt-1">{poi.distance}m</div>
                     </Popup>
                 </Marker>
