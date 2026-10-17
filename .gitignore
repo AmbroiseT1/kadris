@@ -52,3 +52,10 @@ __pycache__/
 *.db-shm
 *.db-wal
 backend/.cache/
+
+# Logs and misc
+*.log
+*.tmp
+.venv/
+venv/
+.pytest_cache/
