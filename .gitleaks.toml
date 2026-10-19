@@ -1,0 +1,9 @@
+# Configuration gitleaks (CI, job "secrets"). Règles par défaut + exceptions connues.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Valeurs factices connues"
+# Clé JWT factice utilisée uniquement par la CI (pas un vrai secret).
+regexes = ['''ci-dummy-secret-key-[0-9a-z-]+''']
+paths = ['''node_modules/''', '''package-lock\.json''']

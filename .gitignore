@@ -62,3 +62,15 @@ uploads/
 .venv/
 venv/
 .pytest_cache/
+
+# Secrets et données sensibles : ne jamais committer
+*.sqlite
+*.sqlite3
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+*.dump
+*.sql.gz
+/gitleaks
