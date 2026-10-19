@@ -19,7 +19,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.24",
     "leaflet": "^1.9.4",
-    "lucide-react": "^0.554.0",
+    "lucide-react": "^1.58.0",
     "next": "^16.4.2",
     "proj4": "^2.20.2",
     "react": "^19.3.1",
