@@ -1,0 +1,210 @@
+"use client";
+
+import { LogoMark } from "@/components/ui/Logo";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useAuth } from '@/app/context/AuthContext';
+import { api } from '@/app/lib/api';
+import Link from 'next/link';
+import { ArrowRight, Loader2, Check } from 'lucide-react';
+
+const registerSchema = z.object({
+    email: z.string().email("Email invalide"),
+    password: z.string().min(10, "Le mot de passe doit contenir au moins 10 caractères"),
+    confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Les mots de passe ne correspondent pas",
+    path: ["confirmPassword"],
+});
+
+type RegisterFormInputs = z.infer<typeof registerSchema>;
+
+export default function RegisterPage() {
+    const { login } = useAuth();
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<RegisterFormInputs>({
+        resolver: zodResolver(registerSchema),
+    });
+
+    const onSubmit = async (data: RegisterFormInputs) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            // 1. Inscription
+            await api.post('/auth/register', {
+                email: data.email.trim(),
+                password: data.password,
+            });
+
+            // 2. Connexion automatique après inscription
+            const loginParams = new URLSearchParams();
+            loginParams.append('username', data.email.trim());
+            loginParams.append('password', data.password);
+
+            const loginResponse = await api.post('/auth/login', loginParams, {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+            if (!loginResponse.data?.access_token) {
+                throw new Error("Erreur technique: Token manquant après inscription.");
+            }
+
+            login(loginResponse.data.access_token);
+
+        } catch (err) {
+            const apiErr = err as { response?: { status?: number; data?: { detail?: string } } };
+            if (apiErr.response?.status === 429) {
+                setError("Trop de tentatives, réessayez plus tard.");
+            } else if (apiErr.response?.status === 400) {
+                setError(apiErr.response?.data?.detail || "Une erreur est survenue.");
+            } else {
+                setError("Une erreur est survenue. Veuillez réessayer.");
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex flex-col md:flex-row bg-papier">
+            {/* Colonne de Gauche (Visuel) */}
+            <div className="hidden md:flex w-1/2 bg-brique text-white items-center justify-center p-12 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10"></div>
+                <div className="relative z-10 max-w-lg">
+                    <Link href="/" className="flex items-center gap-3 mb-8 hover:opacity-80 transition-opacity cursor-pointer">
+                        <LogoMark className="w-10 h-10 text-papier" />
+                        <span className="text-3xl font-bold font-serif tracking-tighter">bricq</span>
+                    </Link>
+                    <h1 className="font-serif text-4xl font-bold mb-6 leading-tight">
+                        Rejoignez la communauté des propriétaires éclairés.
+                    </h1>
+                    <ul className="space-y-4 text-white/90 text-lg font-light">
+                        <li className="flex items-center gap-3">
+                            <div className="bg-white/20 p-1 rounded-full"><Check size={16} /></div>
+                            Centralisation de vos documents
+                        </li>
+                        <li className="flex items-center gap-3">
+                            <div className="bg-white/20 p-1 rounded-full"><Check size={16} /></div>
+                            Suivi de la valeur de votre bien
+                        </li>
+                        <li className="flex items-center gap-3">
+                            <div className="bg-white/20 p-1 rounded-full"><Check size={16} /></div>
+                            Carnet d’entretien intelligent
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            {/* Colonne de Droite (Formulaire) */}
+            <div className="flex-1 flex items-center justify-center p-6 md:p-12">
+                <div className="w-full max-w-md space-y-8">
+                    <div className="text-center md:text-left">
+                        <Link href="/" className="inline-flex items-center gap-2 mb-8">
+                            <LogoMark className="w-8 h-8 text-encre" />
+                            <span className="text-2xl font-bold font-serif tracking-tighter text-texte">bricq</span>
+                        </Link>
+                        <h2 className="text-3xl font-bold text-texte font-serif">Créer un compte</h2>
+                        <p className="mt-2 text-texte-2">
+                            Commencez à gérer votre patrimoine immobilier simplement.
+                        </p>
+                    </div>
+
+                    <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+                        <div className="space-y-4">
+                            <div>
+                                <label htmlFor="email" className="block text-sm font-medium text-texte mb-1">
+                                    Adresse Email
+                                </label>
+                                <input
+                                    id="email"
+                                    type="email"
+                                    autoComplete="email"
+                                    className="appearance-none block w-full px-4 py-3 border border-trait rounded-lg placeholder:text-texte-2 text-texte focus:outline-none focus:ring-2 focus:ring-brique-soft focus:border-brique transition-colors bg-white"
+                                    placeholder="vous@exemple.com"
+                                    {...register("email")}
+                                />
+                                {errors.email && (
+                                    <p className="text-alerte text-xs mt-1">{errors.email.message}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label htmlFor="password" className="block text-sm font-medium text-texte mb-1">
+                                    Mot de passe
+                                </label>
+                                <input
+                                    id="password"
+                                    type="password"
+                                    autoComplete="new-password"
+                                    className="appearance-none block w-full px-4 py-3 border border-trait rounded-lg placeholder:text-texte-2 text-texte focus:outline-none focus:ring-2 focus:ring-brique-soft focus:border-brique transition-colors bg-white"
+                                    placeholder="••••••••"
+                                    {...register("password")}
+                                />
+                                {errors.password && (
+                                    <p className="text-alerte text-xs mt-1">{errors.password.message}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label htmlFor="confirmPassword" className="block text-sm font-medium text-texte mb-1">
+                                    Confirmer le mot de passe
+                                </label>
+                                <input
+                                    id="confirmPassword"
+                                    type="password"
+                                    autoComplete="new-password"
+                                    className="appearance-none block w-full px-4 py-3 border border-trait rounded-lg placeholder:text-texte-2 text-texte focus:outline-none focus:ring-2 focus:ring-brique-soft focus:border-brique transition-colors bg-white"
+                                    placeholder="••••••••"
+                                    {...register("confirmPassword")}
+                                />
+                                {errors.confirmPassword && (
+                                    <p className="text-alerte text-xs mt-1">{errors.confirmPassword.message}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {error && (
+                            <div className="bg-alerte-soft border-l-4 border-alerte/30 p-4 rounded-r-md">
+                                <div className="flex">
+                                    <div className="ml-3">
+                                        <p className="text-sm text-alerte">{error}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-brique hover:bg-brique/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brique disabled:opacity-70 disabled:cursor-not-allowed transition-all shadow-lg shadow-bricq-terracotta/20"
+                        >
+                            {isLoading ? (
+                                <Loader2 className="animate-spin h-5 w-5" />
+                            ) : (
+                                <span className="flex items-center gap-2">
+                                    S’inscrire gratuitement <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                                </span>
+                            )}
+                        </button>
+                    </form>
+
+                    <div className="text-center mt-6">
+                        <p className="text-sm text-texte-2">
+                            Déjà un compte ?{' '}
+                            <Link href="/login" className="font-bold text-texte hover:text-texte transition-colors">
+                                Se connecter
+                            </Link>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

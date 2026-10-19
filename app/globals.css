@@ -1,0 +1,289 @@
+@import "tailwindcss";
+
+/*
+ * Système de design Bricq « Fiche & Plan »
+ * Encre (structure) · Brique (action unique) · Papier (fond) · couleurs de statut réservées à l'information.
+ */
+@theme {
+  /* Marque */
+  --color-encre: #1E3A4C;
+  --color-encre-soft: #E3EBEF;
+  --color-brique: #B4442C;
+  --color-brique-soft: #F6E4DE;
+  --color-papier: #F3F5F4;
+  --color-surface: #FFFFFF;
+  --color-texte: #16232C;
+  --color-texte-2: #4C5D68;
+  --color-trait: #D3DBDD;
+  --color-trait-fort: #A9B6BB;
+
+  /* Statuts (jamais utilisés seuls : toujours avec icône + mot) */
+  --color-ok: #23734A;
+  --color-ok-soft: #E1F0E7;
+  --color-vigil: #9A5B00;
+  --color-vigil-soft: #FBEBD2;
+  --color-alerte: #B02A22;
+  --color-alerte-soft: #F8E0DE;
+  --color-inconnu: #5F6B73;
+  --color-inconnu-soft: #E9ECEE;
+
+  /* Échelle DPE réglementaire */
+  --color-dpe-a: #009C6D;
+  --color-dpe-b: #52B153;
+  --color-dpe-c: #78BD76;
+  --color-dpe-d: #F4E70F;
+  --color-dpe-e: #F0B50F;
+  --color-dpe-f: #EB8235;
+  --color-dpe-g: #D7221F;
+
+  /* Anciens noms conservés pour les pages non encore migrées : ils pointent vers les nouveaux jetons */
+  --color-bricq-terracotta: #B4442C;
+  --color-bricq-slate: #16232C;
+  --color-bricq-sage: #23734A;
+  --color-bricq-cream: #F3F5F4;
+
+  /* Typographie */
+  --font-sans: var(--font-atkinson), "Segoe UI", system-ui, sans-serif;
+  --font-serif: var(--font-bricolage), "Avenir Next", system-ui, sans-serif;
+  --font-display: var(--font-bricolage), "Avenir Next", system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Formes */
+  --radius-sm: 6px;
+  --radius-DEFAULT: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+
+  --shadow-overlay: 0 8px 24px -8px rgba(22, 35, 44, 0.22);
+
+  /* Mouvement */
+  --ease-pose: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-rebond: cubic-bezier(0.3, 1.4, 0.6, 1);
+}
+
+/* ---------- Base ---------- */
+@layer base {
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-papier);
+  color: var(--color-texte);
+  font-family: var(--font-sans);
+  line-height: 1.55;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+h1 {
+  letter-spacing: -0.02em;
+}
+
+::selection {
+  background: var(--color-brique);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-brique);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+}
+
+/* ---------- Composants ---------- */
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    font-weight: 700;
+    font-size: 0.875rem;
+    line-height: 1;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 150ms, border-color 150ms, color 150ms, filter 150ms;
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--color-brique);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+  .btn-secondary {
+    background: var(--color-surface);
+    color: var(--color-texte);
+    border-color: var(--color-trait-fort);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    border-color: var(--color-texte);
+  }
+  .btn-encre {
+    background: var(--color-encre);
+    color: #fff;
+  }
+  .btn-encre:hover:not(:disabled) {
+    filter: brightness(1.15);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-encre);
+    padding: 0 0.5rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .btn-sm {
+    min-height: 36px;
+    font-size: 0.8125rem;
+    padding: 0 0.75rem;
+  }
+
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-trait);
+    border-radius: var(--radius-lg);
+  }
+
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-texte-2);
+  }
+
+  .field {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 0.875rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-trait-fort);
+    background: var(--color-surface);
+    color: var(--color-texte);
+    font-size: 1rem;
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-encre);
+    box-shadow: 0 0 0 3px var(--color-brique-soft);
+  }
+
+  /* Motif d'appareillage de briques en filets fins */
+  .motif-briques {
+    background-image:
+      linear-gradient(var(--color-trait) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-trait) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-trait) 1px, transparent 1px);
+    background-size: 100% 14px, 40px 28px, 40px 28px;
+    background-position: 0 0, 0 0, 20px 14px;
+  }
+}
+
+/* ---------- Animations ---------- */
+@keyframes pose-brique {
+  from {
+    transform: translateY(-14px) rotate(-1deg);
+    opacity: 0.25;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes mortier {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes brique-tombe {
+  0%,
+  25% {
+    transform: translate(0, 0) rotate(0);
+  }
+  100% {
+    transform: translate(var(--dx, 0px), 110vh) rotate(var(--rot, 0deg));
+  }
+}
+
+@keyframes brique-monte {
+  from {
+    transform: translateY(-110vh);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes trace {
+  from {
+    stroke-dashoffset: var(--len, 600);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.reveal-pending {
+  opacity: 0.25;
+  transform: translateY(-14px);
+}
+.reveal-play {
+  animation: pose-brique 500ms var(--ease-pose) both;
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+  body {
+    background: #fff;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal-pending {
+    opacity: 1;
+    transform: none;
+  }
+}
